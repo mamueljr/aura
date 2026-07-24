@@ -1,0 +1,132 @@
+# Aura — Estado de la migración a Monorepo
+
+> Documento de estado. Última actualización: pausa tras **Fase 2 · v0.4**.
+> Resume qué se hizo, el estado de riesgo, cómo trabajar y qué falta.
+
+---
+
+## 1. Resumen
+
+Migración del ecosistema **Aura** (apps de clima, música y hogar) a un **monorepo**
+con **pnpm workspaces + Turborepo**, para compartir código (design system, tipos,
+config) y dejar de copiar-pegar entre proyectos.
+
+- **Ubicación:** `D:\Documentos\GitHub\aura` (repo git nuevo, solo local por ahora).
+- **Apps:** `apps/home` (joya), `apps/music`, `apps/weather`.
+- **Paquetes compartidos:** `packages/tsconfig`, `packages/tokens` (y más por venir).
+
+---
+
+## 2. Estado de riesgo de las apps ✅
+
+**Las apps desplegadas siguen funcionando, sin cambios y sin riesgo.** Corren desde
+sus repos originales, que no fueron modificados:
+
+| Repo original (GitHub) | Estado | En vivo |
+|---|---|---|
+| `mamueljr/App_Clima` | `main` limpio, intacto | ✅ sin cambios |
+| `mamueljr/AuraHome` | `main` limpio, intacto | ✅ sin cambios |
+| `mamueljr/Aura-music` | `main` intacto; los cambios (React 19 + oxlint) están en la rama `chore/react-19-upgrade`, no en `main` ni en `gh-pages` | ✅ sin cambios |
+
+El monorepo es una **copia paralela** no desplegada → no puede afectar lo publicado.
+
+### Riesgos abiertos (no afectan a usuarios hoy)
+
+1. **Divergencia** — existen dos copias de cada app (original + monorepo).
+   Regla: **trabajar solo en el monorepo** de aquí en adelante y **archivar en
+   solo-lectura** los repos originales en GitHub.
+2. **Sin respaldo remoto** — el monorepo vive solo en disco local. Crear el remoto
+   `mamueljr/aura` y pushear para respaldar los commits de la migración.
+
+> Nota: el repo original `Aura-music` quedó con la rama `chore/react-19-upgrade`
+> como checkout activo. Su `main` está intacto. Se puede volver a `main` sin problema.
+
+---
+
+## 3. Estructura del monorepo
+
+```
+aura/
+├─ apps/
+│  ├─ home/      # Aura Home  — React 19, la joya del ecosistema
+│  ├─ music/     # Aura Music — React 19 + oxlint (offline-first)
+│  └─ weather/   # AuraWeather — vanilla JS + Capacitor
+├─ packages/
+│  ├─ tsconfig/  # @aura/tsconfig — presets de TypeScript compartidos
+│  └─ tokens/    # @aura/tokens   — design tokens (OKLCH) + fuentes
+├─ docs/         # este documento
+├─ pnpm-workspace.yaml · turbo.json · package.json · .npmrc · .gitignore
+└─ pnpm-lock.yaml
+```
+
+---
+
+## 4. Qué se hizo (bitácora)
+
+### Fase 0 — Preparación (en el repo de Music)
+- **v0.0.1** Music migrado de **React 18 → 19.2.8** y **react-router 6 → 7.18.1**
+  (alineado con Home). Sin cambios de código fuente: el código ya era React-19-forward.
+- **v0.0.2** Linter unificado a **oxlint** (misma config que Home); se eliminaron
+  eslint, typescript-eslint y sus plugins. Prettier se conservó como formateador.
+
+### Fase 1 — Andamiaje del monorepo
+- **v0.1** Esqueleto **pnpm + Turborepo** (workspace, pipelines de build/lint/
+  typecheck/test/dev con caché).
+- **v0.2** Las 3 apps importadas a `apps/` (**arranque limpio**, sin historial
+  per-app; el historial sigue en los repos originales). Lockfiles npm eliminados.
+- **v0.3** Paquete **`@aura/tsconfig`** (`base.json`, `react-app.json`, `node.json`);
+  home y music extienden los presets conservando sus deltas.
+
+### Fase 2 — Design System (en curso)
+- **v0.4** Paquete **`@aura/tokens`**: se movió `aura.css` (paleta violeta OKLCH,
+  tokens claro/oscuro) desde Home y se bundlearon las fuentes (Inter/Sora Variable).
+  Home ahora consume `@import '@aura/tokens/index.css'`.
+
+**Verificación en cada paso:** `pnpm build` construye las 3 apps (3/3); typecheck y
+lint en verde; smoke tests en runtime de Music y Home sin errores de consola.
+
+---
+
+## 5. Cómo trabajar
+
+Requisitos: Node ≥ 20, pnpm (instalado a nivel usuario).
+
+```bash
+pnpm install                      # instala todo el workspace
+pnpm build                        # turbo run build (las 3 apps, con caché)
+pnpm lint                         # oxlint en home + music
+pnpm typecheck                    # typecheck donde exista el script
+
+# Una sola app:
+pnpm --filter aura-home dev       # dev server de Home
+pnpm --filter aura-music build    # build solo de Music
+pnpm --filter aura-home preview   # previsualizar el build
+```
+
+---
+
+## 6. Decisiones abiertas
+
+- **Punto de entrada del ecosistema** (diferida): apps independientes / hub con Aura
+  Home como puerta / shell unificado. Recomendación: mantener acceso separado y añadir
+  un hub cuando madure. Revisar en la fase de diferenciación.
+- **Archivar repos originales** en GitHub (pendiente que lo haga el usuario).
+- **Crear remoto** `mamueljr/aura` y estrategia de deploy (Fase 4: GitHub Actions con
+  filtros de ruta, o `gh-pages` por app).
+
+## 7. Deuda técnica anotada
+
+- `.oxlintrc.json` duplicado idéntico en home/music → futuro `@aura/config`.
+- Configs de Vite/Tailwind repetidas entre apps → mismo `@aura/config`.
+- El mapeo `@theme inline` (tokens → utilidades Tailwind) sigue en cada app; candidato
+  a compartir cuando exista `@aura/ui`.
+
+## 8. Próximos pasos
+
+| Versión | Entregable |
+|---|---|
+| **v0.5** | `@aura/ui` (base): mover los 6 componentes duplicados (button, dialog, dropdown-menu, input, switch, tabs). Unificar Radix (Home usa `radix-ui`; Music usa `@radix-ui/*` sueltos). |
+| **v0.6** | Migrar Home a `@aura/ui`. |
+| **v0.7** | Migrar Music a `@aura/ui` + `@aura/tokens`. |
+| Fase 3 | `@aura/core` (tipos de dominio, utils, contrato de sync). |
+| Fase 4 | Deploy y CI del monorepo. |
