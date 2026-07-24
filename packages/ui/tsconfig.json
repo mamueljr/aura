@@ -1,0 +1,8 @@
+{
+  "extends": "@aura/tsconfig/react-app.json",
+  "compilerOptions": {
+    /* El paquete no depende de Vite: se anula el `types: ["vite/client"]` del preset. */
+    "types": []
+  },
+  "include": ["src"]
+}
