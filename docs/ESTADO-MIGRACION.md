@@ -1,6 +1,6 @@
 # Aura — Estado de la migración a Monorepo
 
-> Documento de estado. Última actualización: **Fase 2 completa (v0.8)**.
+> Documento de estado. Última actualización: **Fase 3 completa (@aura/core)**.
 > Resume qué se hizo, el estado de riesgo, cómo trabajar y qué falta.
 
 ---
@@ -55,7 +55,9 @@ aura/
 │  └─ weather/   # AuraWeather — vanilla JS + Capacitor
 ├─ packages/
 │  ├─ tsconfig/  # @aura/tsconfig — presets de TypeScript compartidos
-│  └─ tokens/    # @aura/tokens   — design tokens (OKLCH) + fuentes
+│  ├─ tokens/    # @aura/tokens   — design tokens (OKLCH) + fuentes
+│  ├─ ui/        # @aura/ui       — 15 componentes React (shadcn/Radix)
+│  └─ core/      # @aura/core     — contratos y tipos (ecosistema + Aura Sync)
 ├─ docs/         # este documento
 ├─ pnpm-workspace.yaml · turbo.json · package.json · .npmrc · .gitignore
 └─ pnpm-lock.yaml
@@ -106,6 +108,14 @@ aura/
   borra sus copias. `chart` se queda local en Home (recharts es pesado y de único
   consumidor). **Fase 2 (design system) completa.**
 
+### Fase 3 — Núcleo compartido
+- **v0.9** Paquete **`@aura/core`** (solo-tipos, sin deps/runtime/React): se mueve el
+  contrato del ecosistema (`ecosystem.ts`, ex `types/aura-contracts.ts` de Home) y se
+  crea el **esqueleto de Aura Sync** (`sync.ts`: `SyncProvider`, `AuraSyncEnvelope`,
+  `EncryptedEnvelope`, `SyncResult`, `SyncState` — sin implementación). Home consume
+  el contrato desde `@aura/core/ecosystem`. Alcance deliberado: sin utils/Dexie (no
+  hay overlap real). **Fase 3 completa.**
+
 **Verificación en cada paso:** `pnpm build` construye las 3 apps (3/3); typecheck y
 lint en verde; smoke tests en runtime de Music y Home sin errores de consola.
 
@@ -148,12 +158,15 @@ pnpm --filter aura-home preview   # previsualizar el build
 
 ## 8. Próximos pasos
 
-**Fase 2 (design system) completa.** Sigue:
+**Fases 2 y 3 completas.** Queda:
 
 | Fase | Entregable |
 |---|---|
-| **Fase 3** | `@aura/core` (tipos de dominio, utils, contrato de Aura Sync). |
-| **Fase 4** | Deploy y CI del monorepo (GitHub Actions con filtros de ruta). |
+| **Fase 4** | Deploy y CI del monorepo (GitHub Actions con filtros de ruta). Decidir repo público vs plan de pago para Pages; conservar o no las URLs actuales. |
+
+Más allá del plan de migración: implementar Aura Sync (que `drive-sync` de Home
+implemente `SyncProvider` de `@aura/core`), y las apps nuevas del ecosistema
+(p. ej. Aura Finance) arrancando sobre `@aura/{tsconfig,tokens,ui,core}`.
 
 ### Decisión pendiente: ¿unificar tokens de Music con `@aura/tokens`?
 
