@@ -1,6 +1,6 @@
 # Aura — Estado de la migración a Monorepo
 
-> Documento de estado. Última actualización: tras **Fase 2 · v0.6**.
+> Documento de estado. Última actualización: tras **Fase 2 · v0.7**.
 > Resume qué se hizo, el estado de riesgo, cómo trabajar y qué falta.
 
 ---
@@ -92,6 +92,14 @@ aura/
   reexporta `cn` del paquete. Se añadió `@source '../../../packages/ui/src'` al CSS
   raíz — **Tailwind 4 no escanea `node_modules`** y sin eso los componentes salen
   sin estilos.
+- **v0.7** **Music migrado a `@aura/ui`**: 33 imports reescritos, copias locales
+  eliminadas (slider y tooltip se quedan, no están en el paquete). Decisión de
+  diseño: **Music conserva su tema propio** (degradados aura-1/2/3, glass, radius
+  0.75rem) — NO se adoptó `@aura/tokens`; los componentes compartidos se renderizan
+  con la identidad de Music. Supuesto oculto resuelto: `<DropdownMenuItem
+  destructive>` → `variant="destructive"`. Limpiadas deps redundantes (@radix-ui
+  sueltos, cva, clsx, tailwind-merge). **Componentes duplicados: eliminados en las
+  dos apps React.**
 
 **Verificación en cada paso:** `pnpm build` construye las 3 apps (3/3); typecheck y
 lint en verde; smoke tests en runtime de Music y Home sin errores de consola.
@@ -137,7 +145,14 @@ pnpm --filter aura-home preview   # previsualizar el build
 
 | Versión | Entregable |
 |---|---|
-| **v0.7** | Migrar **Music** a `@aura/ui` + `@aura/tokens`. Implica pasar sus componentes de `forwardRef` → estilo React 19 y de los `@radix-ui/*` sueltos → `radix-ui` unificado. Aquí se valida que el paquete sirve para dos apps distintas. |
 | **v0.8** | Completar `@aura/ui` con el resto de componentes compartibles de Home (badge, card, checkbox, label, select, separator, sheet, skeleton, textarea, chart). |
+
+### Decisión pendiente: ¿unificar tokens de Music con `@aura/tokens`?
+
+Music conserva su tema propio (violeta + cyan + rosa, glass, radius 0.75rem, hex);
+Home usa `@aura/tokens` (violeta OKLCH, radius 1rem). Ambos comparten los mismos
+**componentes**, pero con **valores de token distintos** — patrón sano de design
+system. Convergerlos cambiaría el look de Music y es una decisión de identidad,
+no técnica. Se deja abierta para la fase de diferenciación.
 | Fase 3 | `@aura/core` (tipos de dominio, utils, contrato de sync). |
 | Fase 4 | Deploy y CI del monorepo. |
