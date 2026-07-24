@@ -1,6 +1,6 @@
 # Aura — Estado de la migración a Monorepo
 
-> Documento de estado. Última actualización: tras **Fase 2 · v0.7**.
+> Documento de estado. Última actualización: **Fase 2 completa (v0.8)**.
 > Resume qué se hizo, el estado de riesgo, cómo trabajar y qué falta.
 
 ---
@@ -100,6 +100,11 @@ aura/
   destructive>` → `variant="destructive"`. Limpiadas deps redundantes (@radix-ui
   sueltos, cva, clsx, tailwind-merge). **Componentes duplicados: eliminados en las
   dos apps React.**
+- **v0.8** **`@aura/ui` completado** (6 → 15 componentes): promovidos los genéricos
+  restantes de Home (badge, card, checkbox, label, select, separator, sheet,
+  skeleton, textarea) sin añadir dependencias. Home los consume (33 archivos) y
+  borra sus copias. `chart` se queda local en Home (recharts es pesado y de único
+  consumidor). **Fase 2 (design system) completa.**
 
 **Verificación en cada paso:** `pnpm build` construye las 3 apps (3/3); typecheck y
 lint en verde; smoke tests en runtime de Music y Home sin errores de consola.
@@ -143,9 +148,12 @@ pnpm --filter aura-home preview   # previsualizar el build
 
 ## 8. Próximos pasos
 
-| Versión | Entregable |
+**Fase 2 (design system) completa.** Sigue:
+
+| Fase | Entregable |
 |---|---|
-| **v0.8** | Completar `@aura/ui` con el resto de componentes compartibles de Home (badge, card, checkbox, label, select, separator, sheet, skeleton, textarea, chart). |
+| **Fase 3** | `@aura/core` (tipos de dominio, utils, contrato de Aura Sync). |
+| **Fase 4** | Deploy y CI del monorepo (GitHub Actions con filtros de ruta). |
 
 ### Decisión pendiente: ¿unificar tokens de Music con `@aura/tokens`?
 
@@ -154,5 +162,3 @@ Home usa `@aura/tokens` (violeta OKLCH, radius 1rem). Ambos comparten los mismos
 **componentes**, pero con **valores de token distintos** — patrón sano de design
 system. Convergerlos cambiaría el look de Music y es una decisión de identidad,
 no técnica. Se deja abierta para la fase de diferenciación.
-| Fase 3 | `@aura/core` (tipos de dominio, utils, contrato de sync). |
-| Fase 4 | Deploy y CI del monorepo. |
