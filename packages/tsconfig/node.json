@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Aura Node (build tooling)",
+  "_comment": "Para typecheck de archivos de tooling en Node (vite.config.ts, scripts). Sin `strict` para no imponerlo sobre config de terceros.",
+  "extends": "./base.json",
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "allowImportingTsExtensions": true,
+    "types": ["node"]
+  }
+}

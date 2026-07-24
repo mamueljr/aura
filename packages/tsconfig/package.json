@@ -1,0 +1,11 @@
+{
+  "name": "@aura/tsconfig",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Presets de TypeScript compartidos del ecosistema Aura.",
+  "files": [
+    "base.json",
+    "react-app.json",
+    "node.json"
+  ]
+}

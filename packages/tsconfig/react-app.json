@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Aura React App",
+  "_comment": "Base para apps React con Vite (bundler mode). Cada app añade sus deltas: lib extra (WebWorker), types (vite-plugin-pwa), paths y estrictez adicional.",
+  "extends": "./base.json",
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "types": ["vite/client"]
+  }
+}

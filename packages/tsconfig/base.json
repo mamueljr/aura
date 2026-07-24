@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Aura Base",
+  "_comment": "Opciones comunes a TODA la config TS del ecosistema (apps y tooling). Lo específico va en react-app.json / node.json o en el tsconfig de cada app.",
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  }
+}
