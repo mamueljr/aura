@@ -1,9 +1,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
-@import '@fontsource-variable/inter';
-@import '@fontsource-variable/sora';
-@import './theme/aura.css';
+@import '@aura/tokens/index.css';
 
 @custom-variant dark (&:is(.dark *));
 

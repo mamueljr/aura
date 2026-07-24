@@ -1,0 +1,9 @@
+/* ============================================================
+   @aura/tokens — punto de entrada
+   Fuentes variables + tokens de diseño del ecosistema Aura.
+   Importar DESPUÉS de `@import 'tailwindcss'` en la app.
+   ============================================================ */
+
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/sora';
+@import './aura.css';

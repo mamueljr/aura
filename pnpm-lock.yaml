@@ -14,12 +14,9 @@ importers:
 
   apps/home:
     dependencies:
-      '@fontsource-variable/inter':
-        specifier: ^5.2.8
-        version: 5.3.0
-      '@fontsource-variable/sora':
-        specifier: ^5.2.8
-        version: 5.3.0
+      '@aura/tokens':
+        specifier: workspace:*
+        version: link:../../packages/tokens
       '@tanstack/react-query':
         specifier: ^5.101.2
         version: 5.101.4(react@19.2.8)
@@ -248,6 +245,15 @@ importers:
       '@capacitor/cli':
         specifier: ^6.0.0
         version: 6.2.1
+
+  packages/tokens:
+    dependencies:
+      '@fontsource-variable/inter':
+        specifier: ^5.2.8
+        version: 5.3.0
+      '@fontsource-variable/sora':
+        specifier: ^5.2.8
+        version: 5.3.0
 
   packages/tsconfig: {}
 

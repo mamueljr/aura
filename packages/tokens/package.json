@@ -1,0 +1,20 @@
+{
+  "name": "@aura/tokens",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Design tokens del ecosistema Aura (CSS/OKLCH) + fuentes variables.",
+  "exports": {
+    ".": "./index.css",
+    "./index.css": "./index.css",
+    "./aura.css": "./aura.css"
+  },
+  "style": "./index.css",
+  "files": [
+    "index.css",
+    "aura.css"
+  ],
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.2.8",
+    "@fontsource-variable/sora": "^5.2.8"
+  }
+}
