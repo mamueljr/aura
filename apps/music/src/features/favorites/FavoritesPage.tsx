@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { EmptyState } from '@/components/EmptyState';
 import { PageHeader } from '@/components/PageHeader';
 import { TrackList } from '@/components/TrackList';
-import { Button } from '@/components/ui/button';
+import { Button } from '@aura/ui/components/button';
 import { Play, Shuffle } from 'lucide-react';
 import { useFavoriteTracks } from '@/hooks/useLibrary';
 import { player } from '@/services/audio/AudioEngine';

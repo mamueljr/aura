@@ -5,15 +5,15 @@ import { Link } from 'react-router-dom';
 
 import { EmptyState } from '@/components/EmptyState';
 import { PageHeader } from '@/components/PageHeader';
-import { Button } from '@/components/ui/button';
+import { Button } from '@aura/ui/components/button';
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+} from '@aura/ui/components/dialog';
+import { Input } from '@aura/ui/components/input';
 import { useFavoriteTracks, usePlaylists } from '@/hooks/useLibrary';
 import { generatedCoverUri } from '@/services/artwork/artwork';
 import { createPlaylist } from '@/services/playlists/playlists';

@@ -1,7 +1,7 @@
 import { Volume1, Volume2, VolumeX } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@aura/ui/components/button';
 import { Slider } from '@/components/ui/slider';
 import { useSettingsStore } from '@/stores/settingsStore';
 

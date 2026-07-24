@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { Artwork } from '@/components/Artwork';
-import { Button } from '@/components/ui/button';
+import { Button } from '@aura/ui/components/button';
 
 /** Hero header shared by album / artist / genre / playlist detail pages. */
 export function DetailHero({

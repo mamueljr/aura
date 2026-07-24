@@ -5,14 +5,14 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { Artwork } from '@/components/Artwork';
-import { Button } from '@/components/ui/button';
+import { Button } from '@aura/ui/components/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@aura/ui/components/dropdown-menu';
 import type { Track } from '@/core/types';
 import { albumId, artistId } from '@/infrastructure/db/aggregates';
 import { UNKNOWN_ALBUM, UNKNOWN_ARTIST } from '@/core/constants';
@@ -238,7 +238,7 @@ export function TrackMenu({
         {onRemove ? (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem destructive onSelect={onRemove}>
+            <DropdownMenuItem variant="destructive" onSelect={onRemove}>
               <Trash2 /> {removeLabel ?? t('common.delete')}
             </DropdownMenuItem>
           </>

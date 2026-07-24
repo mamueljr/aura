@@ -1,6 +1,10 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+/* Tailwind no escanea node_modules: declara el fuente de @aura/ui para
+   generar las clases usadas dentro de sus componentes compartidos. */
+@source '../../../../packages/ui/src';
+
 @custom-variant dark (&:is(.dark *));
 
 :root {

@@ -21,7 +21,7 @@ import { GripVertical, ListMusic, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { Artwork } from '@/components/Artwork';
-import { Button } from '@/components/ui/button';
+import { Button } from '@aura/ui/components/button';
 import type { Track } from '@/core/types';
 import { db } from '@/infrastructure/db/db';
 import { cn } from '@/lib/utils';

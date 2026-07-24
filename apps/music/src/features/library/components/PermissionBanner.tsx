@@ -3,7 +3,7 @@ import { FolderLock, HardDriveDownload } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@aura/ui/components/button';
 import { useFolders } from '@/hooks/useLibrary';
 import { verifyPermission } from '@/infrastructure/fs/fileSystem';
 import { opfsSupported } from '@/infrastructure/fs/opfs';

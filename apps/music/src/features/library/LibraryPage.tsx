@@ -6,14 +6,14 @@ import { EmptyState } from '@/components/EmptyState';
 import { MediaCard, MediaGrid } from '@/components/MediaCard';
 import { PageHeader } from '@/components/PageHeader';
 import { TrackList } from '@/components/TrackList';
-import { Button } from '@/components/ui/button';
+import { Button } from '@aura/ui/components/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+} from '@aura/ui/components/dropdown-menu';
+import { Tabs, TabsList, TabsTrigger } from '@aura/ui/components/tabs';
 import { UNKNOWN_ALBUM, UNKNOWN_ARTIST, UNKNOWN_GENRE } from '@/core/constants';
 import {
   useAlbums,

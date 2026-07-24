@@ -3,7 +3,7 @@ import { Heart, ListMusic } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { Artwork } from '@/components/Artwork';
-import { Button } from '@/components/ui/button';
+import { Button } from '@aura/ui/components/button';
 import { cn } from '@/lib/utils';
 import { toggleFavorite } from '@/services/library/actions';
 import { usePlayerStore } from '@/stores/playerStore';

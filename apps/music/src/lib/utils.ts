@@ -1,9 +1,6 @@
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+// `cn` vive en @aura/ui (fuente única del ecosistema). El resto de utilidades
+// de abajo son propias de Music.
+export { cn } from '@aura/ui/lib/utils';
 
 /** Fast non-cryptographic 53-bit hash → base36 string. Stable across sessions. */
 export function hash53(str: string, seed = 0): string {

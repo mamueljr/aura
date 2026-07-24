@@ -13,7 +13,7 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { PageHeader } from '@/components/PageHeader';
-import { Button } from '@/components/ui/button';
+import { Button } from '@aura/ui/components/button';
 import {
   Dialog,
   DialogContent,
@@ -21,9 +21,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '@aura/ui/components/dialog';
 import { Slider } from '@/components/ui/slider';
-import { Switch } from '@/components/ui/switch';
+import { Switch } from '@aura/ui/components/switch';
 import { CREATOR_NAME, CREATOR_URL, MAX_CROSSFADE_SECONDS } from '@/core/constants';
 import { EqualizerPanel } from '@/features/player/components/EqualizerPanel';
 import { useFolders } from '@/hooks/useLibrary';

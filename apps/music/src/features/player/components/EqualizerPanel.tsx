@@ -1,14 +1,14 @@
 import { useTranslation } from 'react-i18next';
 
 import { Slider } from '@/components/ui/slider';
-import { Switch } from '@/components/ui/switch';
+import { Switch } from '@aura/ui/components/switch';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
+} from '@aura/ui/components/dropdown-menu';
+import { Button } from '@aura/ui/components/button';
 import { EQ_BANDS, EQ_PRESETS } from '@/core/constants';
 import { cn } from '@/lib/utils';
 import { useSettingsStore } from '@/stores/settingsStore';

@@ -14,21 +14,21 @@ import {
 import { useTranslation } from 'react-i18next';
 
 import { Artwork } from '@/components/Artwork';
-import { Button } from '@/components/ui/button';
+import { Button } from '@aura/ui/components/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from '@aura/ui/components/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@aura/ui/components/dropdown-menu';
 import { PLAYBACK_RATES, SLEEP_TIMER_OPTIONS_MIN } from '@/core/constants';
 import { cn } from '@/lib/utils';
 import { player } from '@/services/audio/AudioEngine';

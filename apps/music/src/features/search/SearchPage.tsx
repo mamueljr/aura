@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import { EmptyState } from '@/components/EmptyState';
 import { MediaCard } from '@/components/MediaCard';
 import { TrackRow } from '@/components/TrackList';
-import { Input } from '@/components/ui/input';
+import { Input } from '@aura/ui/components/input';
 import { UNKNOWN_ALBUM, UNKNOWN_ARTIST, UNKNOWN_GENRE } from '@/core/constants';
 import { useAlbums, useAllTracks, useArtists, useGenres } from '@/hooks/useLibrary';
 import { player } from '@/services/audio/AudioEngine';

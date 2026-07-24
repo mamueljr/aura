@@ -2,7 +2,7 @@ import { FolderPlus } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@aura/ui/components/button';
 import { supportsFsAccess } from '@/infrastructure/fs/fileSystem';
 import { addFolderFromFileList, addFolderWithPicker } from '@/services/library/scanner';
 

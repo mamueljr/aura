@@ -23,7 +23,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Artwork } from '@/components/Artwork';
 import { EmptyState } from '@/components/EmptyState';
 import { TrackMenu } from '@/components/TrackList';
-import { Button } from '@/components/ui/button';
+import { Button } from '@aura/ui/components/button';
 import {
   Dialog,
   DialogContent,
@@ -31,15 +31,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '@aura/ui/components/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
+} from '@aura/ui/components/dropdown-menu';
+import { Input } from '@aura/ui/components/input';
 import type { Track } from '@/core/types';
 import { usePlaylist, usePlaylistTracks } from '@/hooks/useLibrary';
 import { cn, formatDuration, formatTotalDuration } from '@/lib/utils';
@@ -143,7 +143,7 @@ export default function PlaylistDetailPage() {
                 <Download /> {t('playlists.exportJSON')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem destructive onSelect={() => setDeleteOpen(true)}>
+              <DropdownMenuItem variant="destructive" onSelect={() => setDeleteOpen(true)}>
                 <Trash2 /> {t('common.delete')}
               </DropdownMenuItem>
             </DropdownMenuContent>
