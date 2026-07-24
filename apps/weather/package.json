@@ -1,0 +1,16 @@
+{
+  "name": "aura-weather",
+  "version": "1.0.0",
+  "description": "Aplicación de clima premium AuraWeather",
+  "main": "app.js",
+  "scripts": {
+    "build": "node copy-assets.js"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/core": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0"
+  }
+}
