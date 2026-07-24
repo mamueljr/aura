@@ -11,7 +11,7 @@ import {
   Trash2,
   Users,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@aura/ui/components/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   DropdownMenu,
@@ -19,8 +19,8 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
+} from '@aura/ui/components/dropdown-menu'
+import { Input } from '@aura/ui/components/input'
 import { EmptyState } from '@/components/EmptyState'
 import { APP_CONFIG } from '@/config/app'
 import { useContacts } from '@/hooks/queries'

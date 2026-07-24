@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { Bell, CalendarDays, Home, Receipt, Sparkles } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Button } from '@aura/ui/components/button'
 import {
   Card,
   CardContent,
@@ -17,13 +17,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
+} from '@aura/ui/components/dialog'
+import { Input } from '@aura/ui/components/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Switch } from '@/components/ui/switch'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Switch } from '@aura/ui/components/switch'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@aura/ui/components/tabs'
 import { APP_CONFIG } from '@/config/app'
 
 /* Clases estáticas: Tailwind no genera clases construidas dinámicamente */

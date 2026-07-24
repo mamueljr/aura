@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Check, Copy } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@aura/ui/components/button'
 import { cn } from '@/lib/utils'
 
 /** Botón de ícono que copia `value` al portapapeles y confirma con un check. */

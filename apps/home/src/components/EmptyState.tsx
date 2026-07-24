@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { LucideIcon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@aura/ui/components/button'
 
 interface EmptyStateProps {
   icon: LucideIcon

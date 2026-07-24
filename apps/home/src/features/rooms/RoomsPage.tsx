@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Download, Home, MoreVertical, Pencil, Plus, Share2, Trash2, Upload } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@aura/ui/components/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   DropdownMenu,
@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from '@aura/ui/components/dropdown-menu'
 import { EmptyState } from '@/components/EmptyState'
 import { queryKeys } from '@/config/query-client'
 import { useHomeItems, useRooms } from '@/hooks/queries'

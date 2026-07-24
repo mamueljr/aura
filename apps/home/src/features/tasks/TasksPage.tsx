@@ -10,7 +10,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Button } from '@aura/ui/components/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -19,9 +19,9 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+} from '@aura/ui/components/dropdown-menu'
+import { Input } from '@aura/ui/components/input'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@aura/ui/components/tabs'
 import { EmptyState } from '@/components/EmptyState'
 import { useTasks } from '@/hooks/queries'
 import { cn } from '@/lib/utils'

@@ -3,6 +3,10 @@
 @import 'shadcn/tailwind.css';
 @import '@aura/tokens/index.css';
 
+/* Tailwind no escanea node_modules: hay que declarar el fuente de @aura/ui
+   para que genere las clases usadas dentro de sus componentes. */
+@source '../../../packages/ui/src';
+
 @custom-variant dark (&:is(.dark *));
 
 /* Mapea los tokens semánticos de Aura Design a utilidades Tailwind */

@@ -6,9 +6,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+} from '@aura/ui/components/dialog'
+import { Button } from '@aura/ui/components/button'
+import { Input } from '@aura/ui/components/input'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
+import { Switch } from '@aura/ui/components/switch'
 import { Textarea } from '@/components/ui/textarea'
 import {
   CONTACT_CATEGORIES,

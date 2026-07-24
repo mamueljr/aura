@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Bell, Cloud, Download, HardDrive, RefreshCw, Upload } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@aura/ui/components/button'
 import {
   Card,
   CardContent,
@@ -9,10 +9,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
+import { Input } from '@aura/ui/components/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { Switch } from '@/components/ui/switch'
+import { Switch } from '@aura/ui/components/switch'
 import { APP_CONFIG } from '@/config/app'
 import { queryKeys } from '@/config/query-client'
 import {

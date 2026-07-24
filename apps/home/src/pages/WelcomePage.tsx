@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Button } from '@/components/ui/button'
+import { Button } from '@aura/ui/components/button'
 import { APP_CONFIG } from '@/config/app'
 
 interface WelcomePageProps {

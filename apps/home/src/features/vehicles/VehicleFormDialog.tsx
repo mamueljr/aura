@@ -6,9 +6,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+} from '@aura/ui/components/dialog'
+import { Button } from '@aura/ui/components/button'
+import { Input } from '@aura/ui/components/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import type { NewEntity, Vehicle } from '@/types/entities'

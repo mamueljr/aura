@@ -2,15 +2,15 @@ import { useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Download, FileStack, MoreVertical, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Button } from '@aura/ui/components/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
+} from '@aura/ui/components/dropdown-menu'
+import { Input } from '@aura/ui/components/input'
 import { EmptyState } from '@/components/EmptyState'
 import { Plus } from 'lucide-react'
 import { useDocuments } from '@/hooks/queries'

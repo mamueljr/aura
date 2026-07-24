@@ -1,12 +1,12 @@
 import { Moon, Sun, SunMoon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@aura/ui/components/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from '@aura/ui/components/dropdown-menu'
 import { useThemeStore, type ThemePreference } from '@/stores/theme.store'
 
 const ICONS = {

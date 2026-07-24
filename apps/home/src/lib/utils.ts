@@ -1,6 +1,3 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
+// `cn` vive en @aura/ui (fuente única del ecosistema). Se reexporta para que los
+// imports existentes de `@/lib/utils` sigan funcionando sin duplicar la lógica.
+export { cn } from "@aura/ui/lib/utils"

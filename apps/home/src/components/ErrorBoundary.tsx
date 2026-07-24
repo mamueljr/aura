@@ -1,6 +1,6 @@
 import { Component, type ReactNode } from 'react'
 import { AlertTriangle, RotateCcw } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@aura/ui/components/button'
 
 interface Props {
   /** Cambiar esta clave (p. ej. la ruta) reintenta el render automáticamente. */
