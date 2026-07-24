@@ -8,10 +8,10 @@ import {
   ShoppingCart,
   Trash2,
 } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { Badge } from '@aura/ui/components/badge'
 import { Button } from '@aura/ui/components/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
+import { Card, CardContent } from '@aura/ui/components/card'
+import { Checkbox } from '@aura/ui/components/checkbox'
 import { Input } from '@aura/ui/components/input'
 import {
   Select,
@@ -19,7 +19,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@aura/ui/components/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@aura/ui/components/tabs'
 import { EmptyState } from '@/components/EmptyState'
 import { useShoppingItems } from '@/hooks/queries'

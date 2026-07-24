@@ -12,7 +12,7 @@ import {
   Users,
 } from 'lucide-react'
 import { Button } from '@aura/ui/components/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent } from '@aura/ui/components/card'
 import {
   DropdownMenu,
   DropdownMenuContent,

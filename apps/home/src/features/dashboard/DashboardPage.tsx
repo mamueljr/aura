@@ -8,13 +8,13 @@ import {
   Receipt,
   Wallet,
 } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { Badge } from '@aura/ui/components/badge'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
+} from '@aura/ui/components/card'
 import { EmptyState } from '@/components/EmptyState'
 import { MODULES } from '@/config/navigation'
 import { useEvents, useServicePayments, useServices, useTasks } from '@/hooks/queries'

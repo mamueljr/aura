@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { MoreVertical, Pencil, Plus, Trash2, Wrench } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { Badge } from '@aura/ui/components/badge'
 import { Button } from '@aura/ui/components/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent } from '@aura/ui/components/card'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,7 +17,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@aura/ui/components/select'
 import { EmptyState } from '@/components/EmptyState'
 import { useMaintenance } from '@/hooks/queries'
 import { daysUntil, parseLocalDate, relativeDayLabel } from '@/utils/dates'

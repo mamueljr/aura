@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Palette, Settings } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent } from '@aura/ui/components/card'
 import { MODULES } from '@/config/navigation'
 
 /** Entradas extra (no-módulos) accesibles solo desde el sidebar en desktop. */

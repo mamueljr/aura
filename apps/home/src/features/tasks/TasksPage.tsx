@@ -9,10 +9,10 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { Badge } from '@aura/ui/components/badge'
 import { Button } from '@aura/ui/components/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
+import { Card, CardContent } from '@aura/ui/components/card'
+import { Checkbox } from '@aura/ui/components/checkbox'
 import {
   DropdownMenu,
   DropdownMenuContent,

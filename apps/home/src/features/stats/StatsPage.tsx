@@ -11,7 +11,7 @@ import {
 } from 'recharts'
 import type { LucideIcon } from 'lucide-react'
 import { BarChart3, CircleCheckBig, ListTodo, Wallet } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@aura/ui/components/card'
 import {
   ChartContainer,
   ChartLegend,

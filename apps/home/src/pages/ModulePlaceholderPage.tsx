@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Badge } from '@/components/ui/badge'
+import { Badge } from '@aura/ui/components/badge'
 import type { ModuleDef } from '@/config/navigation'
 
 /**

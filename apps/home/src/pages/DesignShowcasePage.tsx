@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { Bell, CalendarDays, Home, Receipt, Sparkles } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { Badge } from '@aura/ui/components/badge'
 import { Button } from '@aura/ui/components/button'
 import {
   Card,
@@ -8,8 +8,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
+} from '@aura/ui/components/card'
+import { Checkbox } from '@aura/ui/components/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -19,9 +19,9 @@ import {
   DialogTrigger,
 } from '@aura/ui/components/dialog'
 import { Input } from '@aura/ui/components/input'
-import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Label } from '@aura/ui/components/label'
+import { Separator } from '@aura/ui/components/separator'
+import { Skeleton } from '@aura/ui/components/skeleton'
 import { Switch } from '@aura/ui/components/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@aura/ui/components/tabs'
 import { APP_CONFIG } from '@/config/app'

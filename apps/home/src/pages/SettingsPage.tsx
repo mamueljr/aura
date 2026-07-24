@@ -8,10 +8,10 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
+} from '@aura/ui/components/card'
 import { Input } from '@aura/ui/components/input'
-import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
+import { Label } from '@aura/ui/components/label'
+import { Separator } from '@aura/ui/components/separator'
 import { Switch } from '@aura/ui/components/switch'
 import { APP_CONFIG } from '@/config/app'
 import { queryKeys } from '@/config/query-client'

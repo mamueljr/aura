@@ -9,16 +9,16 @@ import {
 } from '@aura/ui/components/dialog'
 import { Button } from '@aura/ui/components/button'
 import { Input } from '@aura/ui/components/input'
-import { Label } from '@/components/ui/label'
+import { Label } from '@aura/ui/components/label'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@aura/ui/components/select'
 import { Switch } from '@aura/ui/components/switch'
-import { Textarea } from '@/components/ui/textarea'
+import { Textarea } from '@aura/ui/components/textarea'
 import {
   CONTACT_CATEGORIES,
   type Contact,

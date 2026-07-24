@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Download, Home, MoreVertical, Pencil, Plus, Share2, Trash2, Upload } from 'lucide-react'
 import { Button } from '@aura/ui/components/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent } from '@aura/ui/components/card'
 import {
   DropdownMenu,
   DropdownMenuContent,

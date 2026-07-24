@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { CalendarDays, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { Badge } from '@aura/ui/components/badge'
 import { Button } from '@aura/ui/components/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent } from '@aura/ui/components/card'
 import { Tabs, TabsList, TabsTrigger } from '@aura/ui/components/tabs'
 import { EmptyState } from '@/components/EmptyState'
 import {

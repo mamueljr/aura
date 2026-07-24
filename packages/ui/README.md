@@ -7,8 +7,13 @@ versiones más completas y modernas.
 
 ## Componentes
 
-`button` · `dialog` · `dropdown-menu` · `input` · `switch` · `tabs`
-(+ la utilidad `cn`)
+`badge` · `button` · `card` · `checkbox` · `dialog` · `dropdown-menu` · `input` ·
+`label` · `select` · `separator` · `sheet` · `skeleton` · `switch` · `tabs` ·
+`textarea` (+ la utilidad `cn`)
+
+> `chart` (recharts) se queda local en Aura Home a propósito: recharts es pesado y
+> hoy tiene un único consumidor. Si otra app necesita gráficas, se promueve con
+> `recharts` como peer dependency.
 
 ## Paquete "just-in-time"
 

@@ -9,15 +9,15 @@ import {
   DialogTitle,
 } from '@aura/ui/components/dialog'
 import { Button } from '@aura/ui/components/button'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Label } from '@/components/ui/label'
+import { Checkbox } from '@aura/ui/components/checkbox'
+import { Label } from '@aura/ui/components/label'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@aura/ui/components/select'
 import { EmptyState } from '@/components/EmptyState'
 import { fetchGoogleContacts, type GoogleContact } from '@/services/google-contacts.service'
 import {

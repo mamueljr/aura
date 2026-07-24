@@ -10,8 +10,8 @@ import {
 } from '@aura/ui/components/dialog'
 import { Button } from '@aura/ui/components/button'
 import { Input } from '@aura/ui/components/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@aura/ui/components/label'
+import { Textarea } from '@aura/ui/components/textarea'
 import type { NewEntity, Plant } from '@/types/entities'
 import { compressImage } from '@/utils/images'
 

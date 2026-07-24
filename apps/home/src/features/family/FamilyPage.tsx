@@ -11,9 +11,9 @@ import {
   Trash2,
   Users,
 } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { Badge } from '@aura/ui/components/badge'
 import { Button } from '@aura/ui/components/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent } from '@aura/ui/components/card'
 import {
   DropdownMenu,
   DropdownMenuContent,
