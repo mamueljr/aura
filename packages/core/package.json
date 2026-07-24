@@ -1,0 +1,21 @@
+{
+  "name": "@aura/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Contratos y tipos compartidos del ecosistema Aura (solo-tipos).",
+  "exports": {
+    ".": "./src/index.ts",
+    "./ecosystem": "./src/ecosystem.ts",
+    "./sync": "./src/sync.ts"
+  },
+  "scripts": {
+    "lint": "oxlint",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@aura/tsconfig": "workspace:*",
+    "oxlint": "^1.71.0",
+    "typescript": "~6.0.2"
+  }
+}

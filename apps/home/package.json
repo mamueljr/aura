@@ -12,6 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@aura/core": "workspace:*",
     "@aura/tokens": "workspace:*",
     "@aura/ui": "workspace:*",
     "@tanstack/react-query": "^5.101.2",

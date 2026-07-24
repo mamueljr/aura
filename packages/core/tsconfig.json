@@ -1,0 +1,13 @@
+{
+  "extends": "@aura/tsconfig/base.json",
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "verbatimModuleSyntax": true,
+    "types": []
+  },
+  "include": ["src"]
+}

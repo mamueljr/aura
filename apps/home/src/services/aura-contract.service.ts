@@ -3,7 +3,7 @@ import {
   AURA_ROOMS_CONTRACT,
   AURA_ROOMS_CONTRACT_VERSION,
   type AuraRoomsExport,
-} from '@/types/aura-contracts'
+} from '@aura/core/ecosystem'
 import {
   ITEM_CATEGORIES,
   ROOM_TYPES,
