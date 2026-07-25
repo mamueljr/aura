@@ -13,9 +13,11 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
-    "preview": "turbo run preview"
+    "preview": "turbo run preview",
+    "deploy": "node scripts/deploy.mjs"
   },
   "devDependencies": {
+    "gh-pages": "^6.3.0",
     "turbo": "^2.10.6"
   }
 }

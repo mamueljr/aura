@@ -5,8 +5,9 @@ import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-// Deployed at https://mamueljr.github.io/Aura-music/
-const BASE = process.env.VITE_BASE ?? '/Aura-music/';
+// GitHub Pages sirve el monorepo bajo /aura/ → esta app en /aura/music/.
+// Override con VITE_BASE al construir.
+const BASE = process.env.VITE_BASE ?? '/aura/music/';
 
 // A short build stamp so we can confirm which version a device is actually
 // running (useful when a cached service worker serves a stale bundle).

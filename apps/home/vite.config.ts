@@ -4,8 +4,9 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// GitHub Pages sirve la app bajo /AuraHome/
-const BASE = '/AuraHome/'
+// GitHub Pages sirve el monorepo bajo /aura/ → esta app en /aura/home/.
+// Override con VITE_BASE al construir (p. ej. deploy a otro path).
+const BASE = process.env.VITE_BASE ?? '/aura/home/'
 
 export default defineConfig({
   base: BASE,
