@@ -1,22 +1,25 @@
 /**
- * Aura Sync — ESQUELETO del contrato (interfaces, sin implementación aún).
+ * Aura Sync — contrato de sincronización del ecosistema.
  *
  * Las apps Aura son local-first y offline: los datos viven en el dispositivo
  * (IndexedDB). "Aura Sync" es la capa opcional que replica esos datos entre los
- * dispositivos del mismo usuario, sin que ningún servidor pueda leerlos.
+ * dispositivos del mismo usuario.
  *
  * Principios del contrato:
  * - **Agnóstico de proveedor**: el destino remoto (Google Drive, WebDAV, un
- *   servidor propio…) se abstrae detrás de `SyncProvider`. Hoy Aura Home ya
- *   sincroniza con Drive; en el futuro implementará esta interfaz.
- * - **Cifrado extremo a extremo**: lo que viaja al proveedor es un
- *   `EncryptedEnvelope` opaco. La clave la deriva el usuario; el proveedor solo
- *   ve bytes. El cifrado/descifrado es responsabilidad de la app, no del contrato.
+ *   servidor propio…) se abstrae detrás de `SyncProvider`. El provider solo
+ *   mueve payloads y binarios opacos: no conoce el dominio ni las llaves.
+ * - **Cifrado opcional (opt-in)**: lo que se guarda es un `SyncPayload`, que es
+ *   o un `AuraSyncEnvelope` en claro o un `EncryptedEnvelope`. Aura Home hoy
+ *   sincroniza en claro contra la carpeta privada de la app en el Drive del
+ *   usuario; activar E2E es una decisión del usuario, no un requisito del
+ *   contrato. El cifrado/descifrado es responsabilidad de la app.
  * - **Por app y versionado**: cada app sincroniza su propio `AuraSyncEnvelope`
  *   bajo una clave namespaced; los cambios de esquema suben `schemaVersion`.
+ * - **Solo-tipos**: este paquete no aporta runtime. La orquestación (qué lado
+ *   gana, cómo se fusiona) vive en cada app.
  *
- * NADA de esto está implementado todavía. Es el punto de acuerdo para que las
- * apps del ecosistema converjan hacia una misma capa de sincronización.
+ * Estado: implementado por `drive-sync.service` de Aura Home.
  */
 
 /** Snapshot portable de los datos de una app (texto claro, antes de cifrar). */
@@ -31,7 +34,7 @@ export interface AuraSyncEnvelope<TData = unknown> {
   data: TData
 }
 
-/** Sobre cifrado que realmente viaja al proveedor. El contenido es opaco. */
+/** Sobre cifrado, cuando el usuario activa E2E. El contenido es opaco. */
 export interface EncryptedEnvelope {
   /** Identificador del algoritmo, ej. "AES-GCM-256". */
   algorithm: string
@@ -44,17 +47,51 @@ export interface EncryptedEnvelope {
 }
 
 /**
- * Destino remoto agnóstico. Solo mueve sobres opacos identificados por `key`
- * (namespaced por app/usuario). No conoce el contenido ni las llaves.
+ * Lo que realmente se guarda en el proveedor: en claro o cifrado.
+ *
+ * Se distinguen por la presencia de `ciphertext` (`'ciphertext' in payload`).
+ * Como `AuraSyncEnvelope` no lleva marca alguna, los archivos escritos antes de
+ * existir este contrato siguen leyéndose sin migración.
  */
-export interface SyncProvider {
+export type SyncPayload<TData = unknown> = AuraSyncEnvelope<TData> | EncryptedEnvelope
+
+/**
+ * Canal opcional para binarios grandes (adjuntos, documentos) que NO deben
+ * viajar dentro del snapshot: meterlos en el JSON obligaría a cargarlos enteros
+ * en memoria y los inflaría ~33 % al pasarlos a base64.
+ *
+ * `TBlob` lo fija la app (en el navegador, `Blob`): este paquete no depende de
+ * DOM. `put` devuelve la referencia opaca con la que el provider lo localiza
+ * después; `ref` reemplaza el binario existente en vez de crear otro, y `name`
+ * es una etiqueta legible opcional (los proveedores que no la usen la ignoran).
+ */
+export interface SyncBlobChannel<TBlob> {
+  put(blob: TBlob, opts?: { ref?: string | null; name?: string }): Promise<string>
+  get(ref: string): Promise<TBlob>
+  remove(ref: string): Promise<void>
+}
+
+/**
+ * Destino remoto agnóstico. Solo mueve payloads opacos identificados por `key`
+ * (namespaced por app/usuario). No conoce el contenido, las llaves ni el dominio.
+ *
+ * Los miembros opcionales son capacidades: un provider sin autenticación (una
+ * carpeta local) omite `connect`/`disconnect`, y uno sin adjuntos omite `blobs`.
+ */
+export interface SyncProvider<TBlob = never> {
   readonly id: string
-  /** Descarga el sobre más reciente para `key`, o null si no existe. */
-  pull(key: string): Promise<EncryptedEnvelope | null>
-  /** Sube (crea o reemplaza) el sobre para `key`. */
-  push(key: string, envelope: EncryptedEnvelope): Promise<void>
-  /** Elimina el sobre remoto (p. ej. al desconectar). */
+  /** Descarga el payload más reciente para `key`, o null si no existe. */
+  pull(key: string): Promise<SyncPayload | null>
+  /** Sube (crea o reemplaza) el payload para `key`. */
+  push(key: string, payload: SyncPayload): Promise<void>
+  /** Elimina el payload remoto (p. ej. al desconectar). */
   remove(key: string): Promise<void>
+  /** Autentica y devuelve la identidad de la cuenta (email, id…). */
+  connect?(opts?: { interactive?: boolean }): Promise<string>
+  /** Revoca credenciales y limpia el estado de sesión. */
+  disconnect?(): void
+  /** Canal de binarios, si el proveedor los soporta. */
+  readonly blobs?: SyncBlobChannel<TBlob>
 }
 
 /** Resultado de una operación de sincronización. */
