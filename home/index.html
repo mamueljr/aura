@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/AuraHome/icons/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0b12" />
+    <meta
+      name="description"
+      content="Aura Home — el centro de tu hogar: pagos, tareas, calendario y más."
+    />
+    <title>Aura Home</title>
+    <style>
+      /*
+        Splash crítico: se ve mientras carga el bundle de React. Todo el
+        estilo (fondo incluido) vive en .splash-wrap, NO en #root — así,
+        en cuanto createRoot().render() reemplaza el contenido de #root,
+        el splash desaparece por completo y no deja un fondo "pegado"
+        detrás de la app real (que sigue la preferencia de tema elegida
+        por el usuario, no la del sistema operativo).
+      */
+      .splash-wrap {
+        display: flex;
+        min-height: 100dvh;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: oklch(0.982 0.005 295);
+      }
+      .splash-mark {
+        width: 64px;
+        height: 64px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, oklch(0.71 0.14 295), oklch(0.46 0.18 295));
+        box-shadow: 0 20px 40px -10px oklch(0.62 0.18 295 / 0.35);
+      }
+      .splash-title {
+        margin: 16px 0 0;
+        font-family: system-ui, sans-serif;
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: oklch(0.22 0.02 295);
+        text-align: center;
+      }
+      @media (prefers-color-scheme: dark) {
+        .splash-wrap {
+          background: oklch(0.165 0.015 295);
+        }
+        .splash-title {
+          color: oklch(0.95 0.01 295);
+        }
+      }
+    </style>
+    <script type="module" crossorigin src="/aura/home/assets/index-DSG9ChFW.js"></script>
+    <link rel="modulepreload" crossorigin href="/aura/home/assets/utils-Cc-2gWKG.js">
+    <link rel="modulepreload" crossorigin href="/aura/home/assets/react-dom-DUoJoURO.js">
+    <link rel="modulepreload" crossorigin href="/aura/home/assets/query-client-iMT6n8xl.js">
+    <link rel="modulepreload" crossorigin href="/aura/home/assets/createLucideIcon-C8YVzS0d.js">
+    <link rel="modulepreload" crossorigin href="/aura/home/assets/dist-Cr4NITXz.js">
+    <link rel="modulepreload" crossorigin href="/aura/home/assets/dist-Bl-hSF4m.js">
+    <link rel="modulepreload" crossorigin href="/aura/home/assets/dist-DOP1Fu4Q.js">
+    <link rel="stylesheet" crossorigin href="/aura/home/assets/index-DO4ZG0Ez.css">
+  <link rel="manifest" href="/aura/home/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/aura/home/registerSW.js"></script></head>
+  <body>
+    <div id="root">
+      <div class="splash-wrap">
+        <div class="splash-mark" aria-hidden="true"></div>
+        <p class="splash-title">Aura Home</p>
+      </div>
+    </div>
+  </body>
+</html>

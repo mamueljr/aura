@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AuraWeather - Tu Pronóstico Premium</title>
+
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="AuraWeather: Consulta y predice el clima de cualquier ciudad con un diseño premium, dinámico y en tiempo real. Instálalo como PWA.">
+  <meta name="theme-color" content="#0f172a">
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+  
+  <!-- Google Fonts - Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons (Premium & Clean) -->
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.400.0/dist/umd/lucide.min.js"></script>
+  
+  <!-- Chart.js for beautiful charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="weather-clear-day"> <!-- La clase cambia dinámicamente según el clima -->
+  
+  <!-- Fondo animado/dinámico en CSS -->
+  <div class="dynamic-background">
+    <!-- Capas de ambiente según el clima (estrellas, halo de sol, nubes a la deriva) -->
+    <div class="bg-layer bg-stars"></div>
+    <div class="bg-layer bg-sun"></div>
+    <div class="bg-layer bg-clouds"></div>
+    <canvas id="weather-particles-canvas" class="weather-particles-canvas"></canvas>
+    <!-- Destello de relámpago (solo visible en tormenta, sincronizado con el trueno) -->
+    <div id="lightning-flash" class="lightning-flash"></div>
+  </div>
+
+  <div class="app-container">
+    
+    <!-- HEADER & BÚSQUEDA -->
+    <header class="app-header">
+      <div class="logo-area">
+        <!-- Marca propia "Aura": núcleo cálido con anillos de aura -->
+        <svg class="logo-icon" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="auraGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#fbbf24"/>
+              <stop offset="0.55" stop-color="#f59e0b"/>
+              <stop offset="1" stop-color="#38bdf8"/>
+            </linearGradient>
+          </defs>
+          <circle cx="16" cy="16" r="13.5" fill="none" stroke="url(#auraGrad)" stroke-width="1" opacity="0.3"/>
+          <circle cx="16" cy="16" r="10" fill="none" stroke="url(#auraGrad)" stroke-width="1.6" opacity="0.65"/>
+          <circle cx="16" cy="16" r="6" fill="url(#auraGrad)"/>
+        </svg>
+        <h1>AuraWeather</h1>
+      </div>
+      
+      <div class="search-box-container">
+        <div class="search-bar">
+          <i data-lucide="search" class="search-icon"></i>
+          <input type="text" id="city-search" placeholder="Busca una ciudad (ej. Madrid)..." autocomplete="off">
+          <button id="geo-btn" title="Usar mi ubicación actual" aria-label="Usar mi ubicación actual">
+            <i data-lucide="map-pin"></i>
+          </button>
+        </div>
+        <!-- Resultados del autocompletado -->
+        <ul id="search-results" class="search-results hidden"></ul>
+      </div>
+      
+      <!-- Acciones de Header -->
+      <div class="header-actions">
+        <button id="theme-toggle-btn" class="theme-toggle-btn" title="Cambiar tema" aria-label="Cambiar tema de color">
+          <i data-lucide="monitor" class="theme-icon"></i>
+        </button>
+        <button id="unit-toggle-btn" class="unit-toggle-btn" title="Cambiar a °F" aria-label="Cambiar a grados Fahrenheit">
+          °C
+        </button>
+        <button id="favorites-toggle-btn" class="favorites-toggle-btn">
+          <i data-lucide="star"></i>
+          <span>Favoritos</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- BANNER DE FAVORITOS DESPLEGABLE -->
+    <section id="favorites-bar" class="favorites-bar hidden">
+      <div class="favorites-container">
+        <h3>Tus Ciudades Guardadas</h3>
+        <div id="favorites-list" class="favorites-list">
+          <!-- Ciudades favoritas inyectadas por JS -->
+          <div class="no-favorites">
+            <i data-lucide="star" class="no-favorites-icon"></i>
+            <p>No tienes ciudades favoritas guardadas.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MENSAJE DE BIENVENIDA / CARGA -->
+    <div id="status-message" class="status-message">
+      <!-- Skeleton loader: siluetas que insinúan el layout final mientras carga -->
+      <div id="status-loading" class="status-loading">
+        <div class="skeleton-top-grid">
+          <div class="skeleton-card skeleton-lg"></div>
+          <div class="skeleton-card skeleton-lg"></div>
+          <div class="skeleton-card skeleton-lg"></div>
+        </div>
+        <div class="skeleton-metrics-grid">
+          <div class="skeleton-card skeleton-sm"></div>
+          <div class="skeleton-card skeleton-sm"></div>
+          <div class="skeleton-card skeleton-sm"></div>
+          <div class="skeleton-card skeleton-sm"></div>
+        </div>
+        <div class="skeleton-card skeleton-row"></div>
+        <div class="skeleton-card skeleton-chart"></div>
+      </div>
+      <!-- Estado de error: se puebla dinámicamente desde JS si fallan ambas APIs -->
+      <div id="status-error" class="status-error hidden"></div>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL DE LA APP (OCULTO DURANTE LA CARGA INICIAL) -->
+    <main id="main-content" class="main-content hidden">
+      
+      <!-- GRID SUPERIOR: CLIMA ACTUAL Y RECOMENDACIÓN -->
+      <div class="top-grid">
+        
+        <!-- TARJETA CLIMA ACTUAL -->
+        <section class="card current-weather-card">
+          <div class="card-header-actions">
+            <span class="location-name" id="weather-location">Madrid, España</span>
+            <div class="action-buttons-group">
+              <button id="sound-btn" class="sound-action-btn" title="Activar sonido ambiental" aria-label="Activar sonido ambiental">
+                <i data-lucide="volume-x" class="sound-icon"></i>
+              </button>
+              <button id="share-btn" class="share-action-btn" title="Compartir clima" aria-label="Compartir clima">
+                <i data-lucide="share-2" class="share-icon"></i>
+              </button>
+              <button id="favorite-btn" class="favorite-action-btn" title="Guardar en favoritos" aria-label="Guardar en favoritos">
+                <i data-lucide="star" class="star-icon"></i>
+              </button>
+            </div>
+          </div>
+          <p id="local-time" class="local-time">Lunes, 12:00 PM</p>
+          
+          <div class="weather-main-display">
+            <div class="weather-temp-container">
+              <span id="current-temp" class="current-temp">24</span>
+              <span class="temp-unit">°C</span>
+            </div>
+            <div class="weather-icon-description">
+              <div id="main-weather-icon-container">
+                <i data-lucide="sun" class="main-weather-icon text-yellow-500"></i>
+              </div>
+              <span id="weather-desc" class="weather-desc">Soleado</span>
+            </div>
+          </div>
+          
+          <div class="temp-range">
+            <span>Máx: <strong id="temp-max">28°C</strong></span>
+            <span class="divider">|</span>
+            <span>Mín: <strong id="temp-min">15°C</strong></span>
+          </div>
+        </section>
+
+        <!-- TARJETA DE RECOMENDACIONES CLIMÁTICAS INTELIGENTES -->
+        <section class="card insight-card">
+          <div class="insight-header">
+            <i data-lucide="sparkles" class="insight-icon"></i>
+            <h3>Aura Insight</h3>
+          </div>
+          <p id="insight-text" class="insight-text">
+            Cargando recomendaciones para tu día...
+          </p>
+          <div class="insight-details">
+            <div class="detail-item">
+              <i data-lucide="droplets"></i>
+              <div class="detail-text">
+                <span class="detail-label">Prob. de Lluvia</span>
+                <span id="rain-chance" class="detail-val">10%</span>
+              </div>
+            </div>
+            <div class="detail-item">
+              <i data-lucide="sun"></i>
+              <div class="detail-text">
+                <span class="detail-label">Índice UV Máximo</span>
+                <span id="uv-index" class="detail-val">Alta (6)</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TARJETA DE ASTRONOMÍA -->
+        <section class="card astronomy-card">
+          <div class="insight-header">
+            <i data-lucide="moon-star" class="insight-icon text-indigo-400"></i>
+            <h3>Sol y Luna</h3>
+          </div>
+          <div class="sun-arc-container">
+            <div class="sun-arc-visual">
+              <svg viewBox="0 0 100 50" class="sun-arc-svg">
+                <!-- Arc representing sun path -->
+                <path d="M 10 45 A 40 40 0 0 1 90 45" fill="none" stroke="rgba(255,255,255,0.15)" stroke-dasharray="3 3" stroke-width="1.5"/>
+                <!-- Glow node representing Sun -->
+                <circle id="sun-node" cx="10" cy="45" r="4" fill="#fbbf24" filter="url(#sun-glow)"/>
+                <defs>
+                  <filter id="sun-glow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="3" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                </defs>
+              </svg>
+              <!-- Labels for Sunrise and Sunset at the ends of the arc -->
+              <div class="sun-times-labels">
+                <span id="sunrise-time-label">--:--</span>
+                <span id="sunset-time-label">--:--</span>
+              </div>
+            </div>
+          </div>
+          <div class="astro-details">
+            <div class="astro-detail-item">
+              <i data-lucide="sunrise"></i>
+              <div class="astro-detail-text">
+                <span class="detail-label">Amanecer</span>
+                <span id="sunrise-val" class="detail-val">--:--</span>
+              </div>
+            </div>
+            <div class="astro-detail-item">
+              <i data-lucide="sunset"></i>
+              <div class="astro-detail-text">
+                <span class="detail-label">Atardecer</span>
+                <span id="sunset-val" class="detail-val">--:--</span>
+              </div>
+            </div>
+            <div class="astro-detail-item moon-detail">
+              <div id="moon-phase-icon-container">
+                <i data-lucide="moon" id="moon-phase-icon"></i>
+              </div>
+              <div class="astro-detail-text">
+                <span class="detail-label" id="moon-phase-label">Luna</span>
+                <span id="moon-illumination-val" class="detail-val">--% Iluminada</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- SECCIÓN MÉTRICAS ADICIONALES (FLEX / GRID) -->
+      <section class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-icon-wrapper humidity">
+            <i data-lucide="droplets"></i>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">Humedad</span>
+            <span id="humidity-val" class="metric-value">45%</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon-wrapper wind">
+            <i data-lucide="wind"></i>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">Viento</span>
+            <span id="wind-val" class="metric-value">12 km/h</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon-wrapper feels-like">
+            <i data-lucide="thermometer"></i>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">Sensación Térmica</span>
+            <span id="feels-like-val" class="metric-value">25°C</span>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon-wrapper pressure">
+            <i data-lucide="gauge"></i>
+          </div>
+          <div class="metric-info">
+            <span class="metric-label">Presión</span>
+            <span id="pressure-val" class="metric-value">1015 hPa</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRONÓSTICO POR HORAS DESLIZABLE -->
+      <section class="card hourly-scroll-card">
+        <div class="card-header">
+          <div class="hourly-header-title">
+            <i data-lucide="clock" class="hourly-icon text-teal-400"></i>
+            <h3>Pronóstico por Horas (Siguiente)</h3>
+          </div>
+          <span class="badge">Desliza para ver más</span>
+        </div>
+        <div id="hourly-scroll-container" class="hourly-scroll-container">
+          <!-- Tarjetas generadas dinámicamente en JS -->
+        </div>
+      </section>
+
+      <!-- GRÁFICO DE PRONÓSTICO POR HORAS -->
+      <section class="card chart-card">
+        <div class="card-header">
+          <div class="chart-header-title">
+            <h3>Gráfico del Clima</h3>
+            <span class="badge">Tendencia</span>
+          </div>
+          <div class="chart-filter-buttons">
+            <button class="chart-filter-btn active" data-hours="6">6H</button>
+            <button class="chart-filter-btn" data-hours="12">12H</button>
+            <button class="chart-filter-btn" data-hours="24">24H</button>
+          </div>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="hourlyChart"></canvas>
+        </div>
+      </section>
+
+      <!-- PRONÓSTICO DE 7 DÍAS -->
+      <section class="card forecast-7day-card">
+        <div class="card-header">
+          <h3>Pronóstico de 7 Días</h3>
+        </div>
+        <div id="forecast-list" class="forecast-list">
+          <!-- Generado dinámicamente por JS -->
+        </div>
+      </section>
+
+    </main>
+
+    <!-- PIE DE PÁGINA -->
+    <footer class="app-footer">
+      <p>Desarrollado con <i data-lucide="heart" class="heart-icon"></i> por <a href="https://mamueljr.github.io/esiscom/" target="_blank" class="footer-link">ESISCOM</a></p>
+      <p class="pwa-badge">Versión PWA Instalable</p>
+    </footer>
+
+  </div>
+
+  <!-- TOAST NOTIFICATIONS PARA FEEDBACK PREMIUM -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Script principal -->
+  <script src="app.js"></script>
+  
+  <!-- Registro de PWA -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => {
+            console.log('Service Worker registrado con éxito:', reg.scope);
+            
+            // Detectar actualizaciones en segundo plano
+            reg.onupdatefound = () => {
+              const installingWorker = reg.installing;
+              installingWorker.onstatechange = () => {
+                if (installingWorker.state === 'installed') {
+                  if (navigator.serviceWorker.controller) {
+                    console.log('Nueva versión de Service Worker detectada, activando...');
+                    installingWorker.postMessage({ type: 'SKIP_WAITING' });
+                  }
+                }
+              };
+            };
+          })
+          .catch(err => console.error('Fallo al registrar Service Worker:', err));
+      });
+
+      // Forzar la recarga de la página cuando el SW tome el control
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
+      });
+    }
+  </script>
+</body>
+</html>

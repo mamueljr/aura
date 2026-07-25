@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Aura — Ecosistema</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-content: center; gap: 2rem;
+    padding: 2rem; font-family: system-ui, -apple-system, sans-serif;
+    background: #0b0b12; color: #f4f4f8; }
+  header { text-align: center; }
+  h1 { font-size: clamp(2rem, 6vw, 3rem); margin: 0 0 .3rem;
+    background: linear-gradient(90deg,#a78bfa,#22d3ee,#f472b6);
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+  header p { margin: 0; opacity: .6; }
+  .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+    max-width: 760px; }
+  .card { display: block; padding: 1.4rem 1.5rem; border-radius: 1rem; text-decoration: none;
+    color: inherit; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+    transition: transform .15s ease, background .15s ease; }
+  .card:hover { transform: translateY(-3px); background: rgba(255,255,255,.09); }
+  .card h2 { margin: 0 0 .3rem; font-size: 1.15rem; }
+  .card p { margin: 0; opacity: .65; font-size: .9rem; line-height: 1.4; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Aura</h1>
+    <p>Ecosistema local-first</p>
+  </header>
+  <main class="grid">
+      <a class="card" href="./home/"><h2>Aura Home</h2><p>El centro de tu hogar: pagos, tareas, calendario.</p></a>
+      <a class="card" href="./music/"><h2>Aura Music</h2><p>Reproductor offline-first para tu biblioteca local.</p></a>
+      <a class="card" href="./weather/"><h2>AuraWeather</h2><p>Clima premium.</p></a>
+  </main>
+</body>
+</html>

@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8" />
+<script>
+  (function () {
+    var m = location.pathname.match(/^(\/aura\/(home|music|weather))(\/|$)/);
+    location.replace(m ? m[1] + '/' + location.hash : '/aura/');
+  })();
+</script>
+</head><body></body></html>
