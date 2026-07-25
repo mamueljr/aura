@@ -182,6 +182,11 @@ pnpm --filter aura-home preview   # previsualizar el build
 - **404 de deploy**: el `404.html` raíz redirige rutas profundas a la raíz de la app
   (se pierde la sub-ruta al recargar). Mejorable con el truco de codificar la ruta si
   llega a molestar; para PWAs es caso menor.
+- **Home no tiene script `typecheck`**: su tipado corre dentro de `build` (`tsc -b`),
+  así que `pnpm typecheck` en la raíz NO cubre Home. Para verificarlo hay que buildear.
+- **Pre-vuelo de auth en `syncNow`**: es el único punto que sigue acoplado a Drive
+  (`getAccessToken`). Se conservó a propósito para no cambiar el comportamiento: sin
+  él, un fallo de sesión purgaría tombstones locales antes de fallar.
 
 ## 8. Próximos pasos
 
@@ -190,7 +195,7 @@ Lo que sigue es construir sobre la base:
 
 | Frente | Entregable |
 |---|---|
-| **Aura Sync** (recomendado) | Implementar `SyncProvider` de `@aura/core` en el `drive-sync` de Home: sincronización cifrada entre dispositivos. Función insignia; requiere su propia sesión (proveedor de almacenamiento, esquema de cifrado, resolución de conflictos). |
+| **Aura Sync** (en curso) | ✅ Paso 1: Home implementa `SyncProvider` — transporte (`drive-provider`) separado de la orquestación, contrato con payload claro/cifrado y canal de binarios, 9 tests nuevos de la matriz de decisión. Falta: **cifrado E2E opt-in** (decidido: apagado por defecto) y llevar sync a Music. |
 | **App nueva** (p. ej. Aura Finance) | Arrancar greenfield sobre `@aura/{tsconfig,tokens,ui,core,config}` para validar velocidad de creación con la base compartida. |
 | **Cabos sueltos** | Archivar repos originales en GitHub; warning de lint preexistente en Home (`setState` en component update); mejorar el 404 de deploy. |
 
