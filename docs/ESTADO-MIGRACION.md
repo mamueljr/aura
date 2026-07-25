@@ -195,7 +195,7 @@ Lo que sigue es construir sobre la base:
 
 | Frente | Entregable |
 |---|---|
-| **Aura Sync** (en curso) | ✅ Paso 1: Home implementa `SyncProvider` — transporte (`drive-provider`) separado de la orquestación, contrato con payload claro/cifrado y canal de binarios, 9 tests nuevos de la matriz de decisión. Falta: **cifrado E2E opt-in** (decidido: apagado por defecto) y llevar sync a Music. |
+| **Aura Sync** (en curso) | ✅ **Paso 1**: Home implementa `SyncProvider` — transporte (`drive-provider`) separado de la orquestación, contrato con payload claro/cifrado y canal de binarios.<br>✅ **Paso 2**: Cifrado E2E opt-in (`sync-crypto.service.ts` con Web Crypto API AES-GCM 256-bit + PBKDF2), UI de ajustes y 14 tests de integración/unidad en verde.<br>⏳ **Pendiente**: Llevar sync a Music. |
 | **App nueva** (p. ej. Aura Finance) | Arrancar greenfield sobre `@aura/{tsconfig,tokens,ui,core,config}` para validar velocidad de creación con la base compartida. |
 | **Cabos sueltos** | Archivar repos originales en GitHub; warning de lint preexistente en Home (`setState` en component update); mejorar el 404 de deploy. |
 
