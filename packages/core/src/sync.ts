@@ -34,6 +34,24 @@ export interface AuraSyncEnvelope<TData = unknown> {
   data: TData
 }
 
+/**
+ * Parámetros de derivación de clave a partir de una frase de contraseña.
+ *
+ * Viajan junto al sobre a propósito: sin ellos, otro dispositivo con la MISMA
+ * frase no podría re-derivar la clave. Ninguno es secreto — la sal existe para
+ * que dos usuarios con la misma frase no compartan clave, y las iteraciones
+ * para encarecer la fuerza bruta.
+ */
+export interface KdfParams {
+  /** Función de derivación, ej. "PBKDF2". */
+  name: string
+  /** Hash subyacente, ej. "SHA-256". */
+  hash: string
+  iterations: number
+  /** Sal aleatoria, en base64. */
+  salt: string
+}
+
 /** Sobre cifrado, cuando el usuario activa E2E. El contenido es opaco. */
 export interface EncryptedEnvelope {
   /** Identificador del algoritmo, ej. "AES-GCM-256". */
@@ -42,6 +60,8 @@ export interface EncryptedEnvelope {
   iv: string
   /** `AuraSyncEnvelope` serializado y cifrado, en base64. */
   ciphertext: string
+  /** Derivación usada. Obligatorio si la clave viene de una frase del usuario. */
+  kdf?: KdfParams
   /** Pista no sensible para localizar la clave del usuario (nunca la clave). */
   keyHint?: string
 }

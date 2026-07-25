@@ -255,6 +255,25 @@ export interface DocumentBlob {
   blob: Blob
 }
 
+/**
+ * Clave de cifrado de Aura Sync (E2E opt-in), guardada en su propia tabla.
+ *
+ * `key` es un `CryptoKey` **no extraíble**: el navegador lo persiste sin
+ * exponer nunca sus bytes, ni siquiera a esta app. Se conserva derivada para
+ * que la sincronización automática funcione sin pedir la frase en cada
+ * arranque; los datos locales ya están en claro en IndexedDB, así que exigirla
+ * cada vez no protegería nada adicional en este dispositivo.
+ *
+ * NUNCA debe incluirse en `BACKUP_TABLES`.
+ */
+export interface SyncSecret {
+  /** Siempre 'default': hay una sola clave por dispositivo. */
+  id: string
+  key: CryptoKey
+  /** Parámetros con los que se derivó, para reconstruirla en otro dispositivo. */
+  kdf: { name: string; hash: string; iterations: number; salt: string }
+}
+
 // ---------- Mi Hogar (habitaciones e inventario) ----------
 
 export const ROOM_TYPES = [

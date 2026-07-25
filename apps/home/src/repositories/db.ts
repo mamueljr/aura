@@ -15,6 +15,7 @@ import type {
   Service,
   ServicePayment,
   ShoppingItem,
+  SyncSecret,
   TaskItem,
   Vehicle,
   VehicleRecord,
@@ -45,6 +46,7 @@ export class AuraDatabase extends Dexie {
   homeItems!: Table<HomeItem, string>
   familyMembers!: Table<FamilyMember, string>
   documentBlobs!: Table<DocumentBlob, string>
+  syncSecrets!: Table<SyncSecret, string>
 
   constructor() {
     super('aura-home')
@@ -101,6 +103,11 @@ export class AuraDatabase extends Dexie {
           await tx.table('documents').put(doc)
         }
       })
+    // v9: clave de cifrado de Aura Sync. Deliberadamente FUERA de BACKUP_TABLES:
+    // la clave nunca debe viajar dentro del respaldo que ella misma cifra.
+    this.version(9).stores({
+      syncSecrets: 'id',
+    })
   }
 }
 

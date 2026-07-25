@@ -33,7 +33,16 @@ vi.mock('@/services/drive-provider', () => ({
   },
 }))
 
-const { connect, disconnect, syncNow } = await import('@/services/drive-sync.service')
+const {
+  connect,
+  disableEncryption,
+  disconnect,
+  enableEncryption,
+  isEncryptionEnabled,
+  syncNow,
+  unlockEncryption,
+} = await import('@/services/drive-sync.service')
+const { clearKey, SyncCryptoError } = await import('@/services/sync-crypto.service')
 
 const PASADO = '2026-01-01T00:00:00.000Z'
 const MEDIO = '2026-06-01T00:00:00.000Z'
@@ -148,6 +157,71 @@ describe('syncNow — payload cifrado', () => {
     }
 
     await expect(syncNow()).rejects.toThrow('cifrado')
+  })
+})
+
+/**
+ * Estos casos usan el PBKDF2 real (600 000 iteraciones), así que cada uno tarda
+ * cerca de un segundo. Se deja a propósito: lo que se valida es justo el flujo
+ * completo de activar/desbloquear/desactivar, donde un error significa que el
+ * usuario pierde acceso a su respaldo.
+ */
+describe('cifrado opt-in', () => {
+  it('activarlo deja el respaldo remoto ilegible', async () => {
+    await tareaLocal('local-1', MEDIO)
+    await syncNow()
+    expect(JSON.stringify(fake.remote.payload)).toContain('Tarea local-1')
+
+    await enableEncryption('mi frase secreta')
+
+    expect(fake.remote.payload).toHaveProperty('ciphertext')
+    expect(JSON.stringify(fake.remote.payload)).not.toContain('Tarea local-1')
+  })
+
+  it('sigue sincronizando con el cifrado activo', async () => {
+    await tareaLocal('local-1', MEDIO)
+    await enableEncryption('mi frase secreta')
+
+    await tareaLocal('local-2', FUTURO)
+    const result = await syncNow()
+
+    // Pudo leer el sobre cifrado y decidir sin error.
+    expect(['pushed', 'merged', 'up-to-date']).toContain(result.action)
+  })
+
+  it('otro dispositivo lo abre con la misma frase', async () => {
+    await tareaLocal('local-1', MEDIO)
+    await enableEncryption('mi frase secreta')
+
+    // Dispositivo nuevo: mismo respaldo remoto, sin clave local.
+    await clearKey()
+    await expect(syncNow()).rejects.toThrow(/cifrad/i)
+
+    await unlockEncryption('mi frase secreta')
+
+    expect(await isEncryptionEnabled()).toBe(true)
+    expect((await syncNow()).action).toBeDefined()
+  })
+
+  it('una frase incorrecta no queda registrada', async () => {
+    await tareaLocal('local-1', MEDIO)
+    await enableEncryption('la frase buena')
+    await clearKey()
+
+    await expect(unlockEncryption('la frase equivocada')).rejects.toThrow(SyncCryptoError)
+
+    expect(await isEncryptionEnabled()).toBe(false)
+  })
+
+  it('desactivarlo devuelve el respaldo a texto legible', async () => {
+    await tareaLocal('local-1', MEDIO)
+    await enableEncryption('mi frase secreta')
+
+    await disableEncryption()
+
+    expect(fake.remote.payload).not.toHaveProperty('ciphertext')
+    expect(JSON.stringify(fake.remote.payload)).toContain('Tarea local-1')
+    expect(await isEncryptionEnabled()).toBe(false)
   })
 })
 
