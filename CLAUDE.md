@@ -10,7 +10,8 @@ Gestión: **pnpm workspaces + Turborepo**.
 
 ```
 apps/      home (React 19, la joya) · music (React 19) · weather (vanilla + Capacitor)
-packages/  @aura/tsconfig · @aura/tokens · @aura/ui (15 componentes) · @aura/core (tipos)
+packages/  @aura/tsconfig · @aura/tokens · @aura/ui (15 componentes) · @aura/core (tipos) · @aura/config (oxlint base)
+scripts/   deploy.mjs — deploy manual a GitHub Pages (sin Actions)
 ```
 
 ## Comandos (desde la raíz)
@@ -21,6 +22,7 @@ pnpm build        # turbo, las 3 apps, con caché
 pnpm lint         # oxlint
 pnpm typecheck
 pnpm --filter aura-home dev     # una sola app
+pnpm deploy       # build + publica a gh-pages (todo o: pnpm deploy home music)
 ```
 
 ## Convenciones y gotchas (importantes)
@@ -40,12 +42,15 @@ pnpm --filter aura-home dev     # una sola app
 
 ## Estado de la migración
 
-Fases 0–3 ✅ completas (monorepo, design system, `@aura/core`).
-**Siguiente: Fase 4 — deploy y CI.** Es más de decisiones que de código:
-- Repo público (Pages gratis) vs plan de pago.
-- Conservar URLs actuales (`mamueljr.github.io/AuraHome`…) o nuevas.
-- Archivar los repos originales (`App_Clima`, `Aura-music`, `AuraHome`) en
-  solo-lectura para evitar divergencia.
+**Fases 0–4 ✅ completas. Migración cerrada.** Monorepo, design system, `@aura/core`,
+`@aura/config`, y **deploy en vivo** desde el monorepo a GitHub Pages (rama
+`gh-pages`, sin Actions): `mamueljr.github.io/aura/` → `/home/`, `/music/`,
+`/weather/`. Repo `aura` ahora **público**. Re-deploy: `pnpm deploy`.
+
+**Siguiente (ya no es migración):** implementar **Aura Sync** (`SyncProvider` de
+`@aura/core` en el `drive-sync` de Home) — ver `docs/ESTADO-MIGRACION.md` §8.
+Pendiente del usuario: **archivar los repos originales** (`App_Clima`, `Aura-music`,
+`AuraHome`) en solo-lectura para evitar divergencia (siguen sirviendo URLs viejas).
 
 ## Reglas de trabajo
 

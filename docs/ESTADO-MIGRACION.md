@@ -1,6 +1,7 @@
 # Aura — Estado de la migración a Monorepo
 
-> Documento de estado. Última actualización: **Fase 3 completa (@aura/core)**.
+> Documento de estado. Última actualización: **Fase 4 completa (deploy) + `@aura/config`**.
+> Migración cerrada: el ecosistema ya está desplegado desde el monorepo.
 > Resume qué se hizo, el estado de riesgo, cómo trabajar y qué falta.
 
 ---
@@ -30,15 +31,17 @@ sus repos originales, que no fueron modificados:
 
 El monorepo es una **copia paralela** no desplegada → no puede afectar lo publicado.
 
-### Riesgos abiertos (no afectan a usuarios hoy)
+### Riesgos abiertos
 
-1. **Divergencia** — existen dos copias de cada app (original + monorepo).
-   Regla: **trabajar solo en el monorepo** de aquí en adelante y **archivar en
-   solo-lectura** los repos originales en GitHub.
+1. **Divergencia (ahora activa)** — desde la Fase 4 el monorepo es la fuente de
+   despliegue: las URLs canónicas viven bajo `mamueljr.github.io/aura/`. Los repos
+   originales (`AuraHome`, `Aura-music`, `App_Clima`) **siguen sirviendo sus URLs
+   viejas** con builds antiguos. Regla: **trabajar solo en el monorepo** y
+   **archivar en solo-lectura** los originales en GitHub (pendiente del usuario)
+   para que nadie los confunda con lo vivo.
 2. ~~Sin respaldo remoto~~ ✅ **Resuelto**: el monorepo está en
-   [`mamueljr/aura`](https://github.com/mamueljr/aura) (privado).
-   ⚠️ Ojo para la Fase 4: **GitHub Pages en repos privados requiere plan de pago**.
-   En plan gratuito habría que pasar el repo a público para desplegar con Pages.
+   [`mamueljr/aura`](https://github.com/mamueljr/aura), ahora **público** (para
+   Pages en plan gratuito, sin tarjeta).
 
 > Nota: el repo original `Aura-music` quedó con la rama `chore/react-19-upgrade`
 > como checkout activo. Su `main` está intacto. Se puede volver a `main` sin problema.
@@ -57,7 +60,9 @@ aura/
 │  ├─ tsconfig/  # @aura/tsconfig — presets de TypeScript compartidos
 │  ├─ tokens/    # @aura/tokens   — design tokens (OKLCH) + fuentes
 │  ├─ ui/        # @aura/ui       — 15 componentes React (shadcn/Radix)
-│  └─ core/      # @aura/core     — contratos y tipos (ecosistema + Aura Sync)
+│  ├─ core/      # @aura/core     — contratos y tipos (ecosistema + Aura Sync)
+│  └─ config/    # @aura/config   — oxlint base compartido
+├─ scripts/      # deploy.mjs — deploy manual a GitHub Pages (sin Actions)
 ├─ docs/         # este documento
 ├─ pnpm-workspace.yaml · turbo.json · package.json · .npmrc · .gitignore
 └─ pnpm-lock.yaml
@@ -116,6 +121,22 @@ aura/
   el contrato desde `@aura/core/ecosystem`. Alcance deliberado: sin utils/Dexie (no
   hay overlap real). **Fase 3 completa.**
 
+### Fase 4 — Deploy y CI
+- **v1.0** **Deploy manual a GitHub Pages, sin GitHub Actions.** Decisión: el repo
+  `aura` se pasó a **público** (Actions/Pages en privado pedían tarjeta) y se sirve
+  Pages desde la rama `gh-pages`. `scripts/deploy.mjs` (`pnpm deploy`) construye las
+  3 apps con `VITE_BASE=/aura/<app>/`, ensambla `.deploy/{home,music,weather}` + un
+  hub `index.html` + `404.html` (fallback SPA) + `.nojekyll`, y publica a `gh-pages`
+  vía el paquete `gh-pages`. **En vivo:** `mamueljr.github.io/aura/` (+ `/home/`,
+  `/music/`, `/weather/`). Los `base` de home/music pasaron a `/aura/home/` y
+  `/aura/music/` (override con `VITE_BASE`); weather es vanilla con rutas relativas.
+- **v1.1** Paquete **`@aura/config`**: se extrajo el `.oxlintrc.json` duplicado
+  idéntico de home/music a un base compartido; las apps lo heredan vía `extends`.
+  Quirk de oxlint documentado: `plugins` debe repetirse en el config de entrada de
+  cada app o `extends` reactiva los plugins por defecto y cambia el lint. Verificado
+  idéntico al baseline. **Vite/Tailwind no se comparten** (vite difiere por app;
+  Tailwind 4 no usa archivo de config).
+
 **Verificación en cada paso:** `pnpm build` construye las 3 apps (3/3); typecheck y
 lint en verde; smoke tests en runtime de Music y Home sin errores de consola.
 
@@ -151,22 +172,32 @@ pnpm --filter aura-home preview   # previsualizar el build
 
 ## 7. Deuda técnica anotada
 
-- `.oxlintrc.json` duplicado idéntico en home/music → futuro `@aura/config`.
-- Configs de Vite/Tailwind repetidas entre apps → mismo `@aura/config`.
+- ~~`.oxlintrc.json` duplicado idéntico en home/music~~ ✅ **Resuelto**: base en
+  `@aura/config`, heredado con `extends`.
+- ~~Configs de Vite/Tailwind repetidas~~ ❌ **No aplica**: al inspeccionarlas, los
+  vite difieren de forma legítima por app (PWA, tema, workbox, build-stamp) y
+  Tailwind 4 no usa archivo de config (es CSS). No hay duplicación real que extraer.
 - El mapeo `@theme inline` (tokens → utilidades Tailwind) sigue en cada app; candidato
-  a compartir cuando exista `@aura/ui`.
+  a compartir si se unifican los tokens (hoy Music mantiene tema propio a propósito).
+- **404 de deploy**: el `404.html` raíz redirige rutas profundas a la raíz de la app
+  (se pierde la sub-ruta al recargar). Mejorable con el truco de codificar la ruta si
+  llega a molestar; para PWAs es caso menor.
 
 ## 8. Próximos pasos
 
-**Fases 2 y 3 completas.** Queda:
+**Migración cerrada: Fases 0–4 completas.** El plan de migración a monorepo terminó.
+Lo que sigue es construir sobre la base:
 
-| Fase | Entregable |
+| Frente | Entregable |
 |---|---|
-| **Fase 4** | Deploy y CI del monorepo (GitHub Actions con filtros de ruta). Decidir repo público vs plan de pago para Pages; conservar o no las URLs actuales. |
+| **Aura Sync** (recomendado) | Implementar `SyncProvider` de `@aura/core` en el `drive-sync` de Home: sincronización cifrada entre dispositivos. Función insignia; requiere su propia sesión (proveedor de almacenamiento, esquema de cifrado, resolución de conflictos). |
+| **App nueva** (p. ej. Aura Finance) | Arrancar greenfield sobre `@aura/{tsconfig,tokens,ui,core,config}` para validar velocidad de creación con la base compartida. |
+| **Cabos sueltos** | Archivar repos originales en GitHub; warning de lint preexistente en Home (`setState` en component update); mejorar el 404 de deploy. |
 
-Más allá del plan de migración: implementar Aura Sync (que `drive-sync` de Home
-implemente `SyncProvider` de `@aura/core`), y las apps nuevas del ecosistema
-(p. ej. Aura Finance) arrancando sobre `@aura/{tsconfig,tokens,ui,core}`.
+### Punto de entrada del ecosistema (parcialmente resuelto)
+El deploy ya publica un **hub** en `mamueljr.github.io/aura/` que enlaza las 3 apps.
+Es una landing simple, no un shell unificado. La decisión de fondo (apps
+independientes vs hub-puerta vs shell) sigue abierta para la fase de diferenciación.
 
 ### Decisión pendiente: ¿unificar tokens de Music con `@aura/tokens`?
 
