@@ -61,6 +61,7 @@ aura/
 │  ├─ tokens/    # @aura/tokens   — design tokens (OKLCH) + fuentes
 │  ├─ ui/        # @aura/ui       — 15 componentes React (shadcn/Radix)
 │  ├─ core/      # @aura/core     — contratos y tipos (ecosistema + Aura Sync)
+│  ├─ sync/      # @aura/sync     — transporte (Drive) y cifrado E2E compartidos
 │  └─ config/    # @aura/config   — oxlint base compartido
 ├─ scripts/      # deploy.mjs — deploy manual a GitHub Pages (sin Actions)
 ├─ docs/         # este documento
@@ -195,7 +196,7 @@ Lo que sigue es construir sobre la base:
 
 | Frente | Entregable |
 |---|---|
-| **Aura Sync** (en curso) | ✅ **Paso 1**: Home implementa `SyncProvider` — transporte (`drive-provider`) separado de la orquestación, contrato con payload claro/cifrado y canal de binarios.<br>✅ **Paso 2**: Cifrado E2E opt-in (`sync-crypto.service.ts` con Web Crypto API AES-GCM 256-bit + PBKDF2), UI de ajustes y 14 tests de integración/unidad en verde.<br>⏳ **Pendiente**: Llevar sync a Music. |
+| **Aura Sync** (en curso) | ✅ **Paso 1**: Home implementa `SyncProvider` — transporte (`drive-provider`) separado de la orquestación, contrato con payload claro/cifrado y canal de binarios.<br>✅ **Paso 2**: Cifrado E2E opt-in (`sync-crypto.service.ts` con Web Crypto API AES-GCM 256-bit + PBKDF2), UI de ajustes y 14 tests de integración/unidad en verde.<br>✅ **Paso 3**: Transporte y cifrado extraídos a **`@aura/sync`** (paquete runtime) y **Music sincronizado** (Fase A: playlists, favoritos, historial y ajustes) sobre el mismo contrato. Music estrena vitest.<br>⏳ **Pendiente**: **Fase B — biblioteca en la nube**: subir los archivos de audio y poder reproducirlos en otro dispositivo. Ver §9. |
 | **App nueva** (p. ej. Aura Finance) | Arrancar greenfield sobre `@aura/{tsconfig,tokens,ui,core,config}` para validar velocidad de creación con la base compartida. |
 | **Cabos sueltos** | Archivar repos originales en GitHub; warning de lint preexistente en Home (`setState` en component update); mejorar el 404 de deploy. |
 
@@ -211,3 +212,36 @@ Home usa `@aura/tokens` (violeta OKLCH, radius 1rem). Ambos comparten los mismos
 **componentes**, pero con **valores de token distintos** — patrón sano de design
 system. Convergerlos cambiaría el look de Music y es una decisión de identidad,
 no técnica. Se deja abierta para la fase de diferenciación.
+
+---
+
+## 9. Aura Sync — Fase B: biblioteca de música en la nube (pendiente)
+
+**Objetivo del usuario:** subir la música desde un dispositivo (hoy, el teléfono)
+y poder escucharla en cualquier otro. La Fase A ya replica lo irrecuperable
+(playlists, favoritos, historial); falta el audio.
+
+**Base ya disponible**
+- `SyncBlobChannel` en el contrato (`@aura/core/sync`) y su implementación de
+  Drive en `@aura/sync` — el mismo canal por el que Home sube sus documentos.
+- `infrastructure/fs/opfs.ts` + `services/library/importer.ts` en Music: ya saben
+  copiar las pistas al almacenamiento privado de la app, de donde se pueden leer
+  los bytes sin permisos de carpeta.
+- `encryptBlob`/`decryptBlobIfNeeded` si se quiere cifrar también el audio.
+
+**Lo que falta decidir/resolver**
+1. **Cuota**: `appDataFolder` consume el Drive del usuario (15 GB gratis
+   compartidos con Gmail y Fotos). Biblioteca estimada < 5 GB → cabe, pero hay
+   que mostrar cuánto ocupa y cuánto queda antes de subir.
+2. **Subida reanudable**: pista a pista, saltando las ya subidas (guardar el ref
+   de Drive en el registro del track, como `driveFileId` en los documentos de
+   Home). Una biblioteca entera no puede depender de una sola sesión.
+3. **Identidad de pista entre dispositivos**: hoy `trackId = hash(folderId::path)`
+   y `folderId` es el autoincremental de Dexie, propio del dispositivo. Mientras
+   el dispositivo B *reciba* las pistas del snapshot (en vez de escanear), los
+   ids coinciden; si B además escanea su propia carpeta, habría duplicados. Hay
+   que definir una "carpeta de la nube" sintética para las pistas recibidas.
+4. **Descarga bajo demanda** a OPFS en el dispositivo B, y qué hacer con el
+   almacenamiento (¿todo, o solo lo que se reproduce?).
+5. **Portadas**: hoy no viajan; se regeneran al escanear. En un dispositivo que
+   nunca escanea habría que sincronizarlas o generar la carátula de relleno.
