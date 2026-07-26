@@ -1,0 +1,14 @@
+{
+  "extends": "@aura/tsconfig/base.json",
+  "compilerOptions": {
+    "target": "ES2023",
+    /* Necesita DOM: WebCrypto, Blob y fetch son el sustrato de este paquete. */
+    "lib": ["ES2023", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "verbatimModuleSyntax": true,
+    "types": []
+  },
+  "include": ["src"]
+}

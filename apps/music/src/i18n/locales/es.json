@@ -1,5 +1,8 @@
 {
-  "app": { "name": "Aura Music", "tagline": "Tu música. Tu dispositivo. Tu aura." },
+  "app": {
+    "name": "Aura Music",
+    "tagline": "Tu música. Tu dispositivo. Tu aura."
+  },
   "nav": {
     "home": "Inicio",
     "library": "Biblioteca",
@@ -219,7 +222,35 @@
       "search": "Abrir búsqueda",
       "nowPlaying": "Abrir/cerrar Reproduciendo",
       "queuePanel": "Abrir/cerrar cola"
-    }
+    },
+    "syncSection": "Sincronización",
+    "syncHint": "Guarda playlists, favoritos e historial en tu Google Drive y recupéralos en otro dispositivo.",
+    "syncConnect": "Conectar con Google",
+    "syncDisconnect": "Desconectar",
+    "syncNow": "Sincronizar ahora",
+    "syncConnectedAs": "Conectado como {{email}}",
+    "syncLastAt": "Última sincronización: {{when}}",
+    "syncNever": "nunca",
+    "syncPushed": "Respaldo subido.",
+    "syncUpToDate": "Todo está al día.",
+    "syncImported": "{{count}} registros actualizados.",
+    "syncDisconnected": "Cuenta desconectada.",
+    "syncError": "Error al sincronizar.",
+    "encryption": "Cifrado extremo a extremo",
+    "encryptionOn": "El respaldo viaja cifrado: nadie con acceso al archivo puede leerlo.",
+    "encryptionOff": "Opcional. Cifra el respaldo con una frase tuya antes de subirlo.",
+    "encryptionWarning": "Guarda bien tu frase: si la olvidas, el respaldo queda irrecuperable. No hay forma de restablecerla.",
+    "passphrase": "Frase de cifrado",
+    "passphraseRepeat": "Repítela",
+    "passphraseShort": "Usa al menos {{min}} caracteres.",
+    "passphraseMismatch": "Las dos frases no coinciden.",
+    "encryptionEnable": "Activar cifrado",
+    "encryptionWorking": "Cifrando…",
+    "encryptionEnabled": "Cifrado activado.",
+    "encryptionUnlocked": "Dispositivo desbloqueado.",
+    "encryptionDisabled": "Cifrado desactivado.",
+    "encryptionOtherDevice": "Si ya lo cifraste en otro dispositivo, escribe la misma frase para desbloquearlo aquí.",
+    "cancel": "Cancelar"
   },
   "about": {
     "title": "Acerca de",

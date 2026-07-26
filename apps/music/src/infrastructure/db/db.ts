@@ -9,6 +9,7 @@ import type {
   LibraryFolder,
   PersistedPlaybackState,
   Playlist,
+  SyncSecret,
   Track,
 } from '@/core/types';
 
@@ -26,6 +27,7 @@ export class AuraDatabase extends Dexie {
   genres!: Table<GenreEntry, string>;
   playbackState!: Table<PersistedPlaybackState, string>;
   settings!: Table<KeyValueEntry, string>;
+  syncSecrets!: Table<SyncSecret, string>;
 
   constructor() {
     super('aura-music');
@@ -43,6 +45,11 @@ export class AuraDatabase extends Dexie {
     // v2: generic key-value table (negative cache for online cover lookups…)
     this.version(2).stores({
       settings: 'key',
+    });
+    // v3: Aura Sync encryption key. Deliberately outside the synced snapshot:
+    // the key must never travel inside the backup it encrypts.
+    this.version(3).stores({
+      syncSecrets: 'id',
     });
   }
 }

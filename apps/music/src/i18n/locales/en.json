@@ -1,5 +1,8 @@
 {
-  "app": { "name": "Aura Music", "tagline": "Your music. Your device. Your aura." },
+  "app": {
+    "name": "Aura Music",
+    "tagline": "Your music. Your device. Your aura."
+  },
   "nav": {
     "home": "Home",
     "library": "Library",
@@ -219,7 +222,35 @@
       "search": "Open search",
       "nowPlaying": "Toggle Now Playing",
       "queuePanel": "Toggle queue"
-    }
+    },
+    "syncSection": "Sync",
+    "syncHint": "Keep playlists, favourites and history in your Google Drive and get them back on another device.",
+    "syncConnect": "Connect with Google",
+    "syncDisconnect": "Disconnect",
+    "syncNow": "Sync now",
+    "syncConnectedAs": "Connected as {{email}}",
+    "syncLastAt": "Last sync: {{when}}",
+    "syncNever": "never",
+    "syncPushed": "Backup uploaded.",
+    "syncUpToDate": "Everything is up to date.",
+    "syncImported": "{{count}} records updated.",
+    "syncDisconnected": "Account disconnected.",
+    "syncError": "Sync failed.",
+    "encryption": "End-to-end encryption",
+    "encryptionOn": "The backup travels encrypted: nobody with access to the file can read it.",
+    "encryptionOff": "Optional. Encrypt the backup with your own passphrase before uploading.",
+    "encryptionWarning": "Keep your passphrase safe: if you forget it, the backup is unrecoverable. There is no reset.",
+    "passphrase": "Passphrase",
+    "passphraseRepeat": "Repeat it",
+    "passphraseShort": "Use at least {{min}} characters.",
+    "passphraseMismatch": "The two passphrases do not match.",
+    "encryptionEnable": "Enable encryption",
+    "encryptionWorking": "Encrypting…",
+    "encryptionEnabled": "Encryption enabled.",
+    "encryptionUnlocked": "Device unlocked.",
+    "encryptionDisabled": "Encryption disabled.",
+    "encryptionOtherDevice": "If you already encrypted it on another device, type the same passphrase to unlock it here.",
+    "cancel": "Cancel"
   },
   "about": {
     "title": "About",

@@ -38,6 +38,8 @@ import { usePlayerStore } from '@/stores/playerStore';
 import { useSettingsStore, type LanguageSetting, type ThemeSetting } from '@/stores/settingsStore';
 
 import { AddFolderButton } from '../library/components/AddFolderButton';
+
+import { SyncSection } from './SyncSection';
 import { ScanProgressBanner } from '../library/components/ScanProgressBanner';
 
 export default function SettingsPage() {
@@ -53,6 +55,9 @@ export default function SettingsPage() {
         <PlaybackSection />
         <EqualizerSection />
         <LibrarySection />
+        <Section title={t('settings.syncSection')}>
+          <SyncSection />
+        </Section>
         <DataSection />
         <ShortcutsSection />
         <div className="mx-auto w-full max-w-3xl pb-4 text-center">

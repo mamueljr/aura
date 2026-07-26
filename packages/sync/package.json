@@ -1,0 +1,24 @@
+{
+  "name": "@aura/sync",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Aura Sync — transporte (Google Drive) y cifrado E2E compartidos del ecosistema.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./crypto": "./src/crypto.ts",
+    "./drive": "./src/drive.ts"
+  },
+  "scripts": {
+    "lint": "oxlint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@aura/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@aura/tsconfig": "workspace:*",
+    "oxlint": "^1.71.0",
+    "typescript": "~6.0.2"
+  }
+}

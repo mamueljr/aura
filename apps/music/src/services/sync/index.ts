@@ -1,24 +1,183 @@
-import type { SyncProvider, SyncSnapshot } from './types';
+import type { AuraSyncEnvelope, EncryptedEnvelope, SyncPayload } from '@aura/core/sync';
+import { createDriveProvider } from '@aura/sync/drive';
 
-/** Default provider: the app works 100% locally, sync is a silent no-op. */
-class NoopSyncProvider implements SyncProvider {
-  readonly name = 'local-only';
-  async isAuthenticated() {
-    return false;
-  }
-  async signIn() {
-    /* no backend configured */
-  }
-  async signOut() {
-    /* no backend configured */
-  }
-  async push(_snapshot: SyncSnapshot) {
-    /* no backend configured */
-  }
-  async pull() {
-    return null;
-  }
+import { APP_CONFIG } from '@/config/app';
+import { db } from '@/infrastructure/db/db';
+import { useSyncStore } from '@/stores/syncStore';
+
+import {
+  clearKey,
+  decryptEnvelope,
+  deriveKey,
+  encryptEnvelope,
+  loadKey,
+  newKdfParams,
+  saveKey,
+  SyncCryptoError,
+} from './crypto';
+import { exportSnapshot, mergeSnapshot, totalMerged } from './snapshot';
+import { SNAPSHOT_SCHEMA_VERSION, type SyncSnapshot } from './types';
+
+/**
+ * Aura Sync — orquestación de Aura Music.
+ *
+ * Mismo contrato que Aura Home (`@aura/core/sync`) y mismo transporte
+ * (`@aura/sync/drive`); este archivo solo decide qué lado gana. Qué se replica
+ * y cómo se fusiona vive en `snapshot.ts`.
+ *
+ * (Sustituye al `NoopSyncProvider` que había aquí de placeholder.)
+ */
+
+/** Nombre del respaldo de Music. Distinto al de Home: comparten `appDataFolder`. */
+const BACKUP_KEY = 'aura-music-backup.json';
+
+const provider = createDriveProvider({
+  clientId: APP_CONFIG.googleClientId,
+  getAccountHint: () => useSyncStore.getState().accountEmail,
+  getFileId: () => useSyncStore.getState().fileId,
+  setFileId: (id) => useSyncStore.getState().setFileId(id),
+});
+
+export { loadGis, SyncAuthError } from '@aura/sync/drive';
+export type { SyncSnapshot };
+
+export type SyncResult =
+  | { action: 'pushed' | 'up-to-date'; syncedAt: string }
+  | { action: 'pulled' | 'merged'; syncedAt: string; imported: number };
+
+function envelope(snapshot: SyncSnapshot): AuraSyncEnvelope<SyncSnapshot> {
+  return {
+    app: APP_CONFIG.slug,
+    appVersion: __APP_VERSION__,
+    schemaVersion: SNAPSHOT_SCHEMA_VERSION,
+    exportedAt: new Date().toISOString(),
+    data: snapshot,
+  };
 }
 
-export const syncProvider: SyncProvider = new NoopSyncProvider();
-export type { SyncProvider, SyncSnapshot };
+/** Momento del cambio local más reciente, o null si no hay nada que sincronizar. */
+async function latestLocalChange(): Promise<string | null> {
+  const [playlists, tracks] = await Promise.all([db.playlists.toArray(), db.tracks.toArray()]);
+  let latest = 0;
+  for (const playlist of playlists) latest = Math.max(latest, playlist.updatedAt ?? 0);
+  for (const track of tracks) latest = Math.max(latest, track.lastPlayedAt ?? 0);
+  return latest > 0 ? new Date(latest).toISOString() : null;
+}
+
+async function push(): Promise<SyncResult> {
+  const payload = envelope(await exportSnapshot());
+  const secret = await loadKey();
+  await provider.push(
+    BACKUP_KEY,
+    secret ? await encryptEnvelope(payload, secret.key, secret.kdf) : payload,
+  );
+  useSyncStore.getState().setLastSync(payload.exportedAt);
+  return { action: 'pushed', syncedAt: payload.exportedAt };
+}
+
+/** Devuelve el snapshot en claro: descifra si viene cifrado. */
+async function openPayload(payload: SyncPayload): Promise<AuraSyncEnvelope<SyncSnapshot>> {
+  if (!('ciphertext' in payload)) return payload as AuraSyncEnvelope<SyncSnapshot>;
+
+  const secret = await loadKey();
+  if (!secret) {
+    throw new SyncCryptoError(
+      'El respaldo está cifrado. Introduce tu frase de cifrado para usarlo en este dispositivo.',
+    );
+  }
+  return (await decryptEnvelope(payload, secret.key)) as AuraSyncEnvelope<SyncSnapshot>;
+}
+
+/**
+ * Sincroniza según qué lado cambió desde la última vez. Si ambos cambiaron,
+ * fusiona lo remoto sobre lo local y sube el resultado.
+ */
+export async function syncNow(opts?: { interactive?: boolean }): Promise<SyncResult> {
+  // Pre-vuelo: falla rápido si la sesión ya no sirve, antes de tocar nada.
+  await provider.getAccessToken(opts);
+
+  const payload = await provider.pull(BACKUP_KEY);
+  if (!payload) return push();
+
+  const remote = await openPayload(payload);
+  const { lastSyncAt } = useSyncStore.getState();
+  const localChange = await latestLocalChange();
+
+  const remoteChanged = !lastSyncAt || remote.exportedAt > lastSyncAt;
+  const localChanged = lastSyncAt ? (localChange ?? '') > lastSyncAt : localChange !== null;
+
+  if (!remoteChanged && !localChanged) {
+    const syncedAt = new Date().toISOString();
+    useSyncStore.getState().setLastSync(syncedAt);
+    return { action: 'up-to-date', syncedAt };
+  }
+  if (localChanged && !remoteChanged) return push();
+
+  const imported = totalMerged(await mergeSnapshot(remote.data));
+  if (remoteChanged && !localChanged) {
+    const syncedAt = new Date().toISOString();
+    useSyncStore.getState().setLastSync(syncedAt);
+    return { action: 'pulled', syncedAt, imported };
+  }
+  // Ambos lados cambiaron: ya se fusionó lo remoto; ahora sube el resultado.
+  const pushed = await push();
+  return { action: 'merged', syncedAt: pushed.syncedAt, imported };
+}
+
+/** Inicia sesión con Google y devuelve la cuenta conectada. */
+export async function connect(): Promise<string> {
+  const account = (await provider.connect?.()) ?? 'cuenta conectada';
+  useSyncStore.getState().setConnected(account);
+  return account;
+}
+
+/** Cierra la sesión: revoca credenciales y limpia el estado persistido. */
+export function disconnect(): void {
+  provider.disconnect?.();
+  useSyncStore.getState().disconnect();
+}
+
+// ---------- Cifrado extremo a extremo (opt-in) ----------
+
+export async function isEncryptionEnabled(): Promise<boolean> {
+  return (await loadKey()) !== null;
+}
+
+async function unlockWithPayload(payload: EncryptedEnvelope, passphrase: string): Promise<void> {
+  if (!payload.kdf) {
+    throw new SyncCryptoError('El respaldo cifrado no indica cómo derivar la clave.');
+  }
+  const key = await deriveKey(passphrase, payload.kdf);
+  // Verificar ANTES de guardar: una frase incorrecta no debe quedar registrada.
+  await decryptEnvelope(payload, key);
+  await saveKey(key, payload.kdf);
+  useSyncStore.getState().setEncrypted(true);
+}
+
+/**
+ * Punto de entrada de la UI: desbloquea este dispositivo si el respaldo remoto
+ * ya está cifrado, o activa el cifrado por primera vez si no lo está. Evita que
+ * un segundo dispositivo genere otra clave y deje el respaldo ilegible.
+ *
+ * ⚠️ Si se olvida la frase, el respaldo remoto queda irrecuperable.
+ */
+export async function setUpEncryption(passphrase: string): Promise<'unlocked' | 'enabled'> {
+  const payload = await provider.pull(BACKUP_KEY);
+  if (payload && 'ciphertext' in payload) {
+    await unlockWithPayload(payload, passphrase);
+    return 'unlocked';
+  }
+  const kdf = newKdfParams();
+  await saveKey(await deriveKey(passphrase, kdf), kdf);
+  await push();
+  useSyncStore.getState().setEncrypted(true);
+  return 'enabled';
+}
+
+/** Desactiva el cifrado y deja el respaldo remoto legible otra vez. */
+export async function disableEncryption(): Promise<void> {
+  if (!(await loadKey())) return;
+  await clearKey();
+  await push();
+  useSyncStore.getState().setEncrypted(false);
+}

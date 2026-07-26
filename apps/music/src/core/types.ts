@@ -132,3 +132,20 @@ export interface LyricsResult {
   lines: LyricsLine[];
   source: string;
 }
+
+/**
+ * Aura Sync encryption key (opt-in E2E), stored in its own table.
+ *
+ * `key` is a **non-extractable** CryptoKey: the browser persists it without
+ * ever exposing its bytes, not even to this app. It is kept derived so the
+ * automatic sync does not ask for the passphrase on every start.
+ *
+ * Must NEVER be part of the synced snapshot.
+ */
+export interface SyncSecret {
+  /** Always 'default': one key per device. */
+  id: string;
+  key: CryptoKey;
+  /** Params it was derived with, so another device can rebuild it. */
+  kdf: { name: string; hash: string; iterations: number; salt: string };
+}

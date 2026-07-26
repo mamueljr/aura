@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@aura/core": "workspace:*",
+    "@aura/sync": "workspace:*",
     "@aura/tokens": "workspace:*",
     "@aura/ui": "workspace:*",
     "@tanstack/react-query": "^5.101.2",
