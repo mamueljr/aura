@@ -1,5 +1,5 @@
-import { Cloud, Lock, RefreshCw } from 'lucide-react';
-import { useState } from 'react';
+import { Cloud, CloudUpload, Lock, RefreshCw } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@aura/ui/components/button';
@@ -13,6 +13,12 @@ import {
   syncNow,
   type SyncResult,
 } from '@/services/sync';
+import {
+  libraryUploadStats,
+  uploadLibrary,
+  type LibraryUploadStats,
+  type UploadProgress,
+} from '@/services/sync/library';
 import { useSyncStore } from '@/stores/syncStore';
 
 /** Frase mínima: por debajo, PBKDF2 no compensa lo débil que es. */
@@ -27,6 +33,111 @@ function formatDate(iso: string): string {
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  const mb = bytes / (1024 * 1024);
+  return mb < 1024 ? `${mb.toFixed(1)} MB` : `${(mb / 1024).toFixed(2)} GB`;
+}
+
+/**
+ * Subida de los archivos de audio a Drive (biblioteca en la nube).
+ *
+ * La subida es reanudable: se salta lo ya subido, así que detenerla y
+ * retomarla más tarde no repite trabajo.
+ */
+function CloudLibraryRow() {
+  const { t } = useTranslation();
+  const [stats, setStats] = useState<LibraryUploadStats | null>(null);
+  const [progress, setProgress] = useState<UploadProgress | null>(null);
+  const [note, setNote] = useState<Note>(null);
+  const stopRef = useRef(false);
+
+  const refresh = useCallback(() => {
+    void libraryUploadStats().then(setStats);
+  }, []);
+
+  useEffect(refresh, [refresh]);
+
+  async function handleUpload() {
+    stopRef.current = false;
+    setNote(null);
+    setProgress({ done: 0, total: stats?.pending ?? 0, current: '' });
+    try {
+      const report = await uploadLibrary(setProgress, () => stopRef.current);
+      const parts = [t('settings.cloudDone', { count: report.uploaded })];
+      if (report.unavailable > 0) {
+        parts.push(t('settings.cloudUnavailable', { count: report.unavailable }));
+      }
+      if (report.failed > 0) parts.push(t('settings.cloudFailed', { count: report.failed }));
+      setNote({ kind: report.failed > 0 ? 'error' : 'ok', text: parts.join(' ') });
+    } catch (error) {
+      setNote({
+        kind: 'error',
+        text: error instanceof Error ? error.message : t('settings.syncError'),
+      });
+    } finally {
+      setProgress(null);
+      refresh();
+    }
+  }
+
+  const uploading = progress !== null;
+
+  return (
+    <div className="space-y-2 border-t border-border pt-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="flex items-center gap-2 text-sm font-medium">
+            <CloudUpload className="size-4 text-primary" />
+            {t('settings.cloudLibrary')}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {!stats || stats.total === 0
+              ? t('settings.cloudEmpty')
+              : stats.pending === 0
+                ? t('settings.cloudAllUploaded')
+                : `${t('settings.cloudUploaded', {
+                    uploaded: stats.uploaded,
+                    total: stats.total,
+                  })} · ${t('settings.cloudPending', {
+                    count: stats.pending,
+                    size: formatBytes(stats.pendingBytes),
+                  })}`}
+          </p>
+        </div>
+        {stats && stats.pending > 0 ? (
+          uploading ? (
+            <Button variant="outline" onClick={() => (stopRef.current = true)}>
+              {t('settings.cloudStop')}
+            </Button>
+          ) : (
+            <Button variant="outline" onClick={() => void handleUpload()}>
+              <CloudUpload />
+              {t('settings.cloudUpload')}
+            </Button>
+          )
+        ) : null}
+      </div>
+
+      {progress ? (
+        <p className="text-xs text-muted-foreground">
+          {t('settings.cloudUploading', { done: progress.done, total: progress.total })}{' '}
+          {progress.current}
+        </p>
+      ) : null}
+
+      {note ? (
+        <p
+          role="status"
+          className={note.kind === 'ok' ? 'text-xs text-primary' : 'text-xs text-destructive'}
+        >
+          {note.text}
+        </p>
+      ) : null}
+    </div>
+  );
 }
 
 /**
@@ -171,6 +282,8 @@ export function SyncSection() {
           </Button>
         )}
       </div>
+
+      {enabled ? <CloudLibraryRow /> : null}
 
       {enabled ? (
         <div className="space-y-3 border-t border-border pt-4">

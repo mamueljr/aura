@@ -33,6 +33,12 @@ export interface Track {
   addedAt: number;
   /** 1 when a copy lives in the app's private storage (OPFS) */
   opfs?: 0 | 1;
+  /**
+   * Id of the audio file in Google Drive (appDataFolder), once uploaded.
+   * Lets another device fetch the audio without having the original folder.
+   * The bytes never travel inside the sync snapshot — only this reference.
+   */
+  driveFileId?: string;
 }
 
 export interface AlbumEntry {
@@ -78,7 +84,12 @@ export interface Playlist {
   updatedAt: number;
 }
 
-export type FolderMode = 'fs-access' | 'fallback';
+/**
+ * `cloud`: carpeta sintética de las pistas que llegaron por Aura Sync desde
+ * otro dispositivo. No tiene handle ni ruta local; su audio se descarga de
+ * Drive bajo demanda.
+ */
+export type FolderMode = 'fs-access' | 'fallback' | 'cloud';
 
 export interface LibraryFolder {
   id?: number;

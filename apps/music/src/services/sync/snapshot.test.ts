@@ -69,15 +69,16 @@ describe('exportSnapshot', () => {
     expect(result.settings).toEqual({ tema: 'oscuro' });
   });
 
-  it('deja fuera lo que se regenera solo (la biblioteca no viaja)', async () => {
+  it('deja fuera lo que se regenera solo', async () => {
     await db.tracks.put(track('t1'));
 
     const result = await exportSnapshot();
 
-    // Una pista sin reproducciones ni favorito no aporta nada al snapshot.
+    // Una pista sin reproducciones ni favorito no aporta nada al snapshot, y
+    // sin audio subido tampoco viaja su ficha.
     expect(result.history).toEqual([]);
     expect(result.favorites).toEqual([]);
-    expect(result).not.toHaveProperty('tracks');
+    expect(result.tracks).toEqual([]);
   });
 });
 
@@ -127,6 +128,74 @@ describe('mergeSnapshot — historial', () => {
 
     expect(report.history).toBe(0);
     expect(await db.tracks.get('inexistente')).toBeUndefined();
+  });
+});
+
+describe('snapshot — biblioteca en la nube', () => {
+  it('solo exporta las pistas que ya tienen audio subido', async () => {
+    await db.tracks.bulkPut([
+      track('subida', { driveFileId: 'drive-1' }),
+      track('sin-subir'),
+    ]);
+
+    const result = await exportSnapshot();
+
+    // Exportar una pista sin `driveFileId` la mostraría en el otro
+    // dispositivo sin forma de reproducirla.
+    expect(result.tracks?.map((t) => t.id)).toEqual(['subida']);
+  });
+
+  it('no expone datos propios del dispositivo de origen', async () => {
+    await db.tracks.put(track('t1', { driveFileId: 'drive-1', folderId: 7, opfs: 1 }));
+
+    const [exported] = (await exportSnapshot()).tracks ?? [];
+
+    expect(exported).not.toHaveProperty('folderId');
+    expect(exported).not.toHaveProperty('opfs');
+  });
+
+  it('trae las pistas de la nube a una carpeta sintética', async () => {
+    const remote = { ...track('nube-1'), driveFileId: 'drive-1' } as never;
+
+    const report = await mergeSnapshot(snapshot({ tracks: [remote] }));
+
+    const saved = await db.tracks.get('nube-1');
+    const folder = await db.folders.get(saved!.folderId);
+    expect(report.tracks).toBe(1);
+    expect(folder?.mode).toBe('cloud');
+    // Llega sin copia local: se descargará al reproducirla.
+    expect(saved?.opfs).toBe(0);
+  });
+
+  it('reutiliza la misma carpeta de nube en sincronizaciones sucesivas', async () => {
+    const uno = { ...track('nube-1'), driveFileId: 'd1' } as never;
+    const dos = { ...track('nube-2'), driveFileId: 'd2' } as never;
+
+    await mergeSnapshot(snapshot({ tracks: [uno] }));
+    await mergeSnapshot(snapshot({ tracks: [dos] }));
+
+    const folders = await db.folders.toArray();
+    expect(folders.filter((f) => f.mode === 'cloud')).toHaveLength(1);
+  });
+
+  it('no pisa una pista que ya existe en este dispositivo', async () => {
+    await db.tracks.put(track('t1', { folderId: 3, opfs: 1, path: 'ruta/real.mp3' }));
+    const remote = { ...track('t1'), driveFileId: 'd1', path: 'otra/ruta.mp3' } as never;
+
+    const report = await mergeSnapshot(snapshot({ tracks: [remote] }));
+
+    const local = await db.tracks.get('t1');
+    // La copia local y su ruta real mandan sobre la de la nube.
+    expect(local?.path).toBe('ruta/real.mp3');
+    expect(local?.opfs).toBe(1);
+    expect(report.tracks).toBe(0);
+  });
+
+  it('sigue leyendo un respaldo v1, sin pistas', async () => {
+    const report = await mergeSnapshot(snapshot({ playlists: [playlist('p1', 10)] }));
+
+    expect(report.tracks).toBe(0);
+    expect(await db.playlists.get('p1')).toBeDefined();
   });
 });
 

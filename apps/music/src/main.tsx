@@ -4,6 +4,10 @@ import { createRoot } from 'react-dom/client';
 import '@/styles/globals.css';
 import '@/i18n';
 import App from '@/app/App';
+import { registerCloudResolver } from '@/services/sync/library';
+
+// Permite que una pista que solo existe en la nube se descargue al reproducirla.
+registerCloudResolver();
 
 // Restore deep links redirected by public/404.html on GitHub Pages
 // (`/?/library` → `/library`). Must run before the router mounts.

@@ -15,7 +15,21 @@ export interface SyncSnapshot {
   favorites: string[];
   settings: Record<string, unknown>;
   history: Array<Pick<Track, 'id' | 'playCount' | 'lastPlayedAt'>>;
+  /**
+   * Pistas cuyo audio ya está en la nube (v2). Solo la ficha, nunca los bytes:
+   * el otro dispositivo las ve en su biblioteca y descarga el audio al
+   * reproducirlas. Se omiten las que no se han subido: sin `driveFileId` no
+   * habría forma de escucharlas.
+   */
+  tracks?: CloudTrack[];
 }
 
-/** Versión del esquema del snapshot; se sube ante cambios incompatibles. */
-export const SNAPSHOT_SCHEMA_VERSION = 1;
+/** Ficha de una pista disponible en la nube. */
+export type CloudTrack = Omit<Track, 'folderId' | 'opfs'> & { driveFileId: string };
+
+/**
+ * Versión del esquema del snapshot.
+ * v2 añade `tracks` (biblioteca en la nube). Los respaldos v1 se siguen
+ * leyendo: `tracks` es opcional.
+ */
+export const SNAPSHOT_SCHEMA_VERSION = 2;

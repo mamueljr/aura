@@ -1,3 +1,4 @@
+import type { Track } from '@/core/types';
 import { db } from '@/infrastructure/db/db';
 
 import type { SyncSnapshot } from './types';
@@ -8,12 +9,15 @@ import type { SyncSnapshot } from './types';
  * navegador.
  *
  * **Qué NO va aquí y por qué:**
- * - `tracks` (índice de la biblioteca), `albums`/`artists`/`genres` y `covers`:
- *   se regeneran escaneando la carpeta. Pesados y redundantes.
- * - `folders`: guardan `FileSystemDirectoryHandle`, que es propio del
- *   dispositivo y no viaja.
+ * - `albums`/`artists`/`genres` y `covers`: se regeneran escaneando. Pesados
+ *   y redundantes.
+ * - `folders`: guardan `FileSystemDirectoryHandle`, propio del dispositivo.
  * - `playbackState`: "qué suena ahora" es de este dispositivo.
- * - Los archivos de audio: son la Fase B (biblioteca en la nube).
+ * - Los bytes del audio: viajan por el canal de binarios, no por el snapshot;
+ *   aquí solo va la referencia (`driveFileId`) de cada pista.
+ *
+ * De `tracks` solo viajan las que ya están subidas (v2 del esquema): así el
+ * otro dispositivo ve exactamente lo que puede reproducir.
  */
 export async function exportSnapshot(): Promise<SyncSnapshot> {
   const [playlists, tracks, settings] = await Promise.all([
@@ -29,7 +33,26 @@ export async function exportSnapshot(): Promise<SyncSnapshot> {
       .filter((track) => track.playCount > 0 || track.lastPlayedAt != null)
       .map(({ id, playCount, lastPlayedAt }) => ({ id, playCount, lastPlayedAt })),
     settings: Object.fromEntries(settings.map((entry) => [entry.key, entry.value])),
+    // Solo las que tienen audio en la nube: sin `driveFileId` el otro
+    // dispositivo las vería en la lista pero no podría reproducirlas.
+    tracks: tracks
+      .filter((track): track is Track & { driveFileId: string } => !!track.driveFileId)
+      .map(({ folderId: _folderId, opfs: _opfs, ...rest }) => rest),
   };
+}
+
+/**
+ * Carpeta sintética donde viven las pistas recibidas de otro dispositivo.
+ * Se crea a demanda; no tiene handle ni ruta local.
+ */
+async function cloudFolderId(): Promise<number> {
+  const existing = (await db.folders.toArray()).find((folder) => folder.mode === 'cloud');
+  if (existing?.id != null) return existing.id;
+  return db.folders.add({
+    name: 'Aura Sync',
+    mode: 'cloud',
+    addedAt: Date.now(),
+  }) as Promise<number>;
 }
 
 /** Cuántos registros cambiaron al fusionar (para informar al usuario). */
@@ -38,6 +61,8 @@ export interface MergeReport {
   favorites: number;
   history: number;
   settings: number;
+  /** Pistas nuevas traídas de la nube. */
+  tracks: number;
 }
 
 /**
@@ -54,12 +79,36 @@ export interface MergeReport {
  *   conservar uno de más.
  * - **settings**: solo se rellenan las claves ausentes; las locales mandan,
  *   porque son preferencias de ESTE dispositivo.
+ * - **tracks**: solo se insertan las que faltan, en una carpeta sintética
+ *   "Aura Sync". Nunca se pisan las locales: si la pista ya existe aquí, su
+ *   copia local (y su ruta real) manda sobre la de la nube.
  *
  * ⚠️ Limitación conocida: sin tombstones, borrar una playlist o quitar un
  * favorito no se propaga — puede reaparecer desde el otro dispositivo.
  */
 export async function mergeSnapshot(remote: SyncSnapshot): Promise<MergeReport> {
-  const report: MergeReport = { playlists: 0, favorites: 0, history: 0, settings: 0 };
+  const report: MergeReport = {
+    playlists: 0,
+    favorites: 0,
+    history: 0,
+    settings: 0,
+    tracks: 0,
+  };
+
+  // Fuera de la transacción: crear la carpeta de la nube puede necesitar su
+  // propia escritura, y solo hace falta si llegan pistas nuevas.
+  const incomingTracks = (remote.tracks ?? []).filter((track) => track?.id && track.driveFileId);
+  if (incomingTracks.length > 0) {
+    const existing = new Set((await db.tracks.toArray()).map((track) => track.id));
+    const missing = incomingTracks.filter((track) => !existing.has(track.id));
+    if (missing.length > 0) {
+      const folderId = await cloudFolderId();
+      await db.tracks.bulkPut(
+        missing.map((track) => ({ ...track, folderId, opfs: 0 as const })),
+      );
+      report.tracks = missing.length;
+    }
+  }
 
   await db.transaction('rw', [db.playlists, db.tracks, db.settings], async () => {
     for (const incoming of remote.playlists ?? []) {
@@ -105,5 +154,7 @@ export async function mergeSnapshot(remote: SyncSnapshot): Promise<MergeReport> 
 
 /** Total de registros tocados, para el mensaje de la UI. */
 export function totalMerged(report: MergeReport): number {
-  return report.playlists + report.favorites + report.history + report.settings;
+  return (
+    report.playlists + report.favorites + report.history + report.settings + report.tracks
+  );
 }

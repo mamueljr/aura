@@ -250,7 +250,19 @@
     "encryptionUnlocked": "Device unlocked.",
     "encryptionDisabled": "Encryption disabled.",
     "encryptionOtherDevice": "If you already encrypted it on another device, type the same passphrase to unlock it here.",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "cloudLibrary": "Cloud library",
+    "cloudLibraryHint": "Upload your music to Drive so you can play it on other devices.",
+    "cloudUploaded": "{{uploaded}} of {{total}} tracks uploaded",
+    "cloudPending": "{{count}} tracks left ({{size}})",
+    "cloudAllUploaded": "All your music is in the cloud.",
+    "cloudUpload": "Upload library",
+    "cloudUploading": "Uploading {{done}}/{{total}}…",
+    "cloudStop": "Stop",
+    "cloudDone": "{{count}} tracks uploaded.",
+    "cloudUnavailable": "{{count}} with no copy on this device.",
+    "cloudFailed": "{{count}} failed.",
+    "cloudEmpty": "No tracks in the library yet."
   },
   "about": {
     "title": "About",

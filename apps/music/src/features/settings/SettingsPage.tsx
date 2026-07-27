@@ -299,7 +299,7 @@ function LibrarySection() {
                   : t('common.songs', { count: folder.trackCount ?? 0 })}
               </p>
             </div>
-            {folder.imported ? (
+            {folder.mode === 'cloud' ? null : folder.imported ? (
               <span className="flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[11px] font-medium text-aura-1">
                 <BadgeCheck className="size-3.5" /> {t('library.importedBadge')}
               </span>
@@ -327,9 +327,9 @@ function LibrarySection() {
               >
                 <RefreshCw />
               </Button>
-            ) : (
+            ) : folder.mode === 'fallback' ? (
               <FallbackReimportButton folderId={folder.id!} />
-            )}
+            ) : null}
             <Button
               variant="ghost"
               size="icon-sm"

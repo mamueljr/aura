@@ -117,10 +117,19 @@ export function cacheFallbackFile(folderId: number, path: string, file: File) {
 }
 
 /**
- * Resolves the actual audio File for a track, from its library folder.
- * Throws if the folder handle is gone or permission was revoked.
+ * Último recurso cuando la pista no está en este dispositivo: bajarla de la
+ * nube. Se inyecta desde `services/sync` para no invertir capas — esta capa no
+ * puede depender de los servicios.
  */
-export async function getTrackFile(track: Track): Promise<File> {
+type CloudResolver = (track: Track) => Promise<File | null>;
+
+let cloudResolver: CloudResolver | null = null;
+
+export function setCloudResolver(resolver: CloudResolver | null): void {
+  cloudResolver = resolver;
+}
+
+async function getLocalTrackFile(track: Track): Promise<File> {
   // App-private copy first: needs no permissions, works on every platform.
   if (track.opfs) {
     const opfsFile = await getTrackFromOpfs(track.folderId, track.path);
@@ -132,7 +141,7 @@ export async function getTrackFile(track: Track): Promise<File> {
 
   const folder = await db.folders.get(track.folderId);
   if (!folder) throw new Error('Library folder not found');
-  if (folder.mode === 'fallback' || !folder.handle) {
+  if (folder.mode !== 'fs-access' || !folder.handle) {
     throw new Error('FILE_NOT_AVAILABLE_OFFLINE_HANDLE');
   }
   if (!(await verifyPermission(folder.handle))) {
@@ -146,6 +155,23 @@ export async function getTrackFile(track: Track): Promise<File> {
   }
   const fileHandle = await dir.getFileHandle(parts[parts.length - 1]);
   return fileHandle.getFile();
+}
+
+/**
+ * Resolves the actual audio File for a track: local copy first, and only if
+ * there is none, the copy stored in the cloud by Aura Sync.
+ * Throws the local error if neither source can provide the file.
+ */
+export async function getTrackFile(track: Track): Promise<File> {
+  try {
+    return await getLocalTrackFile(track);
+  } catch (error) {
+    if (track.driveFileId && cloudResolver) {
+      const downloaded = await cloudResolver(track);
+      if (downloaded) return downloaded;
+    }
+    throw error;
+  }
 }
 
 export async function listFolders(): Promise<LibraryFolder[]> {

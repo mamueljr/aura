@@ -1,5 +1,4 @@
 import type { AuraSyncEnvelope, EncryptedEnvelope, SyncPayload } from '@aura/core/sync';
-import { createDriveProvider } from '@aura/sync/drive';
 
 import { APP_CONFIG } from '@/config/app';
 import { db } from '@/infrastructure/db/db';
@@ -15,6 +14,7 @@ import {
   saveKey,
   SyncCryptoError,
 } from './crypto';
+import { BACKUP_KEY, provider } from './provider';
 import { exportSnapshot, mergeSnapshot, totalMerged } from './snapshot';
 import { SNAPSHOT_SCHEMA_VERSION, type SyncSnapshot } from './types';
 
@@ -27,16 +27,6 @@ import { SNAPSHOT_SCHEMA_VERSION, type SyncSnapshot } from './types';
  *
  * (Sustituye al `NoopSyncProvider` que había aquí de placeholder.)
  */
-
-/** Nombre del respaldo de Music. Distinto al de Home: comparten `appDataFolder`. */
-const BACKUP_KEY = 'aura-music-backup.json';
-
-const provider = createDriveProvider({
-  clientId: APP_CONFIG.googleClientId,
-  getAccountHint: () => useSyncStore.getState().accountEmail,
-  getFileId: () => useSyncStore.getState().fileId,
-  setFileId: (id) => useSyncStore.getState().setFileId(id),
-});
 
 export { loadGis, SyncAuthError } from '@aura/sync/drive';
 export type { SyncSnapshot };

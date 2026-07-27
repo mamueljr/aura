@@ -250,7 +250,19 @@
     "encryptionUnlocked": "Dispositivo desbloqueado.",
     "encryptionDisabled": "Cifrado desactivado.",
     "encryptionOtherDevice": "Si ya lo cifraste en otro dispositivo, escribe la misma frase para desbloquearlo aquí.",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "cloudLibrary": "Biblioteca en la nube",
+    "cloudLibraryHint": "Sube tu música a Drive para escucharla en otros dispositivos.",
+    "cloudUploaded": "{{uploaded}} de {{total}} pistas subidas",
+    "cloudPending": "Faltan {{count}} pistas ({{size}})",
+    "cloudAllUploaded": "Toda tu música está en la nube.",
+    "cloudUpload": "Subir biblioteca",
+    "cloudUploading": "Subiendo {{done}}/{{total}}…",
+    "cloudStop": "Detener",
+    "cloudDone": "{{count}} pistas subidas.",
+    "cloudUnavailable": "{{count}} sin copia en este dispositivo.",
+    "cloudFailed": "{{count}} fallaron.",
+    "cloudEmpty": "Aún no hay pistas en la biblioteca."
   },
   "about": {
     "title": "Acerca de",
