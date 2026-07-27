@@ -196,7 +196,7 @@ Lo que sigue es construir sobre la base:
 
 | Frente | Entregable |
 |---|---|
-| **Aura Sync** (en curso) | ✅ **Paso 1**: Home implementa `SyncProvider` — transporte (`drive-provider`) separado de la orquestación, contrato con payload claro/cifrado y canal de binarios.<br>✅ **Paso 2**: Cifrado E2E opt-in (`sync-crypto.service.ts` con Web Crypto API AES-GCM 256-bit + PBKDF2), UI de ajustes y 14 tests de integración/unidad en verde.<br>✅ **Paso 3**: Transporte y cifrado extraídos a **`@aura/sync`** (paquete runtime) y **Music sincronizado** (Fase A: playlists, favoritos, historial y ajustes) sobre el mismo contrato. Music estrena vitest.<br>⏳ **Pendiente**: **Fase B — biblioteca en la nube**: subir los archivos de audio y poder reproducirlos en otro dispositivo. Ver §9. |
+| **Aura Sync** (en curso) | ✅ **Paso 1**: Home implementa `SyncProvider` — transporte (`drive-provider`) separado de la orquestación, contrato con payload claro/cifrado y canal de binarios.<br>✅ **Paso 2**: Cifrado E2E opt-in (`sync-crypto.service.ts` con Web Crypto API AES-GCM 256-bit + PBKDF2), UI de ajustes y 14 tests de integración/unidad en verde.<br>✅ **Paso 3**: Transporte y cifrado extraídos a **`@aura/sync`** (paquete runtime) y **Music sincronizado** (Fase A: playlists, favoritos, historial y ajustes) sobre el mismo contrato. Music estrena vitest.<br>✅ **Paso 4 (Fase B)**: biblioteca en la nube — subida reanudable del audio, descarga bajo demanda a OPFS y snapshot v2 con las pistas subidas. **Sin probar contra Drive real todavía.** Ver §9. |
 | **App nueva** (p. ej. Aura Finance) | Arrancar greenfield sobre `@aura/{tsconfig,tokens,ui,core,config}` para validar velocidad de creación con la base compartida. |
 | **Cabos sueltos** | Archivar repos originales en GitHub; warning de lint preexistente en Home (`setState` en component update); mejorar el 404 de deploy. |
 
@@ -215,7 +215,36 @@ no técnica. Se deja abierta para la fase de diferenciación.
 
 ---
 
-## 9. Aura Sync — Fase B: biblioteca de música en la nube (pendiente)
+## 9. Aura Sync — Fase B: biblioteca de música en la nube ✅ implementada
+
+> **Estado:** el flujo completo (subir en un dispositivo → reproducir en otro)
+> está implementado y cubierto por tests, pero **nunca se ha ejercitado contra
+> Drive de verdad**. La primera subida real es la prueba pendiente.
+
+**Cómo quedó**
+- `services/sync/library.ts`: `uploadLibrary()` sube pista a pista, saltando lo
+  ya subido (reanudable, detenible) y guardando el `driveFileId` en el track.
+  `libraryUploadStats()` alimenta la UI con cuántas faltan y cuánto pesan.
+- `getTrackFile()` gana un cuarto origen: sin copia local y con `driveFileId`,
+  baja el audio y lo guarda en OPFS (la siguiente vez ya es local y offline).
+  Se inyecta con `setCloudResolver` para no invertir capas.
+- Snapshot **v2**: viajan las fichas de las pistas ya subidas, sin `folderId`
+  ni `opfs`. Al fusionar entran en una carpeta sintética `cloud` («Aura Sync»);
+  nunca se pisa una pista local.
+
+**Lo que queda abierto**
+1. **Portadas**: siguen sin viajar. En un dispositivo que nunca escanea, las
+   pistas de la nube usan la carátula generada de relleno.
+2. **Cuota**: la UI muestra cuánto falta por subir, pero no consulta el espacio
+   libre real de Drive (`about?fields=storageQuota`).
+3. **Limpieza**: si se borra una pista, su archivo en Drive queda huérfano
+   (existe `removeUploadedTrack`, pero nadie lo llama todavía).
+4. **Duplicados**: si el dispositivo B además escanea su propia copia de la
+   misma música, tendrá la pista dos veces (ids distintos por `folderId`).
+
+---
+
+## 9-bis. Diseño original de la Fase B (referencia)
 
 **Objetivo del usuario:** subir la música desde un dispositivo (hoy, el teléfono)
 y poder escucharla en cualquier otro. La Fase A ya replica lo irrecuperable
