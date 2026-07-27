@@ -14,6 +14,7 @@ import {
   saveKey,
   SyncCryptoError,
 } from './crypto';
+import { reuploadTracks } from './library';
 import { BACKUP_KEY, provider } from './provider';
 import { exportSnapshot, mergeSnapshot, totalMerged } from './snapshot';
 import { SNAPSHOT_SCHEMA_VERSION, type SyncSnapshot } from './types';
@@ -158,16 +159,37 @@ export async function setUpEncryption(passphrase: string): Promise<'unlocked' | 
     return 'unlocked';
   }
   const kdf = newKdfParams();
-  await saveKey(await deriveKey(passphrase, kdf), kdf);
+  const key = await deriveKey(passphrase, kdf);
+  await saveKey(key, kdf);
+  // El audio ya subido se reescribe cifrado; si no, quedaría en claro pese a
+  // que la UI diga lo contrario. Lo que no esté disponible aquí lo cifrará el
+  // dispositivo que lo tenga (no es pérdida, solo cifrado incompleto).
+  await reuploadTracks(key);
   await push();
   useSyncStore.getState().setEncrypted(true);
   return 'enabled';
 }
 
-/** Desactiva el cifrado y deja el respaldo remoto legible otra vez. */
-export async function disableEncryption(): Promise<void> {
-  if (!(await loadKey())) return;
+/**
+ * Desactiva el cifrado y deja el respaldo remoto legible otra vez.
+ *
+ * Antes de soltar la clave reescribe en claro el audio ya subido: sin ella, un
+ * archivo cifrado que solo exista en la nube sería irrecuperable. Si alguna
+ * pista no tiene copia en este dispositivo **no se desactiva nada** y se avisa,
+ * en vez de dejarla inaccesible en silencio.
+ */
+export async function disableEncryption(): Promise<number> {
+  if (!(await loadKey())) return 0;
+
+  const { converted, unavailable } = await reuploadTracks(null);
+  if (unavailable > 0) {
+    throw new SyncCryptoError(
+      `${unavailable} pistas solo existen cifradas en la nube. Reprodúcelas en este dispositivo (o hazlo desde el que las tiene) antes de desactivar el cifrado.`,
+    );
+  }
+
   await clearKey();
   await push();
   useSyncStore.getState().setEncrypted(false);
+  return converted;
 }

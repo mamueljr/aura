@@ -109,6 +109,42 @@ export async function removeUploadedTrack(track: Track): Promise<void> {
   await db.tracks.update(track.id, { driveFileId: undefined });
 }
 
+/**
+ * Reescribe en su sitio el audio ya subido, cifrado (`key`) o en claro (`null`).
+ *
+ * Hace falta al cambiar el estado del cifrado: si no, activar dejaría la música
+ * subida en claro (contradiciendo lo que promete la UI) y desactivar la dejaría
+ * ilegible para siempre.
+ *
+ * Se apoya en `getTrackFile`, que mientras la clave siga presente puede bajar y
+ * descifrar lo que no esté en este dispositivo. Lo que no se consiga obtener se
+ * cuenta como `unavailable`; al desactivar, quien llama debe abortar en ese caso.
+ */
+export async function reuploadTracks(key: CryptoKey | null): Promise<{
+  converted: number;
+  unavailable: number;
+}> {
+  const blobs = provider.blobs;
+  if (!blobs) return { converted: 0, unavailable: 0 };
+
+  const uploaded = (await db.tracks.toArray()).filter((track) => track.driveFileId);
+  let converted = 0;
+  let unavailable = 0;
+
+  for (const track of uploaded) {
+    try {
+      const file = await getTrackFile(track);
+      const payload = key ? await encryptBlob(file, key) : file;
+      await blobs.put(payload, { ref: track.driveFileId, name: `track-${track.id}` });
+      converted += 1;
+    } catch (error) {
+      console.warn(`No se pudo reescribir el audio de "${track.title}":`, error);
+      unavailable += 1;
+    }
+  }
+  return { converted, unavailable };
+}
+
 // ---------- Descarga (el otro dispositivo) ----------
 
 /**
