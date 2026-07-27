@@ -67,6 +67,21 @@ async function hasUnpublishedUploads(remote: SyncSnapshot): Promise<boolean> {
   return uploaded.some((track) => !published.has(track.id));
 }
 
+/**
+ * ¿El índice remoto trae pistas que este dispositivo no tiene?
+ *
+ * Contrapeso del anterior, y por el mismo motivo: comparar `exportedAt` contra
+ * `lastSyncAt` mezcla relojes de dos dispositivos distintos. Si el que sube va
+ * unos minutos atrasado, su índice nuevo parece viejo y el otro lo ignoraría —
+ * o publicaría el suyo encima. Comparar el contenido no depende de la hora.
+ */
+async function remoteHasNewTracks(remote: SyncSnapshot): Promise<boolean> {
+  const incoming = (remote.tracks ?? []).filter((track) => track?.id);
+  if (incoming.length === 0) return false;
+  const local = new Set((await db.tracks.toArray()).map((track) => track.id));
+  return incoming.some((track) => !local.has(track.id));
+}
+
 async function push(): Promise<SyncResult> {
   return { action: 'pushed', syncedAt: await pushSnapshot() };
 }
@@ -99,7 +114,10 @@ export async function syncNow(opts?: { interactive?: boolean }): Promise<SyncRes
   const { lastSyncAt } = useSyncStore.getState();
   const localChange = await latestLocalChange();
 
-  const remoteChanged = !lastSyncAt || remote.exportedAt > lastSyncAt;
+  const remoteChanged =
+    !lastSyncAt ||
+    remote.exportedAt > lastSyncAt ||
+    (await remoteHasNewTracks(remote.data));
   const localChanged =
     (lastSyncAt ? (localChange ?? '') > lastSyncAt : localChange !== null) ||
     (await hasUnpublishedUploads(remote.data));

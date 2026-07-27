@@ -113,6 +113,35 @@ describe('syncNow — publicar el índice de la biblioteca', () => {
     expect((await syncNow()).action).not.toBe('up-to-date');
   });
 
+  it('trae las pistas nuevas aunque el índice remoto parezca viejo por el reloj', async () => {
+    // El caso real: el teléfono sube y publica, pero su reloj va por detrás del
+    // PC. Comparando solo `exportedAt` contra `lastSyncAt`, el PC descartaría
+    // el índice nuevo — y encima publicaría el suyo, con menos pistas.
+    useSyncStore.setState({ lastSyncAt: '2026-07-27T12:00:00.000Z' });
+    fake.remote.payload = remoteEnvelope('2026-07-27T11:55:00.000Z', [
+      { ...track('nueva'), driveFileId: 'drive-nueva' },
+    ]);
+
+    const result = await syncNow();
+
+    expect(await db.tracks.get('nueva')).toBeDefined();
+    expect(result.action).not.toBe('up-to-date');
+  });
+
+  it('no borra del índice remoto lo que este dispositivo aún no tiene', async () => {
+    useSyncStore.setState({ lastSyncAt: '2026-07-27T12:00:00.000Z' });
+    fake.remote.payload = remoteEnvelope('2026-07-27T11:55:00.000Z', [
+      { ...track('a'), driveFileId: 'd-a' },
+      { ...track('b'), driveFileId: 'd-b' },
+    ]);
+    await db.tracks.put(track('a', { driveFileId: 'd-a' }));
+
+    await syncNow();
+
+    const published = (fake.remote.payload as { data: { tracks: { id: string }[] } }).data;
+    expect(published.tracks.map((t) => t.id).sort()).toEqual(['a', 'b']);
+  });
+
   it('sube por primera vez cuando no hay nada remoto', async () => {
     await db.tracks.put(track('t1', { driveFileId: 'drive-1' }));
 
