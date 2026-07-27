@@ -1,6 +1,5 @@
 import type { AuraSyncEnvelope, EncryptedEnvelope, SyncPayload } from '@aura/core/sync';
 
-import { APP_CONFIG } from '@/config/app';
 import { db } from '@/infrastructure/db/db';
 import { useSyncStore } from '@/stores/syncStore';
 
@@ -8,7 +7,6 @@ import {
   clearKey,
   decryptEnvelope,
   deriveKey,
-  encryptEnvelope,
   loadKey,
   newKdfParams,
   saveKey,
@@ -16,8 +14,9 @@ import {
 } from './crypto';
 import { reuploadTracks } from './library';
 import { BACKUP_KEY, provider } from './provider';
-import { exportSnapshot, mergeSnapshot, totalMerged } from './snapshot';
-import { SNAPSHOT_SCHEMA_VERSION, type SyncSnapshot } from './types';
+import { pushSnapshot } from './push';
+import { mergeSnapshot, totalMerged } from './snapshot';
+import type { SyncSnapshot } from './types';
 
 /**
  * Aura Sync — orquestación de Aura Music.
@@ -36,16 +35,6 @@ export type SyncResult =
   | { action: 'pushed' | 'up-to-date'; syncedAt: string }
   | { action: 'pulled' | 'merged'; syncedAt: string; imported: number };
 
-function envelope(snapshot: SyncSnapshot): AuraSyncEnvelope<SyncSnapshot> {
-  return {
-    app: APP_CONFIG.slug,
-    appVersion: __APP_VERSION__,
-    schemaVersion: SNAPSHOT_SCHEMA_VERSION,
-    exportedAt: new Date().toISOString(),
-    data: snapshot,
-  };
-}
-
 /** Momento del cambio local más reciente, o null si no hay nada que sincronizar. */
 async function latestLocalChange(): Promise<string | null> {
   const [playlists, tracks] = await Promise.all([db.playlists.toArray(), db.tracks.toArray()]);
@@ -56,14 +45,7 @@ async function latestLocalChange(): Promise<string | null> {
 }
 
 async function push(): Promise<SyncResult> {
-  const payload = envelope(await exportSnapshot());
-  const secret = await loadKey();
-  await provider.push(
-    BACKUP_KEY,
-    secret ? await encryptEnvelope(payload, secret.key, secret.kdf) : payload,
-  );
-  useSyncStore.getState().setLastSync(payload.exportedAt);
-  return { action: 'pushed', syncedAt: payload.exportedAt };
+  return { action: 'pushed', syncedAt: await pushSnapshot() };
 }
 
 /** Devuelve el snapshot en claro: descifra si viene cifrado. */

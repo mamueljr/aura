@@ -5,6 +5,7 @@ import { saveTrackToOpfs } from '@/infrastructure/fs/opfs';
 
 import { decryptBlobIfNeeded, encryptBlob, loadKey } from './crypto';
 import { provider } from './provider';
+import { pushSnapshot } from './push';
 
 /**
  * Aura Sync — biblioteca de música en la nube (Fase B, subida).
@@ -75,30 +76,60 @@ export async function uploadLibrary(
   const secret = await loadKey();
   const report: UploadReport = { uploaded: 0, unavailable: 0, failed: 0 };
 
-  for (const [index, track] of pending.entries()) {
-    if (shouldStop?.()) break;
-    onProgress?.({ done: index, total: pending.length, current: track.title });
+  // En paralelo (moderado): con muchos archivos pequeños manda la latencia de
+  // cada petición, no el ancho de banda, así que subir de una en una tarda
+  // muchísimo más. Se mantiene bajo para no saturar la red del móvil ni topar
+  // con los límites de Drive.
+  const CONCURRENCY = 3;
+  const queue = [...pending];
+  let done = 0;
 
-    let file: File;
-    try {
-      file = await getTrackFile(track);
-    } catch {
-      report.unavailable += 1;
-      continue;
-    }
+  // El canal se pasa como parámetro: dentro del closure TypeScript ya no
+  // conserva que la comprobación de arriba lo dejó definido.
+  async function worker(channel: NonNullable<typeof provider.blobs>): Promise<void> {
+    for (;;) {
+      if (shouldStop?.()) return;
+      const track = queue.shift();
+      if (!track) return;
 
-    try {
-      const payload = secret ? await encryptBlob(file, secret.key) : file;
-      const ref = await blobs.put(payload, { name: `track-${track.id}` });
-      await db.tracks.update(track.id, { driveFileId: ref });
-      report.uploaded += 1;
-    } catch (error) {
-      console.warn(`No se pudo subir "${track.title}":`, error);
-      report.failed += 1;
+      onProgress?.({ done, total: pending.length, current: track.title });
+
+      let file: File;
+      try {
+        file = await getTrackFile(track);
+      } catch {
+        report.unavailable += 1;
+        done += 1;
+        continue;
+      }
+
+      try {
+        const payload = secret ? await encryptBlob(file, secret.key) : file;
+        const ref = await channel.put(payload, { name: `track-${track.id}` });
+        await db.tracks.update(track.id, { driveFileId: ref });
+        report.uploaded += 1;
+      } catch (error) {
+        console.warn(`No se pudo subir "${track.title}":`, error);
+        report.failed += 1;
+      }
+      done += 1;
     }
   }
 
+  await Promise.all(
+    Array.from({ length: Math.min(CONCURRENCY, pending.length) }, () => worker(blobs)),
+  );
+
   onProgress?.({ done: pending.length, total: pending.length, current: '' });
+
+  // Imprescindible, y siempre: los `driveFileId` solo existen en local hasta
+  // que se publica el índice. Sin esto el otro dispositivo descarga un snapshot
+  // sin pistas y no ve nada, aunque el audio ya esté en la nube. Se publica
+  // aunque no se haya subido nada nuevo (el índice puede venir de una sesión
+  // anterior) y aunque se haya parado a medias: así el otro dispositivo ve al
+  // menos lo que sí está.
+  await pushSnapshot();
+
   return report;
 }
 

@@ -1,4 +1,5 @@
 import type { Track } from '@/core/types';
+import { rebuildAggregates } from '@/infrastructure/db/aggregates';
 import { db } from '@/infrastructure/db/db';
 
 import type { SyncSnapshot } from './types';
@@ -148,6 +149,11 @@ export async function mergeSnapshot(remote: SyncSnapshot): Promise<MergeReport> 
       report.settings += 1;
     }
   });
+
+  // Los índices de álbum/artista/género solo los reconstruye el escáner, así
+  // que sin esto las pistas llegadas de la nube saldrían en "todas las
+  // canciones" pero no en las vistas por álbum o artista.
+  if (report.tracks > 0) await rebuildAggregates();
 
   return report;
 }
