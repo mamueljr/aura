@@ -217,9 +217,33 @@ no técnica. Se deja abierta para la fase de diferenciación.
 
 ## 9. Aura Sync — Fase B: biblioteca de música en la nube ✅ implementada
 
-> **Estado:** el flujo completo (subir en un dispositivo → reproducir en otro)
-> está implementado y cubierto por tests, pero **nunca se ha ejercitado contra
-> Drive de verdad**. La primera subida real es la prueba pendiente.
+> **Estado: ✅ funcionando en producción** (verificado el 2026-07-27 subiendo
+> desde el teléfono y reproduciendo en el PC).
+
+### Lo que solo apareció al probar contra Drive de verdad
+
+Cuatro fallos que los tests con proveedor falso no detectaban. Todos tenían la
+misma raíz: **la decisión de sincronizar se apoyaba en señales que no reflejaban
+lo que realmente había cambiado.**
+
+1. **El índice no se publicaba tras subir.** `uploadLibrary` guardaba los
+   `driveFileId` solo en local; el otro dispositivo bajaba un índice sin pistas
+   aunque el audio ya estuviera en la nube. Ahora se publica siempre al final.
+2. **Subir no contaba como "cambio local".** `latestLocalChange()` miraba solo
+   playlists y reproducciones, y subir no toca ninguna marca de tiempo → el
+   teléfono decía "Todo está al día" y no publicaba nada. Peor: sin pistas
+   pendientes la UI ocultaba el botón, dejando al usuario sin salida. Lo
+   resuelve `hasUnpublishedUploads()`, comparando contenido.
+3. **Se comparaban relojes de dos dispositivos.** `exportedAt` (del que sube)
+   contra `lastSyncAt` (del que baja): con desfase horario, un índice recién
+   publicado parece viejo → el otro lo descartaba y publicaba el suyo, con
+   menos pistas, encima del bueno. Lo resuelve `remoteHasNewTracks()`.
+4. **Sin auto-sync ni reconstrucción de índices** (albums/artists/genres) al
+   recibir pistas.
+
+**Lección para el resto del ecosistema:** cuando algo se sincroniza, la señal de
+"esto cambió" debe derivarse del **contenido**, no de marcas de tiempo — menos
+aún de relojes de otro dispositivo.
 
 **Cómo quedó**
 - `services/sync/library.ts`: `uploadLibrary()` sube pista a pista, saltando lo
@@ -238,9 +262,18 @@ no técnica. Se deja abierta para la fase de diferenciación.
 2. **Cuota**: la UI muestra cuánto falta por subir, pero no consulta el espacio
    libre real de Drive (`about?fields=storageQuota`).
 3. **Limpieza**: si se borra una pista, su archivo en Drive queda huérfano
-   (existe `removeUploadedTrack`, pero nadie lo llama todavía).
+   (existe `removeUploadedTrack`, pero nadie lo llama todavía). Hay archivos
+   huérfanos de las pruebas: se subieron, se desinstaló la PWA y con ella se
+   perdieron los `driveFileId` que los referenciaban.
 4. **Duplicados**: si el dispositivo B además escanea su propia copia de la
    misma música, tendrá la pista dos veces (ids distintos por `folderId`).
+5. **Velocidad de subida**: se sube de 3 en 3. Está sin medir si ese es el
+   límite real o lo es la subida de la red.
+
+> ⚠️ **Desinstalar la PWA borra su almacenamiento local**, y con él las fichas
+> de las pistas y sus `driveFileId`. El audio sigue en Drive pero queda
+> huérfano: hay que volver a subir. Conviene tenerlo en cuenta antes de sugerir
+> "reinstala la app" como diagnóstico.
 
 ---
 
