@@ -35,13 +35,36 @@ export type SyncResult =
   | { action: 'pushed' | 'up-to-date'; syncedAt: string }
   | { action: 'pulled' | 'merged'; syncedAt: string; imported: number };
 
-/** Momento del cambio local más reciente, o null si no hay nada que sincronizar. */
+/**
+ * Momento del cambio local más reciente, o null si no hay nada que sincronizar.
+ *
+ * Incluye `addedAt`: si solo se miraran playlists y reproducciones, una
+ * biblioteca recién escaneada (sin listas ni escuchas) parecería "sin cambios"
+ * y nunca se publicaría.
+ */
 async function latestLocalChange(): Promise<string | null> {
   const [playlists, tracks] = await Promise.all([db.playlists.toArray(), db.tracks.toArray()]);
   let latest = 0;
   for (const playlist of playlists) latest = Math.max(latest, playlist.updatedAt ?? 0);
-  for (const track of tracks) latest = Math.max(latest, track.lastPlayedAt ?? 0);
+  for (const track of tracks) {
+    latest = Math.max(latest, track.lastPlayedAt ?? 0, track.addedAt ?? 0);
+  }
   return latest > 0 ? new Date(latest).toISOString() : null;
+}
+
+/**
+ * ¿Hay audio subido desde este dispositivo que el índice remoto todavía no
+ * menciona?
+ *
+ * Es la comprobación decisiva: subir el audio guarda el `driveFileId` en local,
+ * y sin publicar el índice el otro dispositivo no ve nada. Las marcas de tiempo
+ * no bastan para detectarlo, porque subir no modifica ninguna.
+ */
+async function hasUnpublishedUploads(remote: SyncSnapshot): Promise<boolean> {
+  const uploaded = (await db.tracks.toArray()).filter((track) => track.driveFileId);
+  if (uploaded.length === 0) return false;
+  const published = new Set((remote.tracks ?? []).map((track) => track.id));
+  return uploaded.some((track) => !published.has(track.id));
 }
 
 async function push(): Promise<SyncResult> {
@@ -77,7 +100,9 @@ export async function syncNow(opts?: { interactive?: boolean }): Promise<SyncRes
   const localChange = await latestLocalChange();
 
   const remoteChanged = !lastSyncAt || remote.exportedAt > lastSyncAt;
-  const localChanged = lastSyncAt ? (localChange ?? '') > lastSyncAt : localChange !== null;
+  const localChanged =
+    (lastSyncAt ? (localChange ?? '') > lastSyncAt : localChange !== null) ||
+    (await hasUnpublishedUploads(remote.data));
 
   if (!remoteChanged && !localChanged) {
     const syncedAt = new Date().toISOString();
