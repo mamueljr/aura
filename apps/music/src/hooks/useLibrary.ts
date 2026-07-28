@@ -105,22 +105,28 @@ export function useFavoriteTracks() {
   }, []);
 }
 
+// Las playlists borradas conservan su fila como lápida para que el borrado
+// viaje entre dispositivos (ver `deletePlaylist`), así que la app las oculta.
 export function usePlaylists() {
   return useLiveQuery(async () => {
     const playlists = await db.playlists.toArray();
-    return playlists.sort((a, b) => b.updatedAt - a.updatedAt);
+    return playlists.filter((p) => !p.deletedAt).sort((a, b) => b.updatedAt - a.updatedAt);
   }, []);
 }
 
 export function usePlaylist(id: string | undefined) {
-  return useLiveQuery(async () => (id ? db.playlists.get(id) : undefined), [id]);
+  return useLiveQuery(async () => {
+    if (!id) return undefined;
+    const playlist = await db.playlists.get(id);
+    return playlist?.deletedAt ? undefined : playlist;
+  }, [id]);
 }
 
 export function usePlaylistTracks(id: string | undefined) {
   return useLiveQuery(async () => {
     if (!id) return undefined;
     const playlist = await db.playlists.get(id);
-    if (!playlist) return [];
+    if (!playlist || playlist.deletedAt) return [];
     const tracks = await db.tracks.bulkGet(playlist.trackIds);
     return tracks.filter((t): t is Track => !!t);
   }, [id]);

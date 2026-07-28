@@ -27,8 +27,14 @@ export async function renamePlaylist(id: string, name: string, description?: str
   });
 }
 
+/**
+ * Borra dejando lápida (`deletedAt`) en vez de eliminar la fila: así el borrado
+ * viaja a los demás dispositivos. Sin esto, el otro lado volvería a mandar la
+ * playlist en la siguiente sincronización y reaparecería.
+ */
 export async function deletePlaylist(id: string) {
-  await db.playlists.delete(id);
+  const now = Date.now();
+  await db.playlists.update(id, { deletedAt: now, updatedAt: now, trackIds: [] });
 }
 
 export async function duplicatePlaylist(id: string, copySuffix: string): Promise<Playlist | null> {

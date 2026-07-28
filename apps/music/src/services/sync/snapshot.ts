@@ -2,7 +2,7 @@ import type { Track } from '@/core/types';
 import { rebuildAggregates } from '@/infrastructure/db/aggregates';
 import { db } from '@/infrastructure/db/db';
 
-import type { SyncSnapshot } from './types';
+import { TOMBSTONE_RETENTION_DAYS, type SyncSnapshot } from './types';
 
 /**
  * Snapshot portable de Aura Music: lo que vale la pena replicar entre
@@ -28,8 +28,13 @@ export async function exportSnapshot(): Promise<SyncSnapshot> {
   ]);
 
   return {
+    // Van también las borradas: su lápida es lo que propaga el borrado.
     playlists,
     favorites: tracks.filter((track) => track.favorite === 1).map((track) => track.id),
+    // Solo las que tienen fecha: sin ella no se puede decidir quién gana.
+    favoriteMarks: tracks
+      .filter((track) => track.favoriteAt != null)
+      .map((track) => ({ id: track.id, favorite: track.favorite, at: track.favoriteAt! })),
     history: tracks
       .filter((track) => track.playCount > 0 || track.lastPlayedAt != null)
       .map(({ id, playCount, lastPlayedAt }) => ({ id, playCount, lastPlayedAt })),
@@ -71,21 +76,20 @@ export interface MergeReport {
  * le corresponde:
  *
  * - **playlists**: última-escritura-gana por `updatedAt`, registro a registro.
- *   Las que solo existen en el remoto se insertan.
+ *   Las que solo existen en el remoto se insertan. Borrar sella `updatedAt`, así
+ *   que la lápida gana igual que cualquier otro cambio y el borrado se propaga.
  * - **history**: monotónico — `playCount` y `lastPlayedAt` se quedan con el
  *   máximo de ambos lados. Es lo correcto para contadores: así no se pierden
  *   reproducciones hechas en el otro dispositivo.
- * - **favorites**: unión. Sin marca de tiempo por pista no se puede distinguir
- *   "lo quité" de "el otro no lo tenía", y perder un favorito molesta más que
- *   conservar uno de más.
+ * - **favorites**: gana el cambio con `favoriteAt` más reciente, en ambos
+ *   sentidos — quitar un favorito también se propaga. Con respaldos antiguos
+ *   (sin fechas) se cae a unión, que era el comportamiento anterior.
  * - **settings**: solo se rellenan las claves ausentes; las locales mandan,
  *   porque son preferencias de ESTE dispositivo.
  * - **tracks**: solo se insertan las que faltan, en una carpeta sintética
  *   "Aura Sync". Nunca se pisan las locales: si la pista ya existe aquí, su
  *   copia local (y su ruta real) manda sobre la de la nube.
  *
- * ⚠️ Limitación conocida: sin tombstones, borrar una playlist o quitar un
- * favorito no se propaga — puede reaparecer desde el otro dispositivo.
  */
 export async function mergeSnapshot(remote: SyncSnapshot): Promise<MergeReport> {
   const report: MergeReport = {
@@ -136,11 +140,26 @@ export async function mergeSnapshot(remote: SyncSnapshot): Promise<MergeReport> 
       }
     }
 
-    for (const id of remote.favorites ?? []) {
-      const local = await db.tracks.get(id);
-      if (!local || local.favorite === 1) continue;
-      await db.tracks.update(id, { favorite: 1 });
+    // v3: con fecha, gana el cambio más reciente — así QUITAR un favorito
+    // también se propaga. Antes solo se sumaban ids y era imposible.
+    for (const mark of remote.favoriteMarks ?? []) {
+      const local = await db.tracks.get(mark.id);
+      if (!local) continue;
+      if ((local.favoriteAt ?? 0) >= mark.at) continue;
+      if (local.favorite === mark.favorite) continue;
+      await db.tracks.update(mark.id, { favorite: mark.favorite, favoriteAt: mark.at });
       report.favorites += 1;
+    }
+
+    // Respaldos anteriores a v3: sin fechas, solo se pueden sumar. Se ignoran
+    // las pistas que ya traen marca propia, para no revivir un favorito quitado.
+    if (!remote.favoriteMarks) {
+      for (const id of remote.favorites ?? []) {
+        const local = await db.tracks.get(id);
+        if (!local || local.favorite === 1 || local.favoriteAt != null) continue;
+        await db.tracks.update(id, { favorite: 1 });
+        report.favorites += 1;
+      }
     }
 
     for (const [key, value] of Object.entries(remote.settings ?? {})) {
@@ -156,6 +175,23 @@ export async function mergeSnapshot(remote: SyncSnapshot): Promise<MergeReport> 
   if (report.tracks > 0) await rebuildAggregates();
 
   return report;
+}
+
+/**
+ * Elimina las lápidas ya caducadas.
+ *
+ * Se espera bastante (30 días) a propósito: una lápida borrada antes de que el
+ * otro dispositivo sincronice haría reaparecer la playlist, que es justo lo que
+ * se quería evitar.
+ */
+export async function purgeOldTombstones(): Promise<void> {
+  const cutoff = Date.now() - TOMBSTONE_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+  const expired = await db.playlists
+    .filter((playlist) => !!playlist.deletedAt && playlist.deletedAt < cutoff)
+    .toArray();
+  if (expired.length > 0) {
+    await db.playlists.bulkDelete(expired.map((playlist) => playlist.id));
+  }
 }
 
 /** Total de registros tocados, para el mensaje de la UI. */

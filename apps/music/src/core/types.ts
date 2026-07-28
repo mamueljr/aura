@@ -28,6 +28,12 @@ export interface Track {
   searchText: string;
   /** 0 | 1 so Dexie can index it */
   favorite: 0 | 1;
+  /**
+   * Cuándo se cambió `favorite` por última vez. Sin esta marca la fusión no
+   * puede distinguir "lo quité aquí" de "el otro dispositivo aún no lo tenía",
+   * y quitar un favorito nunca se propagaría.
+   */
+  favoriteAt?: number;
   playCount: number;
   lastPlayedAt?: number;
   addedAt: number;
@@ -82,6 +88,12 @@ export interface Playlist {
   trackIds: string[];
   createdAt: number;
   updatedAt: number;
+  /**
+   * Tombstone: cuándo se borró. La fila se conserva para que el borrado viaje
+   * a los demás dispositivos; sin esto la playlist reaparecería en la siguiente
+   * sincronización. Se purga pasado `TOMBSTONE_RETENTION_DAYS`.
+   */
+  deletedAt?: number;
 }
 
 /**

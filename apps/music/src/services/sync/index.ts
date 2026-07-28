@@ -15,7 +15,7 @@ import {
 import { reuploadTracks } from './library';
 import { BACKUP_KEY, provider } from './provider';
 import { pushSnapshot } from './push';
-import { mergeSnapshot, totalMerged } from './snapshot';
+import { mergeSnapshot, purgeOldTombstones, totalMerged } from './snapshot';
 import type { SyncSnapshot } from './types';
 
 /**
@@ -106,6 +106,7 @@ async function openPayload(payload: SyncPayload): Promise<AuraSyncEnvelope<SyncS
 export async function syncNow(opts?: { interactive?: boolean }): Promise<SyncResult> {
   // Pre-vuelo: falla rápido si la sesión ya no sirve, antes de tocar nada.
   await provider.getAccessToken(opts);
+  await purgeOldTombstones();
 
   const payload = await provider.pull(BACKUP_KEY);
   if (!payload) return push();

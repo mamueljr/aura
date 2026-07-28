@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { Playlist, Track } from '@/core/types';
 import { db } from '@/infrastructure/db/db';
 
-import { exportSnapshot, mergeSnapshot } from './snapshot';
+import { exportSnapshot, mergeSnapshot, purgeOldTombstones } from './snapshot';
 import type { SyncSnapshot } from './types';
 
 /**
@@ -128,6 +128,73 @@ describe('mergeSnapshot — historial', () => {
 
     expect(report.history).toBe(0);
     expect(await db.tracks.get('inexistente')).toBeUndefined();
+  });
+});
+
+describe('propagar borrados', () => {
+  it('una playlist borrada viaja como lápida y no reaparece', async () => {
+    // El dispositivo A la borró: su lápida es más reciente que la copia de B.
+    await db.playlists.put(playlist('p1', 10, { name: 'Mi lista' }));
+
+    await mergeSnapshot(
+      snapshot({ playlists: [playlist('p1', 20, { deletedAt: 20 })] }),
+    );
+
+    const local = await db.playlists.get('p1');
+    expect(local?.deletedAt).toBe(20);
+  });
+
+  it('la lápida viaja en el snapshot', async () => {
+    await db.playlists.put(playlist('p1', 20, { deletedAt: 20 }));
+
+    const result = await exportSnapshot();
+
+    // Si se omitiera, el otro dispositivo la reenviaría y reaparecería.
+    expect(result.playlists.map((p) => p.id)).toEqual(['p1']);
+  });
+
+  it('quitar un favorito se propaga', async () => {
+    await db.tracks.put(track('t1', { favorite: 1, favoriteAt: 10 }));
+
+    await mergeSnapshot(
+      snapshot({ favoriteMarks: [{ id: 't1', favorite: 0, at: 20 }] }),
+    );
+
+    expect((await db.tracks.get('t1'))?.favorite).toBe(0);
+  });
+
+  it('no revive un favorito que se quitó después', async () => {
+    // Local lo quitó en t=30; el remoto trae una marca más vieja.
+    await db.tracks.put(track('t1', { favorite: 0, favoriteAt: 30 }));
+
+    await mergeSnapshot(
+      snapshot({ favoriteMarks: [{ id: 't1', favorite: 1, at: 20 }] }),
+    );
+
+    expect((await db.tracks.get('t1'))?.favorite).toBe(0);
+  });
+
+  it('un respaldo antiguo no revive un favorito ya quitado', async () => {
+    await db.tracks.put(track('t1', { favorite: 0, favoriteAt: 30 }));
+
+    // Sin `favoriteMarks`: sería la lista de ids de v1/v2.
+    await mergeSnapshot(snapshot({ favorites: ['t1'] }));
+
+    expect((await db.tracks.get('t1'))?.favorite).toBe(0);
+  });
+
+  it('purga las lápidas caducadas, no las recientes', async () => {
+    const hace40Dias = Date.now() - 40 * 24 * 60 * 60 * 1000;
+    await db.playlists.bulkPut([
+      playlist('vieja', hace40Dias, { deletedAt: hace40Dias }),
+      playlist('reciente', Date.now(), { deletedAt: Date.now() }),
+    ]);
+
+    await purgeOldTombstones();
+
+    expect(await db.playlists.get('vieja')).toBeUndefined();
+    // Purgarla antes de que el otro dispositivo sincronice la haría reaparecer.
+    expect(await db.playlists.get('reciente')).toBeDefined();
   });
 });
 
