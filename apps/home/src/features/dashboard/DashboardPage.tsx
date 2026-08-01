@@ -6,7 +6,6 @@ import {
   CircleCheckBig,
   ListTodo,
   Receipt,
-  Wallet,
 } from 'lucide-react'
 import { Badge } from '@aura/ui/components/badge'
 import {
@@ -42,32 +41,82 @@ function dueBadgeVariant(days: number): 'destructive' | 'default' | 'secondary' 
   return 'secondary'
 }
 
-function StatCard({
+/**
+ * Cabecera: saludo y gasto del mes como dato protagonista.
+ *
+ * Antes el saludo era una línea suelta y el gasto una tarjeta más entre cuatro
+ * iguales, así que la pantalla no tenía a dónde mirar primero. El degradado usa
+ * la paleta de marca, que el panel no estaba aprovechando.
+ */
+function Hero({ monthTotal }: { monthTotal: number }) {
+  return (
+    <motion.section
+      {...fadeUp(0)}
+      className="relative overflow-hidden rounded-3xl border border-aura-500/15 bg-gradient-to-br from-aura-500/15 via-card to-card p-5"
+    >
+      {/* Halo decorativo; `aria-hidden` porque no aporta información. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-16 -top-20 size-52 rounded-full bg-aura-500/20 blur-3xl"
+      />
+      <div className="relative space-y-4">
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            {formatLongDate()}
+          </p>
+          <h2 className="font-heading text-3xl font-semibold tracking-tight">
+            {greeting()}
+          </h2>
+        </div>
+        <div>
+          <p className="font-heading text-4xl font-semibold tracking-tight text-foreground">
+            {formatCurrency(monthTotal)}
+          </p>
+          <p className="mt-0.5 text-sm text-muted-foreground">Gastado este mes</p>
+        </div>
+      </div>
+    </motion.section>
+  )
+}
+
+/**
+ * Indicador compacto. Cada uno lleva su propio tono: en monocromo los cuatro
+ * números se leían como un bloque indistinto.
+ */
+function StatChip({
   icon: Icon,
   label,
   value,
+  tone,
+  to,
   delay,
 }: {
   icon: React.ComponentType<{ className?: string }>
   label: string
   value: string
+  tone: string
+  to: string
   delay: number
 }) {
   return (
     <motion.div {...fadeUp(delay)}>
-      <Card>
-        <CardContent className="flex items-center gap-3">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
-            <Icon className="size-5" />
-          </div>
-          <div className="min-w-0">
-            <p className="truncate font-heading text-lg font-semibold leading-tight">
-              {value}
-            </p>
-            <p className="text-xs text-muted-foreground">{label}</p>
-          </div>
-        </CardContent>
-      </Card>
+      <Link
+        to={to}
+        className="flex h-full flex-col gap-2 rounded-2xl border bg-card p-3 transition-colors hover:bg-accent/50"
+      >
+        {/* El color va en el contenedor y el icono lo hereda (`currentColor`). */}
+        <span
+          className="flex size-9 items-center justify-center rounded-xl"
+          style={{
+            color: tone,
+            backgroundColor: `color-mix(in oklch, ${tone} 18%, transparent)`,
+          }}
+        >
+          <Icon className="size-4.5" />
+        </span>
+        <span className="font-heading text-xl font-semibold leading-none">{value}</span>
+        <span className="text-xs leading-tight text-muted-foreground">{label}</span>
+      </Link>
     </motion.div>
   )
 }
@@ -165,39 +214,33 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <motion.section {...fadeUp(0)} className="space-y-1">
-        <p className="text-sm text-muted-foreground">
-          {formatLongDate()}
-        </p>
-        <h2 className="font-heading text-2xl font-semibold tracking-tight">
-          {greeting()}
-        </h2>
-      </motion.section>
+      <Hero monthTotal={monthTotal} />
 
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard
-          icon={Wallet}
-          label="Gastado este mes"
-          value={formatCurrency(monthTotal)}
-          delay={0.05}
-        />
-        <StatCard
+      {/* Tres en fila: caben en móvil sin apretarse y llevan a su sección. */}
+      <section className="grid grid-cols-3 gap-3">
+        <StatChip
           icon={Receipt}
           label="Pagos en 7 días"
           value={String(dueSoon.length)}
-          delay={0.1}
+          tone="var(--chart-2)"
+          to="/servicios"
+          delay={0.05}
         />
-        <StatCard
+        <StatChip
           icon={ListTodo}
           label="Tareas pendientes"
           value={String(pendingTasks.length)}
-          delay={0.15}
+          tone="var(--chart-3)"
+          to="/tareas"
+          delay={0.1}
         />
-        <StatCard
+        <StatChip
           icon={CalendarDays}
           label="Eventos próximos"
           value={String(upcomingEvents.length)}
-          delay={0.2}
+          tone="var(--chart-4)"
+          to="/calendario"
+          delay={0.15}
         />
       </section>
 
@@ -267,17 +310,19 @@ export function DashboardPage() {
             <CardHeader>
               <CardTitle className="text-base">Accesos rápidos</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-4 gap-2">
+            <CardContent className="grid grid-cols-4 gap-x-2 gap-y-3">
               {MODULES.slice(0, 8).map((m) => (
                 <Link
                   key={m.id}
                   to={m.path}
-                  className="flex flex-col items-center gap-1.5 rounded-xl p-2 text-center transition-colors hover:bg-accent"
+                  className="group flex flex-col items-center gap-1.5 rounded-xl py-1.5 text-center transition-colors"
                 >
-                  <div className="flex size-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+                  <div className="flex size-11 items-center justify-center rounded-2xl bg-aura-500/10 text-primary transition-colors group-hover:bg-aura-500/20">
                     <m.icon className="size-5" />
                   </div>
-                  <span className="w-full truncate text-[11px] text-muted-foreground">
+                  {/* Sin `truncate`: cortaba etiquetas como "Mantenimiento" a
+                      media palabra. Dos líneas caben de sobra. */}
+                  <span className="text-[11px] leading-tight text-muted-foreground">
                     {m.label}
                   </span>
                 </Link>
