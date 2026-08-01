@@ -21,10 +21,11 @@ import { TOMBSTONE_RETENTION_DAYS, type SyncSnapshot } from './types';
  * otro dispositivo ve exactamente lo que puede reproducir.
  */
 export async function exportSnapshot(): Promise<SyncSnapshot> {
-  const [playlists, tracks, settings] = await Promise.all([
+  const [playlists, tracks, settings, covers] = await Promise.all([
     db.playlists.toArray(),
     db.tracks.toArray(),
     db.settings.toArray(),
+    db.covers.toArray(),
   ]);
 
   return {
@@ -44,6 +45,10 @@ export async function exportSnapshot(): Promise<SyncSnapshot> {
     tracks: tracks
       .filter((track): track is Track & { driveFileId: string } => !!track.driveFileId)
       .map(({ folderId: _folderId, opfs: _opfs, ...rest }) => rest),
+    // Solo la referencia: los bytes de la imagen van por el canal de binarios.
+    covers: covers
+      .filter((cover): cover is typeof cover & { driveFileId: string } => !!cover.driveFileId)
+      .map((cover) => ({ id: cover.id, driveFileId: cover.driveFileId })),
   };
 }
 
@@ -168,6 +173,15 @@ export async function mergeSnapshot(remote: SyncSnapshot): Promise<MergeReport> 
       report.settings += 1;
     }
   });
+
+  // Fichas de carátula sin imagen: se descargan al pintarlas por primera vez.
+  // Nunca se pisa una portada que ya tiene su blob en este dispositivo.
+  for (const incoming of remote.covers ?? []) {
+    if (!incoming?.id || !incoming.driveFileId) continue;
+    const local = await db.covers.get(incoming.id);
+    if (local?.blob) continue;
+    await db.covers.put({ id: incoming.id, driveFileId: incoming.driveFileId });
+  }
 
   // Los índices de álbum/artista/género solo los reconstruye el escáner, así
   // que sin esto las pistas llegadas de la nube saldrían en "todas las

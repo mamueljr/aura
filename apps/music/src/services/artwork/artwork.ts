@@ -1,5 +1,6 @@
 import { db } from '@/infrastructure/db/db';
 import { hash53 } from '@/lib/utils';
+import { downloadCoverFromCloud } from '@/services/sync/library';
 
 /** Object-URL cache: covers are tiny (embedded art), one URL per cover id. */
 const urlCache = new Map<string, string>();
@@ -15,7 +16,13 @@ export async function getCoverUrl(coverId: string): Promise<string | null> {
   const load = (async () => {
     const cover = await db.covers.get(coverId);
     if (!cover) return null;
-    const url = URL.createObjectURL(cover.blob);
+
+    // Llegó por Aura Sync sin imagen: se baja la primera vez que se pinta y
+    // queda guardada, así el resto de la sesión (y las siguientes) es local.
+    const blob = cover.blob ?? (await downloadCoverFromCloud(cover));
+    if (!blob) return null;
+
+    const url = URL.createObjectURL(blob);
     urlCache.set(coverId, url);
     return url;
   })().finally(() => pendingLoads.delete(coverId));

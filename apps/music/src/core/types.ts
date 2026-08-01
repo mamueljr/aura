@@ -78,7 +78,14 @@ export interface GenreEntry {
 export interface CoverArt {
   /** hash of the image bytes (deduplicated across an album) */
   id: string;
-  blob: Blob;
+  /**
+   * Ausente cuando la portada llegó por Aura Sync y aún no se ha descargado:
+   * la ficha existe (sabemos que hay carátula y dónde), la imagen se baja al
+   * pintarla por primera vez.
+   */
+  blob?: Blob;
+  /** Id de la imagen en Drive, si está subida. */
+  driveFileId?: string;
 }
 
 export interface Playlist {

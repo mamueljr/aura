@@ -31,6 +31,12 @@ export interface SyncSnapshot {
    * habría forma de escucharlas.
    */
   tracks?: CloudTrack[];
+  /**
+   * Referencias a las carátulas subidas (v4). Solo el id y dónde está la
+   * imagen: los bytes viajan por el canal de binarios, y se bajan al pintarlas.
+   * Deduplicadas por hash, así que hay una por álbum, no por pista.
+   */
+  covers?: Array<{ id: string; driveFileId: string }>;
 }
 
 /** Ficha de una pista disponible en la nube. */
@@ -39,12 +45,13 @@ export type CloudTrack = Omit<Track, 'folderId' | 'opfs'> & { driveFileId: strin
 /**
  * Versión del esquema del snapshot.
  * - v2 añadió `tracks` (biblioteca en la nube).
- * - v3 añade `favoriteMarks` y las lápidas de playlists (propagar borrados).
+ * - v3 añadió `favoriteMarks` y las lápidas de playlists (propagar borrados).
+ * - v4 añade `covers` (las carátulas dejan de ser locales).
  *
  * Los respaldos anteriores se siguen leyendo: los campos nuevos son opcionales
  * y `favorites` se mantiene como respaldo de lectura.
  */
-export const SNAPSHOT_SCHEMA_VERSION = 3;
+export const SNAPSHOT_SCHEMA_VERSION = 4;
 
 /** Días que se conserva una lápida antes de purgarla. */
 export const TOMBSTONE_RETENTION_DAYS = 30;

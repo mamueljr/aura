@@ -120,6 +120,9 @@ export async function uploadLibrary(
     Array.from({ length: Math.min(CONCURRENCY, pending.length) }, () => worker(blobs)),
   );
 
+  // Las carátulas van después: pesan poco y no deben retrasar el audio.
+  await uploadCovers(secret?.key ?? null);
+
   onProgress?.({ done: pending.length, total: pending.length, current: '' });
 
   // Imprescindible, y siempre: los `driveFileId` solo existen en local hasta
@@ -174,6 +177,63 @@ export async function reuploadTracks(key: CryptoKey | null): Promise<{
     }
   }
   return { converted, unavailable };
+}
+
+// ---------- Portadas ----------
+
+/**
+ * Sube las carátulas de las pistas que están en la nube.
+ *
+ * Van aparte del audio y deduplicadas por su hash (una por álbum, no por
+ * pista), así que pesan poco. Sin esto, un dispositivo que nunca escanea la
+ * biblioteca mostraría el degradado generado en todas las canciones.
+ */
+async function uploadCovers(key: CryptoKey | null): Promise<number> {
+  const blobs = provider.blobs;
+  if (!blobs) return 0;
+
+  const needed = new Set(
+    (await db.tracks.toArray())
+      .filter((track) => track.driveFileId && track.coverId)
+      .map((track) => track.coverId!),
+  );
+  if (needed.size === 0) return 0;
+
+  let uploaded = 0;
+  for (const coverId of needed) {
+    const cover = await db.covers.get(coverId);
+    if (!cover?.blob || cover.driveFileId) continue;
+    try {
+      const payload = key ? await encryptBlob(cover.blob, key) : cover.blob;
+      const ref = await blobs.put(payload, { name: `cover-${coverId}` });
+      await db.covers.update(coverId, { driveFileId: ref });
+      uploaded += 1;
+    } catch (error) {
+      console.warn(`No se pudo subir una carátula:`, error);
+    }
+  }
+  return uploaded;
+}
+
+/**
+ * Baja una carátula que llegó por sync y la guarda, para no repetir la descarga.
+ * Devuelve `null` si falla: la app cae al degradado generado, que es aceptable.
+ */
+export async function downloadCoverFromCloud(cover: {
+  id: string;
+  driveFileId?: string;
+}): Promise<Blob | null> {
+  if (!cover.driveFileId || !provider.blobs) return null;
+  try {
+    const raw = await provider.blobs.get(cover.driveFileId);
+    const secret = await loadKey();
+    const blob = await decryptBlobIfNeeded(raw, secret?.key ?? null);
+    await db.covers.update(cover.id, { blob });
+    return blob;
+  } catch (error) {
+    console.warn('No se pudo descargar una carátula:', error);
+    return null;
+  }
 }
 
 // ---------- Descarga (el otro dispositivo) ----------

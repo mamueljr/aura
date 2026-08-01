@@ -198,6 +198,40 @@ describe('propagar borrados', () => {
   });
 });
 
+describe('portadas', () => {
+  it('exporta solo la referencia, nunca la imagen', async () => {
+    await db.covers.put({ id: 'c1', blob: new Blob(['img']), driveFileId: 'drive-c1' });
+
+    const [exported] = (await exportSnapshot()).covers ?? [];
+
+    expect(exported).toEqual({ id: 'c1', driveFileId: 'drive-c1' });
+    expect(exported).not.toHaveProperty('blob');
+  });
+
+  it('omite las que aún no están subidas', async () => {
+    await db.covers.put({ id: 'c1', blob: new Blob(['img']) });
+
+    expect((await exportSnapshot()).covers).toEqual([]);
+  });
+
+  it('guarda la ficha sin imagen para bajarla al pintarla', async () => {
+    await mergeSnapshot(snapshot({ covers: [{ id: 'c1', driveFileId: 'drive-c1' }] }));
+
+    const local = await db.covers.get('c1');
+    expect(local?.driveFileId).toBe('drive-c1');
+    expect(local?.blob).toBeUndefined();
+  });
+
+  it('no pisa una portada que ya tiene imagen aquí', async () => {
+    await db.covers.put({ id: 'c1', blob: new Blob(['la buena']) });
+
+    await mergeSnapshot(snapshot({ covers: [{ id: 'c1', driveFileId: 'drive-c1' }] }));
+
+    // Pisarla obligaría a re-descargar una imagen que ya estaba local.
+    expect(await (await db.covers.get('c1'))!.blob!.text()).toBe('la buena');
+  });
+});
+
 describe('snapshot — biblioteca en la nube', () => {
   it('solo exporta las pistas que ya tienen audio subido', async () => {
     await db.tracks.bulkPut([
