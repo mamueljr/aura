@@ -323,6 +323,29 @@ export function createDriveProvider(config: DriveProviderConfig): DriveProvider 
       cachedToken = null
     },
 
+    /**
+     * Espacio de la cuenta. `about.get` acepta el scope `drive.appdata`, así que
+     * no obliga a pedir permisos nuevos.
+     *
+     * Ojo: el consumo es el de TODO el Drive del usuario (Gmail y Fotos
+     * incluidos), no solo el de esta app — que es justo lo que importa para
+     * saber si cabe lo que se va a subir.
+     */
+    async quota() {
+      const response = await authFetch(
+        'https://www.googleapis.com/drive/v3/about?fields=storageQuota',
+        { method: 'GET' },
+      )
+      const data = (await response.json()) as {
+        storageQuota?: { usage?: string; limit?: string }
+      }
+      return {
+        used: Number(data.storageQuota?.usage ?? 0),
+        // Sin `limit` la cuenta no tiene tope conocido (p. ej. planes ilimitados).
+        limit: data.storageQuota?.limit ? Number(data.storageQuota.limit) : null,
+      }
+    },
+
     blobs: {
       put: (blob, opts) =>
         uploadDriveFile(

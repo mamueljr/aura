@@ -270,7 +270,9 @@
     "cloudCleanupCheck": "Buscar",
     "cloudCleanupDelete": "Eliminar",
     "cloudCleanupWorking": "Revisando…",
-    "cloudCleanupDone": "{{count}} archivos eliminados, {{size}} liberados."
+    "cloudCleanupDone": "{{count}} archivos eliminados, {{size}} liberados.",
+    "cloudFree": "{{size}} libres en Drive",
+    "cloudWontFit": "No cabe: faltan {{size}} de espacio en Drive."
   },
   "about": {
     "title": "Acerca de",

@@ -42,6 +42,19 @@ export async function libraryUploadStats(): Promise<LibraryUploadStats> {
   };
 }
 
+/** Espacio libre en Drive, o null si el proveedor no lo sabe o falla la consulta. */
+export async function cloudFreeBytes(): Promise<number | null> {
+  if (!provider.quota) return null;
+  try {
+    const { used, limit } = await provider.quota();
+    return limit == null ? null : Math.max(0, limit - used);
+  } catch (error) {
+    // Que no se pueda leer la cuota no debe impedir subir.
+    console.warn('No se pudo consultar el espacio de Drive:', error);
+    return null;
+  }
+}
+
 export interface UploadProgress {
   done: number;
   total: number;

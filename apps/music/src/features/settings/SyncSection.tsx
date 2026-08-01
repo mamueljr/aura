@@ -17,6 +17,7 @@ import {
   type SyncResult,
 } from '@/services/sync';
 import {
+  cloudFreeBytes,
   libraryUploadStats,
   uploadLibrary,
   type LibraryUploadStats,
@@ -53,12 +54,15 @@ function formatBytes(bytes: number): string {
 function CloudLibraryRow() {
   const { t } = useTranslation();
   const [stats, setStats] = useState<LibraryUploadStats | null>(null);
+  const [freeBytes, setFreeBytes] = useState<number | null>(null);
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [note, setNote] = useState<Note>(null);
   const stopRef = useRef(false);
 
   const refresh = useCallback(() => {
     void libraryUploadStats().then(setStats);
+    // Silencioso: si no se puede leer la cuota, simplemente no se muestra.
+    void cloudFreeBytes().then(setFreeBytes);
   }, []);
 
   useEffect(refresh, [refresh]);
@@ -87,6 +91,10 @@ function CloudLibraryRow() {
   }
 
   const uploading = progress !== null;
+  // Aviso antes de empezar: subir hasta llenar Drive y fallar a mitad es peor
+  // que decirlo de antemano.
+  const noRoom =
+    freeBytes != null && stats != null && stats.pendingBytes > freeBytes;
 
   return (
     <div className="space-y-2 border-t border-border pt-4">
@@ -123,6 +131,20 @@ function CloudLibraryRow() {
           )
         ) : null}
       </div>
+
+      {freeBytes != null && !uploading ? (
+        <p
+          className={
+            noRoom ? 'text-xs font-medium text-destructive' : 'text-xs text-muted-foreground'
+          }
+        >
+          {noRoom
+            ? t('settings.cloudWontFit', {
+                size: formatBytes((stats?.pendingBytes ?? 0) - freeBytes),
+              })
+            : t('settings.cloudFree', { size: formatBytes(freeBytes) })}
+        </p>
+      ) : null}
 
       {progress ? (
         <p className="text-xs text-muted-foreground">

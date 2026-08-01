@@ -121,6 +121,11 @@ export interface SyncProvider<TBlob = never> {
   disconnect?(): void
   /** Canal de binarios, si el proveedor los soporta. */
   readonly blobs?: SyncBlobChannel<TBlob>
+  /**
+   * Espacio del proveedor, para avisar antes de subir algo que no cabe.
+   * `limit` es null cuando la cuenta no tiene tope conocido.
+   */
+  quota?(): Promise<{ used: number; limit: number | null }>
 }
 
 /** Resultado de una operación de sincronización. */

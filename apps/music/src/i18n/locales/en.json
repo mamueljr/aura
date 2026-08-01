@@ -270,7 +270,9 @@
     "cloudCleanupCheck": "Scan",
     "cloudCleanupDelete": "Delete",
     "cloudCleanupWorking": "Checking…",
-    "cloudCleanupDone": "{{count}} files deleted, {{size}} freed."
+    "cloudCleanupDone": "{{count}} files deleted, {{size}} freed.",
+    "cloudFree": "{{size}} free in Drive",
+    "cloudWontFit": "Not enough room: {{size}} short in Drive."
   },
   "about": {
     "title": "About",
