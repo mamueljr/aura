@@ -232,6 +232,43 @@ export function createDriveProvider(config: DriveProviderConfig): DriveProvider 
     return response.blob()
   }
 
+  /**
+   * Lista todo lo que hay en `appDataFolder`, paginando hasta el final.
+   *
+   * Ojo: la carpeta es de la *aplicación OAuth*, no de una app concreta del
+   * ecosistema, así que aquí aparecen también los archivos de las demás.
+   */
+  async function listAppDataFiles(): Promise<
+    Array<{ ref: string; name: string; size: number }>
+  > {
+    const files: Array<{ ref: string; name: string; size: number }> = []
+    let pageToken: string | undefined
+
+    do {
+      const params = new URLSearchParams({
+        spaces: 'appDataFolder',
+        fields: 'nextPageToken, files(id, name, size)',
+        pageSize: '1000',
+      })
+      if (pageToken) params.set('pageToken', pageToken)
+
+      const response = await authFetch(
+        `https://www.googleapis.com/drive/v3/files?${params}`,
+        { method: 'GET' },
+      )
+      const data = (await response.json()) as {
+        nextPageToken?: string
+        files?: { id: string; name: string; size?: string }[]
+      }
+      for (const file of data.files ?? []) {
+        files.push({ ref: file.id, name: file.name, size: Number(file.size ?? 0) })
+      }
+      pageToken = data.nextPageToken
+    } while (pageToken)
+
+    return files
+  }
+
   /** Elimina un archivo; no rompe el flujo si ya no existe o falla la red. */
   async function deleteDriveFile(fileId: string): Promise<void> {
     try {
@@ -295,6 +332,7 @@ export function createDriveProvider(config: DriveProviderConfig): DriveProvider 
         ),
       get: (ref) => downloadBlob(ref),
       remove: (ref) => deleteDriveFile(ref),
+      list: listAppDataFiles,
     },
   }
 }

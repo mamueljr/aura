@@ -262,7 +262,15 @@
     "cloudDone": "{{count}} pistas subidas.",
     "cloudUnavailable": "{{count}} sin copia en este dispositivo.",
     "cloudFailed": "{{count}} fallaron.",
-    "cloudEmpty": "Aún no hay pistas en la biblioteca."
+    "cloudEmpty": "Aún no hay pistas en la biblioteca.",
+    "cloudCleanup": "Archivos sin usar",
+    "cloudCleanupHint": "Audio y carátulas en Drive que ya no referencia ninguna canción.",
+    "cloudCleanupNone": "No hay archivos sin usar.",
+    "cloudCleanupFound": "{{count}} archivos sin usar ({{size}})",
+    "cloudCleanupCheck": "Buscar",
+    "cloudCleanupDelete": "Eliminar",
+    "cloudCleanupWorking": "Revisando…",
+    "cloudCleanupDone": "{{count}} archivos eliminados, {{size}} liberados."
   },
   "about": {
     "title": "Acerca de",

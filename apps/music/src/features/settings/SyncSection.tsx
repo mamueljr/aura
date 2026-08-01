@@ -1,4 +1,4 @@
-import { Cloud, CloudUpload, Lock, RefreshCw } from 'lucide-react';
+import { Cloud, CloudUpload, Lock, RefreshCw, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -9,8 +9,11 @@ import {
   connect,
   disableEncryption,
   disconnect,
+  findOrphanBlobs,
+  removeOrphanBlobs,
   setUpEncryption,
   syncNow,
+  type OrphanReport,
   type SyncResult,
 } from '@/services/sync';
 import {
@@ -127,6 +130,95 @@ function CloudLibraryRow() {
           {progress.current}
         </p>
       ) : null}
+
+      {note ? (
+        <p
+          role="status"
+          className={note.kind === 'ok' ? 'text-xs text-primary' : 'text-xs text-destructive'}
+        >
+          {note.text}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Limpieza de los binarios que ya no referencia ninguna pista.
+ *
+ * Se busca primero y se muestra qué se va a borrar: eliminar sin enseñar nada
+ * en una carpeta que además comparte espacio con Aura Home daría demasiado
+ * miedo (y con razón).
+ */
+function CleanupRow() {
+  const { t } = useTranslation();
+  const [busy, setBusy] = useState(false);
+  const [found, setFound] = useState<OrphanReport | null>(null);
+  const [note, setNote] = useState<Note>(null);
+
+  async function run<T>(action: () => Promise<T>, after: (result: T) => void) {
+    setBusy(true);
+    setNote(null);
+    try {
+      after(await action());
+    } catch (error) {
+      setNote({
+        kind: 'error',
+        text: error instanceof Error ? error.message : t('settings.syncError'),
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="space-y-2 border-t border-border pt-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="flex items-center gap-2 text-sm font-medium">
+            <Trash2 className="size-4 text-primary" />
+            {t('settings.cloudCleanup')}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {found
+              ? found.count === 0
+                ? t('settings.cloudCleanupNone')
+                : t('settings.cloudCleanupFound', {
+                    count: found.count,
+                    size: formatBytes(found.bytes),
+                  })
+              : t('settings.cloudCleanupHint')}
+          </p>
+        </div>
+        {found && found.count > 0 ? (
+          <Button
+            variant="outline"
+            disabled={busy}
+            onClick={() =>
+              void run(removeOrphanBlobs, (report) => {
+                setFound({ count: 0, bytes: 0 });
+                setNote({
+                  kind: 'ok',
+                  text: t('settings.cloudCleanupDone', {
+                    count: report.count,
+                    size: formatBytes(report.bytes),
+                  }),
+                });
+              })
+            }
+          >
+            {busy ? t('settings.cloudCleanupWorking') : t('settings.cloudCleanupDelete')}
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            disabled={busy}
+            onClick={() => void run(findOrphanBlobs, setFound)}
+          >
+            {busy ? t('settings.cloudCleanupWorking') : t('settings.cloudCleanupCheck')}
+          </Button>
+        )}
+      </div>
 
       {note ? (
         <p
@@ -284,6 +376,7 @@ export function SyncSection() {
       </div>
 
       {enabled ? <CloudLibraryRow /> : null}
+      {enabled ? <CleanupRow /> : null}
 
       {enabled ? (
         <div className="space-y-3 border-t border-border pt-4">

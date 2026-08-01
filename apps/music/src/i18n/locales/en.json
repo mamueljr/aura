@@ -262,7 +262,15 @@
     "cloudDone": "{{count}} tracks uploaded.",
     "cloudUnavailable": "{{count}} with no copy on this device.",
     "cloudFailed": "{{count}} failed.",
-    "cloudEmpty": "No tracks in the library yet."
+    "cloudEmpty": "No tracks in the library yet.",
+    "cloudCleanup": "Unused files",
+    "cloudCleanupHint": "Audio and covers in Drive no longer referenced by any track.",
+    "cloudCleanupNone": "No unused files.",
+    "cloudCleanupFound": "{{count}} unused files ({{size}})",
+    "cloudCleanupCheck": "Scan",
+    "cloudCleanupDelete": "Delete",
+    "cloudCleanupWorking": "Checking…",
+    "cloudCleanupDone": "{{count}} files deleted, {{size}} freed."
   },
   "about": {
     "title": "About",

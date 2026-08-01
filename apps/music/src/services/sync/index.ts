@@ -154,6 +154,85 @@ export function disconnect(): void {
   useSyncStore.getState().disconnect();
 }
 
+// ---------- Limpieza de archivos huérfanos ----------
+
+/**
+ * Prefijos de los binarios que Aura Music sube. **Nada fuera de esta lista se
+ * toca jamás**: la `appDataFolder` la comparten todas las apps del ecosistema
+ * (mismo Client ID), así que ahí viven también el respaldo de Aura Home y sus
+ * documentos. Lista blanca, nunca lista negra.
+ */
+const MUSIC_BLOB_PREFIXES = ['track-', 'cover-'];
+
+/**
+ * Referencias vivas: las de este dispositivo **y** las del índice publicado.
+ *
+ * Incluir lo publicado es lo que hace segura la limpieza con varios
+ * dispositivos: el teléfono puede tener pistas que este PC todavía no conoce, y
+ * borrarlas por no reconocerlas sería perder el audio.
+ */
+async function referencedRefs(): Promise<Set<string>> {
+  const refs = new Set<string>();
+
+  const [tracks, covers] = await Promise.all([db.tracks.toArray(), db.covers.toArray()]);
+  for (const track of tracks) if (track.driveFileId) refs.add(track.driveFileId);
+  for (const cover of covers) if (cover.driveFileId) refs.add(cover.driveFileId);
+
+  const payload = await provider.pull(BACKUP_KEY);
+  if (payload) {
+    const remote = await openPayload(payload);
+    for (const track of remote.data.tracks ?? []) {
+      if (track.driveFileId) refs.add(track.driveFileId);
+    }
+    for (const cover of remote.data.covers ?? []) refs.add(cover.driveFileId);
+  }
+
+  return refs;
+}
+
+export interface OrphanReport {
+  count: number;
+  bytes: number;
+}
+
+/** Busca binarios de Music que ya no referencia nadie, sin borrar nada. */
+export async function findOrphanBlobs(): Promise<OrphanReport & { refs: string[] }> {
+  const list = provider.blobs?.list;
+  if (!list) return { refs: [], count: 0, bytes: 0 };
+
+  await provider.getAccessToken({ interactive: true });
+  const referenced = await referencedRefs();
+  const files = await list();
+
+  const orphans = files.filter(
+    (file) =>
+      MUSIC_BLOB_PREFIXES.some((prefix) => file.name.startsWith(prefix)) &&
+      !referenced.has(file.ref),
+  );
+
+  return {
+    refs: orphans.map((file) => file.ref),
+    count: orphans.length,
+    bytes: orphans.reduce((sum, file) => sum + file.size, 0),
+  };
+}
+
+/** Elimina los huérfanos encontrados. Un fallo suelto no detiene al resto. */
+export async function removeOrphanBlobs(): Promise<OrphanReport> {
+  const { refs, count, bytes } = await findOrphanBlobs();
+  const blobs = provider.blobs;
+  if (!blobs) return { count: 0, bytes: 0 };
+
+  for (const ref of refs) {
+    try {
+      await blobs.remove(ref);
+    } catch (error) {
+      console.warn('No se pudo eliminar un archivo huérfano:', error);
+    }
+  }
+  return { count, bytes };
+}
+
 // ---------- Cifrado extremo a extremo (opt-in) ----------
 
 export async function isEncryptionEnabled(): Promise<boolean> {

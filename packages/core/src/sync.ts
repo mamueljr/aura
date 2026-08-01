@@ -89,6 +89,15 @@ export interface SyncBlobChannel<TBlob> {
   put(blob: TBlob, opts?: { ref?: string | null; name?: string }): Promise<string>
   get(ref: string): Promise<TBlob>
   remove(ref: string): Promise<void>
+  /**
+   * Enumera los binarios del proveedor, para detectar los que ya no referencia
+   * nadie. Opcional: no todo proveedor puede listar.
+   *
+   * ⚠️ El espacio puede estar compartido por varias apps del ecosistema, así que
+   * quien lo use debe identificar lo suyo por nombre y **no** dar por huérfano
+   * todo lo que no reconozca.
+   */
+  list?(): Promise<Array<{ ref: string; name: string; size: number }>>
 }
 
 /**

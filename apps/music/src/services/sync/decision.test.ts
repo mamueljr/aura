@@ -11,7 +11,11 @@ import { useSyncStore } from '@/stores/syncStore';
  * `syncNow` lo daba por "sin cambios" y nunca publicaba el índice, así que el
  * otro dispositivo no veía nada.
  */
-const fake = vi.hoisted(() => ({ remote: { payload: null as unknown } }));
+const fake = vi.hoisted(() => ({
+  remote: { payload: null as unknown },
+  files: [] as Array<{ ref: string; name: string; size: number }>,
+  removed: [] as string[],
+}));
 
 vi.mock('./provider', () => ({
   BACKUP_KEY: 'aura-music-backup.json',
@@ -26,11 +30,19 @@ vi.mock('./provider', () => ({
     remove: () => Promise.resolve(),
     connect: () => Promise.resolve('persona@example.com'),
     disconnect: () => {},
-    blobs: undefined,
+    blobs: {
+      put: () => Promise.resolve('nuevo'),
+      get: () => Promise.resolve(new Blob()),
+      remove: (ref: string) => {
+        fake.removed.push(ref);
+        return Promise.resolve();
+      },
+      list: () => Promise.resolve(fake.files),
+    },
   },
 }));
 
-const { syncNow } = await import('./index');
+const { findOrphanBlobs, removeOrphanBlobs, syncNow } = await import('./index');
 
 function track(id: string, extra: Partial<Track> = {}): Track {
   return {
@@ -67,6 +79,8 @@ function remoteEnvelope(exportedAt: string, tracks: unknown[] = []) {
 beforeEach(async () => {
   await Promise.all(db.tables.map((table) => table.clear()));
   fake.remote.payload = null;
+  fake.files = [];
+  fake.removed = [];
   useSyncStore.setState({
     enabled: true,
     accountEmail: 'persona@example.com',
@@ -147,5 +161,64 @@ describe('syncNow — publicar el índice de la biblioteca', () => {
 
     expect((await syncNow()).action).toBe('pushed');
     expect(fake.remote.payload).not.toBeNull();
+  });
+});
+
+/**
+ * La `appDataFolder` la comparten todas las apps del ecosistema (mismo Client
+ * ID): ahí vive también el respaldo de Aura Home y sus documentos. Un borrado
+ * mal filtrado se llevaría datos de otra app, así que estos casos existen sobre
+ * todo para blindar eso.
+ */
+describe('limpieza de archivos huérfanos', () => {
+  it('NO toca los archivos de otras apps del ecosistema', async () => {
+    fake.files = [
+      { ref: 'r1', name: 'aura-home-backup.json', size: 100 },
+      { ref: 'r2', name: 'doc-123', size: 200 },
+      { ref: 'r3', name: 'algo-desconocido', size: 300 },
+    ];
+
+    const report = await removeOrphanBlobs();
+
+    expect(fake.removed).toEqual([]);
+    expect(report.count).toBe(0);
+  });
+
+  it('detecta el audio y las carátulas que ya no referencia nadie', async () => {
+    fake.files = [
+      { ref: 'huerfano', name: 'track-viejo', size: 1000 },
+      { ref: 'usado', name: 'track-actual', size: 2000 },
+      { ref: 'portada', name: 'cover-vieja', size: 50 },
+    ];
+    await db.tracks.put(track('actual', { driveFileId: 'usado' }));
+
+    const report = await findOrphanBlobs();
+
+    expect(report.refs.sort()).toEqual(['huerfano', 'portada']);
+    expect(report.bytes).toBe(1050);
+  });
+
+  it('respeta lo que solo referencia el índice publicado', async () => {
+    // El caso del otro dispositivo: el teléfono subió una pista que este PC
+    // todavía no tiene en local. Borrarla sería perder el audio.
+    fake.files = [{ ref: 'del-telefono', name: 'track-remota', size: 500 }];
+    fake.remote.payload = remoteEnvelope('2026-07-27T10:00:00.000Z', [
+      { ...track('remota'), driveFileId: 'del-telefono' },
+    ]);
+
+    const report = await findOrphanBlobs();
+
+    expect(report.refs).toEqual([]);
+  });
+
+  it('respeta las carátulas publicadas', async () => {
+    fake.files = [{ ref: 'c-remota', name: 'cover-remota', size: 40 }];
+    const envelope = remoteEnvelope('2026-07-27T10:00:00.000Z');
+    (envelope.data as Record<string, unknown>).covers = [
+      { id: 'c1', driveFileId: 'c-remota' },
+    ];
+    fake.remote.payload = envelope;
+
+    expect((await findOrphanBlobs()).refs).toEqual([]);
   });
 });
