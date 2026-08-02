@@ -8,7 +8,7 @@ import {
   encryptEnvelope,
   newKdfParams,
   SyncCryptoError,
-} from '@/services/sync-crypto.service'
+} from './crypto'
 
 /**
  * Se usan pocas iteraciones a propósito: PBKDF2 real (600 000) tarda ~0.5 s por
