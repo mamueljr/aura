@@ -32,30 +32,27 @@ const APPS = {
     dist: 'apps/home/dist',
     filter: 'aura-home',
     label: 'Aura Home',
-    desc: 'Pagos, tareas, calendario, documentos y todo lo del hogar.',
+    desc: 'Tu hogar, organizado',
     icon: './home/icons/icon-192.png',
     tone: '#a78bfa',
-    tags: ['Sin conexión', 'Sincroniza'],
   },
   music: {
     base: '/aura/music/',
     dist: 'apps/music/dist',
     filter: 'aura-music',
     label: 'Aura Music',
-    desc: 'Tu biblioteca local, con playlists y letras. Y en la nube.',
+    desc: 'Tu música, siempre contigo',
     icon: './music/icons/icon-192.png',
     tone: '#22d3ee',
-    tags: ['Sin conexión', 'Sincroniza'],
   },
   weather: {
     base: '/aura/weather/',
     dist: 'apps/weather/www',
     filter: 'aura-weather',
     label: 'AuraWeather',
-    desc: 'El clima de tu zona, claro y al momento.',
+    desc: 'El clima, al momento',
     icon: './weather/assets/icons/icon-192.png',
     tone: '#f472b6',
-    tags: ['Ligera'],
   },
 };
 
@@ -110,15 +107,13 @@ writeFileSync(path.join(OUT, '.nojekyll'), '');
 const links = targets
   .map((t) => {
     const app = APPS[t];
-    const tags = app.tags.map((tag) => `<span class="tag">${tag}</span>`).join('');
     return `<a class="card" href="./${t}/" style="--tone:${app.tone}">
         <!-- Sin lazy: son el contenido principal y están arriba del todo;
              diferirlos solo retrasa lo primero que se ve. -->
-        <img class="icon" src="${app.icon}" alt="" width="56" height="56" decoding="async" />
+        <img class="icon" src="${app.icon}" alt="" width="64" height="64" decoding="async" />
         <div class="body">
           <h2>${app.label}</h2>
           <p>${app.desc}</p>
-          <div class="tags">${tags}</div>
         </div>
         <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
       </a>`;
@@ -131,7 +126,7 @@ const hub = `<!doctype html>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="theme-color" content="#0b0b12" />
-<meta name="description" content="Aura — apps para el día a día que funcionan sin conexión y sin cuentas." />
+<meta name="description" content="Aura — tus apps: hogar, música y clima. Funcionan sin internet." />
 <title>Aura — Tus apps</title>
 <link rel="icon" href="./home/icons/favicon.svg" />
 <style>
@@ -167,7 +162,7 @@ const hub = `<!doctype html>
 
   .card {
     position: relative; display: flex; align-items: center; gap: 1rem;
-    padding: 1rem; border-radius: 1.25rem; text-decoration: none; color: inherit;
+    padding: 1.1rem; border-radius: 1.35rem; text-decoration: none; color: inherit;
     background: rgba(255,255,255,.045);
     border: 1px solid rgba(255,255,255,.09);
     transition: background .18s ease, border-color .18s ease, transform .18s ease;
@@ -186,18 +181,12 @@ const hub = `<!doctype html>
   .card:active { transform: translateY(0); }
 
   .icon {
-    position: relative; flex: 0 0 auto; width: 56px; height: 56px; border-radius: 1rem;
+    position: relative; flex: 0 0 auto; width: 64px; height: 64px; border-radius: 1.1rem;
     box-shadow: 0 6px 20px -8px color-mix(in srgb, var(--tone) 80%, transparent);
   }
   .body { position: relative; min-width: 0; flex: 1; }
-  .card h2 { margin: 0 0 .15rem; font-size: 1.05rem; font-weight: 600; letter-spacing: -.01em; }
-  .card p { margin: 0; font-size: .875rem; line-height: 1.45; color: #b0b0be; }
-
-  .tags { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .5rem; }
-  .tag {
-    font-size: .7rem; padding: .15rem .5rem; border-radius: 999px; color: #d6d6e0;
-    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.08);
-  }
+  .card h2 { margin: 0 0 .2rem; font-size: 1.15rem; font-weight: 600; letter-spacing: -.01em; }
+  .card p { margin: 0; font-size: .9rem; line-height: 1.4; color: #a8a8b8; }
 
   .chev {
     position: relative; flex: 0 0 auto; width: 20px; height: 20px; fill: none;
@@ -217,14 +206,14 @@ const hub = `<!doctype html>
 <body>
   <header>
     <h1 class="wordmark">Aura</h1>
-    <p>Apps para el día a día. Funcionan sin conexión, sin cuentas y sin anuncios.</p>
+    <p>Elige una app</p>
   </header>
 
   <main>
       ${links}
   </main>
 
-  <footer>Se instalan como app desde el navegador · Hecho por Emmanuel Rojas</footer>
+  <footer>Funcionan sin internet · Se instalan desde tu navegador</footer>
 </body>
 </html>
 `;
