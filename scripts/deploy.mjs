@@ -24,11 +24,39 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, '.deploy');
 const REPO = 'https://github.com/mamueljr/aura.git';
 
-// Cada app: cómo construirla y dónde queda su salida.
+// Cada app: cómo construirla, dónde queda su salida y cómo se presenta en el hub.
+// El icono es el de la propia app, así se reconoce igual que en el escritorio.
 const APPS = {
-  home: { base: '/aura/home/', dist: 'apps/home/dist', filter: 'aura-home' },
-  music: { base: '/aura/music/', dist: 'apps/music/dist', filter: 'aura-music' },
-  weather: { base: '/aura/weather/', dist: 'apps/weather/www', filter: 'aura-weather' },
+  home: {
+    base: '/aura/home/',
+    dist: 'apps/home/dist',
+    filter: 'aura-home',
+    label: 'Aura Home',
+    desc: 'Pagos, tareas, calendario, documentos y todo lo del hogar.',
+    icon: './home/icons/icon-192.png',
+    tone: '#a78bfa',
+    tags: ['Sin conexión', 'Sincroniza'],
+  },
+  music: {
+    base: '/aura/music/',
+    dist: 'apps/music/dist',
+    filter: 'aura-music',
+    label: 'Aura Music',
+    desc: 'Tu biblioteca local, con playlists y letras. Y en la nube.',
+    icon: './music/icons/icon-192.png',
+    tone: '#22d3ee',
+    tags: ['Sin conexión', 'Sincroniza'],
+  },
+  weather: {
+    base: '/aura/weather/',
+    dist: 'apps/weather/www',
+    filter: 'aura-weather',
+    label: 'AuraWeather',
+    desc: 'El clima de tu zona, claro y al momento.',
+    icon: './weather/assets/icons/icon-192.png',
+    tone: '#f472b6',
+    tags: ['Ligera'],
+  },
 };
 
 const args = process.argv.slice(2);
@@ -81,13 +109,19 @@ writeFileSync(path.join(OUT, '.nojekyll'), '');
 
 const links = targets
   .map((t) => {
-    const label = { home: 'Aura Home', music: 'Aura Music', weather: 'AuraWeather' }[t];
-    const desc = {
-      home: 'El centro de tu hogar: pagos, tareas, calendario.',
-      music: 'Reproductor offline-first para tu biblioteca local.',
-      weather: 'Clima premium.',
-    }[t];
-    return `<a class="card" href="./${t}/"><h2>${label}</h2><p>${desc}</p></a>`;
+    const app = APPS[t];
+    const tags = app.tags.map((tag) => `<span class="tag">${tag}</span>`).join('');
+    return `<a class="card" href="./${t}/" style="--tone:${app.tone}">
+        <!-- Sin lazy: son el contenido principal y están arriba del todo;
+             diferirlos solo retrasa lo primero que se ve. -->
+        <img class="icon" src="${app.icon}" alt="" width="56" height="56" decoding="async" />
+        <div class="body">
+          <h2>${app.label}</h2>
+          <p>${app.desc}</p>
+          <div class="tags">${tags}</div>
+        </div>
+        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </a>`;
   })
   .join('\n      ');
 
@@ -96,36 +130,101 @@ const hub = `<!doctype html>
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Aura — Ecosistema</title>
+<meta name="theme-color" content="#0b0b12" />
+<meta name="description" content="Aura — apps para el día a día que funcionan sin conexión y sin cuentas." />
+<title>Aura — Tus apps</title>
+<link rel="icon" href="./home/icons/favicon.svg" />
 <style>
-  :root { color-scheme: light dark; }
-  * { box-sizing: border-box; }
-  body { margin: 0; min-height: 100vh; display: grid; place-content: center; gap: 2rem;
-    padding: 2rem; font-family: system-ui, -apple-system, sans-serif;
-    background: #0b0b12; color: #f4f4f8; }
-  header { text-align: center; }
-  h1 { font-size: clamp(2rem, 6vw, 3rem); margin: 0 0 .3rem;
-    background: linear-gradient(90deg,#a78bfa,#22d3ee,#f472b6);
-    -webkit-background-clip: text; background-clip: text; color: transparent; }
-  header p { margin: 0; opacity: .6; }
-  .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
-    max-width: 760px; }
-  .card { display: block; padding: 1.4rem 1.5rem; border-radius: 1rem; text-decoration: none;
-    color: inherit; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
-    transition: transform .15s ease, background .15s ease; }
-  .card:hover { transform: translateY(-3px); background: rgba(255,255,255,.09); }
-  .card h2 { margin: 0 0 .3rem; font-size: 1.15rem; }
-  .card p { margin: 0; opacity: .65; font-size: .9rem; line-height: 1.4; }
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    padding: clamp(1.5rem, 5vw, 4rem) 1.25rem calc(2rem + env(safe-area-inset-bottom));
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: clamp(2rem, 6vw, 3.5rem);
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    color: #f4f4f8;
+    background: #0b0b12;
+    /* Halos de la paleta Aura: dan profundidad sin cargar la página. */
+    background-image:
+      radial-gradient(70ch 50ch at 15% -10%, rgba(167,139,250,.20), transparent 60%),
+      radial-gradient(60ch 45ch at 95% 5%, rgba(34,211,238,.14), transparent 60%),
+      radial-gradient(60ch 50ch at 50% 110%, rgba(244,114,182,.12), transparent 60%);
+    background-attachment: fixed;
+  }
+
+  header { text-align: center; max-width: 34ch; }
+  .wordmark {
+    font-size: clamp(2.75rem, 13vw, 4.5rem); font-weight: 700; letter-spacing: -.04em;
+    line-height: 1; margin: 0 0 .6rem;
+    background: linear-gradient(100deg, #c4b5fd, #22d3ee 55%, #f472b6);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  header p { margin: 0; font-size: clamp(.95rem, 3.6vw, 1.05rem); line-height: 1.5; color: #b9b9c6; }
+
+  main { display: grid; gap: .9rem; width: 100%; max-width: 30rem; }
+
+  .card {
+    position: relative; display: flex; align-items: center; gap: 1rem;
+    padding: 1rem; border-radius: 1.25rem; text-decoration: none; color: inherit;
+    background: rgba(255,255,255,.045);
+    border: 1px solid rgba(255,255,255,.09);
+    transition: background .18s ease, border-color .18s ease, transform .18s ease;
+  }
+  /* El tono de cada app tiñe su tarjeta lo justo para distinguirlas. */
+  .card::before {
+    content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    background: linear-gradient(100deg, color-mix(in srgb, var(--tone) 12%, transparent), transparent 55%);
+  }
+  .card:hover, .card:focus-visible {
+    background: rgba(255,255,255,.075);
+    border-color: color-mix(in srgb, var(--tone) 45%, transparent);
+    transform: translateY(-2px);
+  }
+  .card:focus-visible { outline: 2px solid var(--tone); outline-offset: 3px; }
+  .card:active { transform: translateY(0); }
+
+  .icon {
+    position: relative; flex: 0 0 auto; width: 56px; height: 56px; border-radius: 1rem;
+    box-shadow: 0 6px 20px -8px color-mix(in srgb, var(--tone) 80%, transparent);
+  }
+  .body { position: relative; min-width: 0; flex: 1; }
+  .card h2 { margin: 0 0 .15rem; font-size: 1.05rem; font-weight: 600; letter-spacing: -.01em; }
+  .card p { margin: 0; font-size: .875rem; line-height: 1.45; color: #b0b0be; }
+
+  .tags { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .5rem; }
+  .tag {
+    font-size: .7rem; padding: .15rem .5rem; border-radius: 999px; color: #d6d6e0;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.08);
+  }
+
+  .chev {
+    position: relative; flex: 0 0 auto; width: 20px; height: 20px; fill: none;
+    stroke: #6f6f80; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    transition: stroke .18s ease, transform .18s ease;
+  }
+  .card:hover .chev { stroke: var(--tone); transform: translateX(2px); }
+
+  footer { font-size: .8rem; color: #7c7c8c; text-align: center; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card, .chev { transition: none; }
+    .card:hover { transform: none; }
+  }
 </style>
 </head>
 <body>
   <header>
-    <h1>Aura</h1>
-    <p>Ecosistema local-first</p>
+    <h1 class="wordmark">Aura</h1>
+    <p>Apps para el día a día. Funcionan sin conexión, sin cuentas y sin anuncios.</p>
   </header>
-  <main class="grid">
+
+  <main>
       ${links}
   </main>
+
+  <footer>Se instalan como app desde el navegador · Hecho por Emmanuel Rojas</footer>
 </body>
 </html>
 `;
