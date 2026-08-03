@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+# Verificación antes de publicar. Existe porque el ecosistema se despliega a
+# mano (`pnpm deploy`) sin CI: sin esto, nada impide subir a producción algo
+# que no compila o con tests en rojo.
+#
+# Se apoya en la caché de Turbo, así que cuando no ha cambiado nada tarda
+# apenas un instante. No corre `build`: `typecheck` ya cubre los tipos y el
+# build entero es demasiado lento para un hook.
+#
+# Se instala solo con `pnpm install` (script `prepare` de la raíz).
+# Para saltárselo puntualmente: git push --no-verify
+
+set -e
+
+echo "→ Verificando antes de subir (lint · typecheck · test)…"
+
+if ! command -v pnpm >/dev/null 2>&1; then
+  echo "⚠  pnpm no está en el PATH; me salto la verificación."
+  exit 0
+fi
+
+pnpm lint
+pnpm typecheck
+pnpm test
+
+echo "✓ Todo en verde."

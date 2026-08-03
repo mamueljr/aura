@@ -52,6 +52,19 @@ pnpm deploy       # build + publica a gh-pages (todo o: pnpm deploy home music)
 Pendiente del usuario: **archivar los repos originales** (`App_Clima`, `Aura-music`,
 `AuraHome`) en solo-lectura para evitar divergencia (siguen sirviendo URLs viejas).
 
+## Verificación antes de publicar
+
+No hay CI (Actions descartado: en repo privado pedía tarjeta, y ahora no se ha
+montado). En su lugar hay un **hook de pre-push** en `.githooks/pre-push` que
+corre `lint`, `typecheck` y `test`, y **aborta el push si algo falla**.
+
+Se instala solo: el script `prepare` de la raíz apunta `core.hooksPath` a
+`.githooks` en cada `pnpm install`, así que basta con instalar al clonar en una
+máquina nueva. Para saltárselo puntualmente: `git push --no-verify`.
+
+> `pnpm typecheck` **sí** cubre ahora Aura Home (antes su tipado solo corría
+> dentro de `build`, así que el comando de la raíz se saltaba la app más grande).
+
 ## Reglas de trabajo
 
 - **Trabajar solo en este monorepo.** Los repos originales quedaron congelados.
