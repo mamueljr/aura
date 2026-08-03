@@ -138,31 +138,35 @@ export function VehiclesPage() {
                 >
                   <Card>
                     <CardContent className="space-y-0">
-                      <button
-                        type="button"
-                        onClick={() => setExpanded(isOpen ? null : vehicle.id)}
-                        className="flex w-full items-center gap-3 text-left"
-                      >
-                        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
-                          <Car className="size-5" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate font-medium">{vehicle.name}</p>
-                          {vehicle.plate && (
-                            <p className="truncate text-sm text-muted-foreground">{vehicle.plate}</p>
-                          )}
-                        </div>
+                      <div className="flex w-full items-center gap-3">
+                        <button
+                          type="button"
+                          aria-label={`Detalles de ${vehicle.name}`}
+                          aria-expanded={isOpen}
+                          onClick={() => setExpanded(isOpen ? null : vehicle.id)}
+                          className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                        >
+                          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+                            <Car className="size-5" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-medium">{vehicle.name}</p>
+                            {vehicle.plate && (
+                              <p className="truncate text-sm text-muted-foreground">
+                                {vehicle.plate}
+                              </p>
+                            )}
+                          </div>
+                        </button>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <span
-                              role="button"
-                              tabIndex={0}
+                            <button
+                              type="button"
                               aria-label={`Opciones de ${vehicle.name}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="flex size-9 items-center justify-center rounded-md hover:bg-accent"
+                              className="flex size-9 shrink-0 items-center justify-center rounded-md hover:bg-accent"
                             >
                               <MoreVertical className="size-4" />
-                            </span>
+                            </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
@@ -182,7 +186,7 @@ export function VehiclesPage() {
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </button>
+                      </div>
 
                       <AnimatePresence initial={false}>
                         {isOpen && (

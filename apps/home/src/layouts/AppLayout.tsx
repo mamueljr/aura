@@ -59,7 +59,7 @@ export function AppLayout() {
             transition={{ duration: 0.18, ease: 'easeOut' }}
             className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 pb-28 md:px-8 md:pb-10"
           >
-            <ErrorBoundary resetKey={location.pathname}>
+            <ErrorBoundary>
               <Suspense fallback={<PageLoader />}>{outlet}</Suspense>
             </ErrorBoundary>
           </motion.main>

@@ -143,31 +143,33 @@ export function PetsPage() {
                 >
                   <Card>
                     <CardContent className="space-y-0">
-                      <button
-                        type="button"
-                        onClick={() => setExpanded(isOpen ? null : pet.id)}
-                        className="flex w-full items-center gap-3 text-left"
-                      >
-                        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
-                          <meta.icon className="size-5" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate font-medium">{pet.name}</p>
-                          <p className="truncate text-sm text-muted-foreground">
-                            {pet.breed ? `${pet.breed} · ${meta.label}` : meta.label}
-                          </p>
-                        </div>
+                      <div className="flex w-full items-center gap-3">
+                        <button
+                          type="button"
+                          aria-label={`Detalles de ${pet.name}`}
+                          aria-expanded={isOpen}
+                          onClick={() => setExpanded(isOpen ? null : pet.id)}
+                          className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                        >
+                          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+                            <meta.icon className="size-5" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-medium">{pet.name}</p>
+                            <p className="truncate text-sm text-muted-foreground">
+                              {pet.breed ? `${pet.breed} · ${meta.label}` : meta.label}
+                            </p>
+                          </div>
+                        </button>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <span
-                              role="button"
-                              tabIndex={0}
+                            <button
+                              type="button"
                               aria-label={`Opciones de ${pet.name}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="flex size-9 items-center justify-center rounded-md hover:bg-accent"
+                              className="flex size-9 shrink-0 items-center justify-center rounded-md hover:bg-accent"
                             >
                               <MoreVertical className="size-4" />
-                            </span>
+                            </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
@@ -187,7 +189,7 @@ export function PetsPage() {
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </button>
+                      </div>
 
                       <AnimatePresence initial={false}>
                         {isOpen && (

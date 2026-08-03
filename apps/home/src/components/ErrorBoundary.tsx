@@ -3,8 +3,6 @@ import { AlertTriangle, RotateCcw } from 'lucide-react'
 import { Button } from '@aura/ui/components/button'
 
 interface Props {
-  /** Cambiar esta clave (p. ej. la ruta) reintenta el render automáticamente. */
-  resetKey?: string
   children: ReactNode
 }
 
@@ -15,19 +13,14 @@ interface State {
 /**
  * Última línea de defensa: si una página lanza una excepción no controlada,
  * muestra un mensaje recuperable en lugar de dejar la PWA en blanco.
- * Navegar a otra ruta (resetKey) o pulsar "Reintentar" vuelve a renderizar.
+ * "Reintentar" vuelve a renderizar; al cambiar de ruta el layout remonta este
+ * árbol entero (`key={location.pathname}`), así que el estado se limpia solo.
  */
 export class ErrorBoundary extends Component<Props, State> {
   state: State = { error: null }
 
   static getDerivedStateFromError(error: Error): State {
     return { error }
-  }
-
-  componentDidUpdate(prevProps: Props) {
-    if (this.state.error && prevProps.resetKey !== this.props.resetKey) {
-      this.setState({ error: null })
-    }
   }
 
   componentDidCatch(error: Error) {

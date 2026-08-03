@@ -40,30 +40,34 @@ export function MiniPlayer() {
             />
           </div>
 
-          <div
-            role="button"
-            tabIndex={0}
-            aria-label={t('player.nowPlaying')}
-            onClick={() => setNowPlayingOpen(true)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') setNowPlayingOpen(true);
-            }}
-            className="flex cursor-pointer items-center gap-3 px-3 py-2 md:px-4 md:py-2.5"
-          >
-            <motion.div layoutId="now-playing-art" className="shrink-0">
-              <Artwork
-                coverId={track.coverId}
-                name={track.album || track.title}
-                className="size-11 md:size-12 shadow-md"
-              />
-            </motion.div>
+          {/*
+            Solo la carátula y el título abren "Reproduciendo ahora". Antes el
+            botón envolvía la fila entera y los controles necesitaban frenar la
+            propagación del click; con el teclado eso no funcionaba y pulsar
+            Enter sobre "cola" abría además el overlay.
+          */}
+          <div className="flex items-center gap-3 px-3 py-2 md:px-4 md:py-2.5">
+            <button
+              type="button"
+              aria-label={t('player.nowPlaying')}
+              onClick={() => setNowPlayingOpen(true)}
+              className="flex min-w-0 flex-1 items-center gap-3 text-left md:flex-none"
+            >
+              <motion.div layoutId="now-playing-art" className="shrink-0">
+                <Artwork
+                  coverId={track.coverId}
+                  name={track.album || track.title}
+                  className="size-11 md:size-12 shadow-md"
+                />
+              </motion.div>
 
-            <div className="min-w-0 flex-1 md:w-56 md:flex-none">
-              <p className="truncate text-sm font-semibold">{track.title}</p>
-              <p className="truncate text-xs text-muted-foreground">
-                {track.artist || t('common.unknownArtist')}
-              </p>
-            </div>
+              <div className="min-w-0 flex-1 md:w-56 md:flex-none">
+                <p className="truncate text-sm font-semibold">{track.title}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {track.artist || t('common.unknownArtist')}
+                </p>
+              </div>
+            </button>
 
             <button
               type="button"
@@ -71,10 +75,7 @@ export function MiniPlayer() {
                 track.favorite ? t('player.removeFromFavorites') : t('player.addToFavorites')
               }
               aria-pressed={!!track.favorite}
-              onClick={(e) => {
-                e.stopPropagation();
-                void toggleFavorite(track.id);
-              }}
+              onClick={() => void toggleFavorite(track.id)}
               className={cn(
                 'hidden rounded-full p-2 text-muted-foreground transition-colors hover:text-foreground sm:block',
                 track.favorite && 'text-aura-3',
@@ -86,12 +87,12 @@ export function MiniPlayer() {
             {/* Desktop: full transport + seek in the middle */}
             <div className="hidden min-w-0 flex-1 flex-col items-center gap-1 md:flex">
               <TransportControls />
-              <div className="w-full max-w-xl" onClick={(e) => e.stopPropagation()}>
+              <div className="w-full max-w-xl">
                 <SeekBar />
               </div>
             </div>
 
-            <div className="hidden items-center gap-1 md:flex" onClick={(e) => e.stopPropagation()}>
+            <div className="hidden items-center gap-1 md:flex">
               <Button
                 variant="ghost"
                 size="icon-sm"
@@ -106,7 +107,7 @@ export function MiniPlayer() {
             </div>
 
             {/* Mobile: compact controls */}
-            <div className="flex items-center gap-1 md:hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-1 md:hidden">
               <PlayPauseButton size="icon" />
             </div>
           </div>

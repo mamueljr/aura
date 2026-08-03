@@ -87,60 +87,58 @@ function MemberCard({
     >
       <Card>
         <CardContent className="space-y-0">
-          <button
-            type="button"
-            onClick={() => setExpanded((v) => !v)}
-            className="flex w-full items-center gap-3 text-left"
-          >
-            {member.photo ? (
-              <img
-                src={member.photo}
-                alt=""
-                className="size-11 shrink-0 rounded-xl border object-cover"
-              />
-            ) : (
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
-                <meta.icon className="size-5" />
+          <div className="flex w-full items-center gap-3">
+            <button
+              type="button"
+              aria-label={`Detalles de ${member.name}`}
+              aria-expanded={expanded}
+              onClick={() => setExpanded((v) => !v)}
+              className="flex min-w-0 flex-1 items-center gap-3 text-left"
+            >
+              {member.photo ? (
+                <img
+                  src={member.photo}
+                  alt=""
+                  className="size-11 shrink-0 rounded-xl border object-cover"
+                />
+              ) : (
+                <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+                  <meta.icon className="size-5" />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium">{member.name}</p>
+                <p className="truncate text-sm text-muted-foreground">
+                  {meta.label}
+                  {age !== null && ` · ${age} años`}
+                </p>
               </div>
-            )}
-            <div className="min-w-0 flex-1">
-              <p className="truncate font-medium">{member.name}</p>
-              <p className="truncate text-sm text-muted-foreground">
-                {meta.label}
-                {age !== null && ` · ${age} años`}
-              </p>
-            </div>
+            </button>
             {member.bloodType && (
               <Badge variant="secondary">
                 <Droplet className="size-3" /> {member.bloodType}
               </Badge>
             )}
-            <span
-              role="button"
-              tabIndex={0}
-              aria-label={expanded ? 'Ocultar datos' : 'Mostrar datos'}
-              onClick={(e) => {
-                e.stopPropagation()
-                setExpanded((v) => !v)
-              }}
+            <button
+              type="button"
+              aria-expanded={expanded}
+              onClick={() => setExpanded((v) => !v)}
               className="flex h-7 shrink-0 items-center gap-1 rounded-md px-2 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
             >
               {expanded ? 'Ocultar' : 'Mostrar'}
               <ChevronDown
                 className={`size-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`}
               />
-            </span>
+            </button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <span
-                  role="button"
-                  tabIndex={0}
+                <button
+                  type="button"
                   aria-label={`Opciones de ${member.name}`}
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex size-9 items-center justify-center rounded-md hover:bg-accent"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-md hover:bg-accent"
                 >
                   <MoreVertical className="size-4" />
-                </span>
+                </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={onEdit}>
@@ -152,7 +150,7 @@ function MemberCard({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </button>
+          </div>
 
           <AnimatePresence initial={false}>
             {expanded && (

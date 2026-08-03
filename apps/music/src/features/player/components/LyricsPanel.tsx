@@ -68,24 +68,34 @@ export function LyricsPanel({ track, stage = false }: { track: Track; stage?: bo
       {data.lines.map((line, i) => {
         const isActive = data.synced && i === activeIndex;
         const clickable = data.synced && line.timeMs != null;
-        return (
-          <p
+        const className = cn(
+          'block w-full transition-all duration-300',
+          stage
+            ? 'py-2 text-xl font-bold leading-snug md:text-2xl'
+            : 'py-1.5 text-[15px] leading-snug',
+          stage ? 'text-center' : 'text-left',
+          data.synced
+            ? isActive
+              ? 'aura-text scale-[1.03]'
+              : cn('text-muted-foreground', stage && 'opacity-50 hover:opacity-80')
+            : 'text-foreground',
+        );
+
+        // Con letra sincronizada cada verso salta a su momento. Eso es un
+        // control, no un párrafo: como <button> se enfoca y se activa con el
+        // teclado sin tener que reimplementar nada.
+        return clickable ? (
+          <button
             key={i}
+            type="button"
             data-line={i}
-            onClick={clickable ? () => player.seek(line.timeMs! / 1000) : undefined}
-            className={cn(
-              'transition-all duration-300',
-              stage
-                ? 'py-2 text-xl font-bold leading-snug md:text-2xl'
-                : 'py-1.5 text-[15px] leading-snug',
-              clickable && 'cursor-pointer',
-              data.synced
-                ? isActive
-                  ? 'aura-text scale-[1.03]'
-                  : cn('text-muted-foreground', stage && 'opacity-50 hover:opacity-80')
-                : 'text-foreground',
-            )}
+            onClick={() => player.seek(line.timeMs! / 1000)}
+            className={cn(className, 'cursor-pointer')}
           >
+            {line.text || '♪'}
+          </button>
+        ) : (
+          <p key={i} data-line={i} className={className}>
             {line.text || '♪'}
           </p>
         );
