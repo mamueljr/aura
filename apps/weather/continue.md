@@ -123,3 +123,14 @@ La aplicación destaca por sus efectos visuales climatológicos dinámicos en vi
   * **#9 Marca propia + favicon**: se reemplazó el logo genérico `cloud-sun` de Lucide por una marca SVG inline ("orbe de aura" con anillos y gradiente cálido→frío); se añadió `assets/favicon.svg` con la misma identidad y su `<link rel="icon">`.
   * **#10 Modo landscape compacto**: nuevo `@media (orientation: landscape) and (max-height: 500px)` que colapsa cabecera, logo, tipografía y paddings para aprovechar la poca altura en teléfonos en horizontal.
   * **Service Worker**: caché incrementada a **`v24`** y `favicon.svg` añadido al precache.
+
+### 2 de Agosto de 2026
+
+* **Chart.js fijado a una versión (corrección importante)**: se cargaba desde el CDN como `npm/chart.js`, **sin versión**, así que servía siempre la última publicada. El día que Chart.js sacara un cambio mayor, las gráficas se habrían roto en producción sin tocar una línea de código — y con el service worker cacheando por usuario, unos habrían visto la versión antigua y otros la rota. Se fija a **`chart.js@4.5.1`**, que era la que ya venía sirviéndose (fijar lo que funciona, no actualizar a ciegas). Lucide ya estaba correctamente fijado.
+* **`app.js` pasa a ser un módulo ES**: la lógica pura de datos se extrae a **`lib/weather-data.js`** (`brightSkyIconToWmoCode`, `estimateHumidityFromDewPoint`, `mapBrightSkyToOpenMeteo`, `getUVDescription`). Eran las funciones donde un error pasa desapercibido: no rompen nada, solo muestran un dato equivocado.
+  * `index.html` carga `app.js` con `type="module"`.
+  * El único `onclick` incrustado (`retryWeatherFetch`) se sustituye por un `id` + `addEventListener`: en un módulo nada es global, así que el botón de reintentar habría dejado de funcionar en silencio.
+  * `copy-assets.js` copia ahora `lib/` (y **excluye** los `.test.js` del paquete publicado).
+* **Primeros tests del proyecto**: 15 casos sobre la lógica pura con Vitest, incluidos los límites que más engañan (humedad acotada a 0–100 aunque una estación reporte un rocío imposible, UV 7 = "Alto" y no "Muy Alto", elección de la hora más cercana con reloj simulado). Verificado que los tests fallan al introducir cada error a propósito.
+* **Lint**: el proyecto entra en `pnpm lint` del monorepo y se corrigen sus 6 avisos reales (`catch` que ignoraba el error, un parámetro y una variable muertos, un escape innecesario en una expresión regular).
+* **Service Worker**: caché incrementada a **`v25`** y `lib/weather-data.js` añadido al precache.

@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const files = ['index.html', 'style.css', 'app.js', 'manifest.json', 'sw.js'];
-const folders = ['assets'];
+const folders = ['assets', 'lib'];
 
 const distDir = path.join(__dirname, 'www');
 
@@ -31,6 +31,8 @@ folders.forEach(folder => {
 function copyFolderSync(from, to) {
   fs.mkdirSync(to, { recursive: true });
   fs.readdirSync(from).forEach(element => {
+    // Los tests no se publican: solo añadirían peso al paquete.
+    if (element.endsWith('.test.js')) return;
     const stat = fs.lstatSync(path.join(from, element));
     if (stat.isFile()) {
       fs.copyFileSync(path.join(from, element), path.join(to, element));

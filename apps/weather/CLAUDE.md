@@ -15,7 +15,12 @@ npx http-server -p 8080    # Serve locally (source files run directly, no build 
 npx cap sync android       # Sync www/ into the native Android project
 ```
 
-Android APK is built in CI (`.github/workflows/build-apk.yml`) on every push to `main`: build web assets → `cap sync android` → `gradlew assembleDebug` → uploads `AuraWeather-Android-APK` artifact. There are no tests or linters.
+Android APK is built in CI (`.github/workflows/build-apk.yml`) on every push to `main`: build web assets → `cap sync android` → `gradlew assembleDebug` → uploads `AuraWeather-Android-APK` artifact.
+
+```bash
+pnpm --filter aura-weather lint   # oxlint
+pnpm --filter aura-weather test   # vitest, sobre lib/
+```
 
 ## Critical build/deploy model
 
@@ -23,16 +28,24 @@ The **source of truth is the root files** (`index.html`, `style.css`, `app.js`, 
 
 - `www/` is a **generated copy** (gitignored). `npm run build` deletes and regenerates it from the root files. Never edit `www/` by hand — changes there are lost on the next build.
 - GitHub Pages serves the **root files directly** (no build). Capacitor/Android consumes `www/`. So a web change is live on push; an Android change also requires `npm run build` + `cap sync`.
-- The file list to copy is hardcoded in `copy-assets.js` — if you add a new top-level asset, add it there too.
+- The file list to copy is hardcoded in `copy-assets.js` — if you add a new top-level asset, add it there too. Files ending in `.test.js` are skipped.
 
 ## Service Worker cache — bump the version on every asset change
 
-`sw.js` caches the app shell under `CACHE_NAME` (currently `aura-weather-cache-v16`). **When you change any cached static file, increment this version number**, otherwise users keep the stale cached copy. The `activate` handler deletes any cache whose name != current, and `index.html` sends `SKIP_WAITING` + listens for `controllerchange` to force an immediate reload when a new SW takes over. Weather API hosts (`open-meteo.com`, `bigdatacloud.net`, `api.brightsky.dev`) are explicitly excluded from caching so data stays fresh.
+`sw.js` caches the app shell under `CACHE_NAME` (currently `aura-weather-cache-v25`). **When you change any cached static file, increment this version number**, otherwise users keep the stale cached copy. The `activate` handler deletes any cache whose name != current, and `index.html` sends `SKIP_WAITING` + listens for `controllerchange` to force an immediate reload when a new SW takes over. Weather API hosts (`open-meteo.com`, `bigdatacloud.net`, `api.brightsky.dev`) are explicitly excluded from caching so data stays fresh.
 
-## app.js architecture (single ~1700-line file, no modules)
+## Architecture: `app.js` (ES module) + `lib/`
 
-All logic lives in `app.js` as plain functions on the global scope. Key flows:
+`app.js` is loaded with `<script type="module">`, so **nothing is global**. Anything an
+inline HTML attribute would need (e.g. an `onclick`) must instead be wired with
+`addEventListener` — this already bit the "Reintentar" button once.
 
+Pure data logic lives in **`lib/weather-data.js`** (`brightSkyIconToWmoCode`,
+`estimateHumidityFromDewPoint`, `mapBrightSkyToOpenMeteo`, `getUVDescription`) so it can be
+tested without DOM or network — see `lib/weather-data.test.js`. Everything else (DOM,
+audio, canvas, fetch) stays in `app.js`. Key flows:
+
+- **CDN deps are version-pinned on purpose** (`lucide@0.400.0`, `chart.js@4.5.1`). Unpinned, a breaking upstream release silently breaks production — and the service worker caches per user, so some would see the old version and others the broken one. Keep the pin when upgrading.
 - **Weather data with automatic failover** — `fetchWeatherData()` calls the **primary** API BrightSky (`api.brightsky.dev`, has native CORS → near-instant) and falls back **transparently** to Open-Meteo if it fails/times out. Each provider has a mapper that normalizes its JSON into the internal Open-Meteo-shaped structure the rest of the app expects: `mapBrightSkyToOpenMeteo()` and (for BrightSky's icon strings) `brightSkyIconToWmoCode()`. **All rendering assumes the Open-Meteo data shape** — if you add/change a provider, write a mapper to that shape rather than touching render code.
 - **`fetchWithTimeout()`** — every external request goes through this (AbortController-based). Timeouts in use: weather 8s, reverse-geocode 4s, city autocomplete 5s. Preserve these when adding requests.
 - **Rendering** — `renderWeather()` is the orchestrator; it fans out to `renderHourlyChart()` (Chart.js), `renderHourlyScroll()` (swipeable cards), `render7DayForecast()`, `updateAstronomy()`, `updateWeatherEffects()`, `generateAuraInsight()`.

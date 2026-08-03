@@ -2,12 +2,13 @@
  * AuraWeather Service Worker for PWA
  */
 
-const CACHE_NAME = 'aura-weather-cache-v24';
+const CACHE_NAME = 'aura-weather-cache-v25';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './style.css',
   './app.js',
+  './lib/weather-data.js',
   './manifest.json',
   './assets/favicon.svg',
   './assets/icons/icon-192.png',
