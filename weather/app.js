@@ -458,7 +458,10 @@ async function fetchWeatherData(lat, lon, cityName, options = {}) {
   }
 }
 
-// Reintenta la carga del clima para la ciudad actual sin recargar la página
+// Reintenta la carga del clima para la ciudad actual sin recargar la página.
+// Se invoca desde un `onclick` dentro de la plantilla de error, así que debe
+// seguir siendo global: el linter no puede verlo porque vive en una cadena.
+// eslint-disable-next-line no-unused-vars
 function retryWeatherFetch() {
   fetchWeatherData(AppState.currentCity.lat, AppState.currentCity.lon, AppState.currentCity.name);
 }
@@ -938,7 +941,7 @@ function loadFavorites() {
   if (saved) {
     try {
       AppState.favorites = JSON.parse(saved);
-    } catch (e) {
+    } catch {
       AppState.favorites = [];
     }
   }
@@ -1421,7 +1424,7 @@ function triggerPWAInstall() {
 }
 
 // Escuchar cuando la app se haya instalado con éxito
-window.addEventListener('appinstalled', (evt) => {
+window.addEventListener('appinstalled', () => {
   console.log('AuraWeather instalada con éxito.');
   showToast('¡Aplicación instalada con éxito!', 'check-circle');
   
@@ -1436,7 +1439,6 @@ window.addEventListener('appinstalled', (evt) => {
 // 10. Actualizar astronomía (Sol y Luna)
 function updateAstronomy(data) {
   const daily = data.daily;
-  const current = data.current;
   
   if (!daily || !daily.sunrise || !daily.sunset) return;
   
@@ -1458,7 +1460,7 @@ function updateAstronomy(data) {
   if (elements.sunsetVal) elements.sunsetVal.textContent = sunsetFormatted;
   
   // Mostrar etiquetas cortas de los extremos del arco (sin AM/PM)
-  const stripAmPm = (str) => str.replace(/\s*[a-zA-Z\.]+$/, '').trim();
+  const stripAmPm = (str) => str.replace(/\s*[a-zA-Z.]+$/, '').trim();
   if (elements.sunriseTimeLabel) elements.sunriseTimeLabel.textContent = stripAmPm(sunriseFormatted);
   if (elements.sunsetTimeLabel) elements.sunsetTimeLabel.textContent = stripAmPm(sunsetFormatted);
   
@@ -1765,7 +1767,7 @@ function stopRainSound() {
   setTimeout(() => {
     try {
       src.stop();
-    } catch(e) {}
+    } catch {}
   }, 1100);
   
   rainSound = null;
@@ -1829,7 +1831,7 @@ function stopWindSound() {
     try {
       src.stop();
       lfo.stop();
-    } catch(e) {}
+    } catch {}
   }, 1100);
   
   windSound = null;

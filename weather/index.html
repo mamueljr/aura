@@ -22,8 +22,11 @@
   <!-- Lucide Icons (Premium & Clean) -->
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.400.0/dist/umd/lucide.min.js"></script>
   
-  <!-- Chart.js for beautiful charts -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Chart.js for beautiful charts.
+       Versión FIJADA a propósito: sin ella el CDN sirve siempre la última, y el
+       día que publiquen un cambio mayor las gráficas se romperían en producción
+       sin tocar una línea de código. 4.5.1 es la que ya venía sirviéndose. -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1"></script>
   
   <link rel="stylesheet" href="style.css">
 </head>
