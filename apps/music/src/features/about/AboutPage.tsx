@@ -1,4 +1,4 @@
-import { Github, ShieldCheck, Sparkles } from 'lucide-react';
+import { Code, ShieldCheck, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { PageHeader } from '@/components/PageHeader';
@@ -49,7 +49,8 @@ export default function AboutPage() {
               rel="noreferrer"
               className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
             >
-              <Github className="size-4" /> {t('about.sourceCode')}
+              {/* lucide v1 retiró los iconos de marca; el enlace ya dice "código fuente". */}
+              <Code className="size-4" /> {t('about.sourceCode')}
             </a>
             <a
               href={CREATOR_URL}

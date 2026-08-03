@@ -82,10 +82,15 @@ export default defineConfig({
     target: 'es2022',
     rollupOptions: {
       output: {
-        manualChunks: {
-          react: ['react', 'react-dom', 'react-router-dom'],
-          media: ['music-metadata'],
-          motion: ['framer-motion'],
+        // Rollup 4 (Vite 8) ya no acepta la forma de objeto aquí; el mismo
+        // reparto expresado como función.
+        manualChunks(id) {
+          if (/node_modules\/(react|react-dom|react-router|react-router-dom)\//.test(id)) {
+            return 'react';
+          }
+          if (id.includes('node_modules/music-metadata/')) return 'media';
+          if (id.includes('node_modules/framer-motion/')) return 'motion';
+          return undefined;
         },
       },
     },
