@@ -266,11 +266,16 @@ aún de relojes de otro dispositivo.
    y del índice publicado.
 4. ~~Borrados~~ → resuelto (`0dad338`, no listado originalmente pero relacionado):
    tombstones propagan los borrados entre dispositivos.
-5. **Duplicados** (sigue abierto): si el dispositivo B además escanea su propia
-   copia de la misma música, tendrá la pista dos veces (ids distintos por
-   `folderId`). Sin decisión tomada.
-6. **Velocidad de subida** (sigue abierto, sin urgencia): se sube de 3 en 3.
-   Sin medir si ese es el límite real o lo es la subida de la red.
+5. ~~Duplicados~~ → resuelto: `services/library/dedupe.ts` funde las filas que
+   son la misma canción (huella de contenido: título, artista de álbum, álbum y
+   duración al segundo). Sobrevive la fila con `driveFileId` — el id que ya
+   conocen los demás dispositivos — adoptando la ruta local de aquí; se
+   arrastran favorito, escuchas y referencias de playlist. Corre al terminar un
+   escaneo y al fusionar un snapshot.
+6. **Velocidad de subida**: se sube de 3 en 3. Sigue sin medirse si ese es el
+   límite real o lo es la red, pero ya **se puede** medir: la UI muestra la
+   velocidad media durante la subida. Hace falta una subida real desde el
+   teléfono del usuario para decidir si tocar `CONCURRENCY`.
 
 > ⚠️ **Desinstalar la PWA borra su almacenamiento local**, y con él las fichas
 > de las pistas y sus `driveFileId`. El audio sigue en Drive pero queda

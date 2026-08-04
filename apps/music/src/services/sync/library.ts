@@ -60,6 +60,12 @@ export interface UploadProgress {
   total: number;
   /** Título de la pista en curso, para la UI. */
   current: string;
+  /**
+   * Velocidad media de subida hasta ahora, o `null` mientras no haya terminado
+   * ningún archivo. Sin esto, una subida atascada y una subida lenta se ven
+   * exactamente igual: "1 de 16" durante diez minutos.
+   */
+  bytesPerSecond: number | null;
 }
 
 export interface UploadReport {
@@ -97,6 +103,15 @@ export async function uploadLibrary(
   const queue = [...pending];
   let done = 0;
 
+  // Para saber si el cuello de botella es la red o esta concurrencia hace
+  // falta un número, no una impresión.
+  const startedAt = Date.now();
+  let uploadedBytes = 0;
+  const rate = (): number | null => {
+    const seconds = (Date.now() - startedAt) / 1000;
+    return uploadedBytes > 0 && seconds > 0 ? uploadedBytes / seconds : null;
+  };
+
   // El canal se pasa como parámetro: dentro del closure TypeScript ya no
   // conserva que la comprobación de arriba lo dejó definido.
   async function worker(channel: NonNullable<typeof provider.blobs>): Promise<void> {
@@ -105,7 +120,12 @@ export async function uploadLibrary(
       const track = queue.shift();
       if (!track) return;
 
-      onProgress?.({ done, total: pending.length, current: track.title });
+      onProgress?.({
+        done,
+        total: pending.length,
+        current: track.title,
+        bytesPerSecond: rate(),
+      });
 
       let file: File;
       try {
@@ -121,6 +141,7 @@ export async function uploadLibrary(
         const ref = await channel.put(payload, { name: `track-${track.id}` });
         await db.tracks.update(track.id, { driveFileId: ref });
         report.uploaded += 1;
+        uploadedBytes += payload.size;
       } catch (error) {
         console.warn(`No se pudo subir "${track.title}":`, error);
         report.failed += 1;
@@ -136,7 +157,12 @@ export async function uploadLibrary(
   // Las carátulas van después: pesan poco y no deben retrasar el audio.
   await uploadCovers(secret?.key ?? null);
 
-  onProgress?.({ done: pending.length, total: pending.length, current: '' });
+  onProgress?.({
+    done: pending.length,
+    total: pending.length,
+    current: '',
+    bytesPerSecond: rate(),
+  });
 
   // Imprescindible, y siempre: los `driveFileId` solo existen en local hasta
   // que se publica el índice. Sin esto el otro dispositivo descarga un snapshot

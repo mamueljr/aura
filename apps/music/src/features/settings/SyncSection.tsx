@@ -70,7 +70,7 @@ function CloudLibraryRow() {
   async function handleUpload() {
     stopRef.current = false;
     setNote(null);
-    setProgress({ done: 0, total: stats?.pending ?? 0, current: '' });
+    setProgress({ done: 0, total: stats?.pending ?? 0, current: '', bytesPerSecond: null });
     try {
       const report = await uploadLibrary(setProgress, () => stopRef.current);
       const parts = [t('settings.cloudDone', { count: report.uploaded })];
@@ -148,7 +148,11 @@ function CloudLibraryRow() {
 
       {progress ? (
         <p className="text-xs text-muted-foreground">
-          {t('settings.cloudUploading', { done: progress.done, total: progress.total })}{' '}
+          {t('settings.cloudUploading', { done: progress.done, total: progress.total })}
+          {/* Sin velocidad, una subida atascada se ve igual que una lenta. */}
+          {progress.bytesPerSecond != null
+            ? ` · ${formatBytes(progress.bytesPerSecond)}/s`
+            : ''}{' '}
           {progress.current}
         </p>
       ) : null}
