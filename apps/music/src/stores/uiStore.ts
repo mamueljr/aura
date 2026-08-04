@@ -24,6 +24,7 @@ const idleScan: ScanProgress = {
   added: 0,
   updated: 0,
   removed: 0,
+  merged: 0,
 };
 
 export const useUiStore = create<UiState>((set) => ({

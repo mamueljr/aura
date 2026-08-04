@@ -12,6 +12,7 @@ import {
 import { deleteFolderFromOpfs } from '@/infrastructure/fs/opfs';
 import { MetadataWorkerPool } from '@/infrastructure/workers/metadataPool';
 import { fetchMissingCovers } from '@/services/artwork/onlineCovers';
+import { dedupeLibrary } from '@/services/library/dedupe';
 import { hash53 } from '@/lib/utils';
 import { useUiStore } from '@/stores/uiStore';
 
@@ -134,6 +135,7 @@ async function runScan(folderId: number, discovered: DiscoveredFile[]): Promise<
     added: 0,
     updated: 0,
     removed: 0,
+    merged: 0,
     error: undefined,
   });
 
@@ -185,7 +187,11 @@ async function runScan(folderId: number, discovered: DiscoveredFile[]): Promise<
           }
 
           const base = {
-            id: trackId(folderId, d.path),
+            // Si esta ruta ya tenía ficha, conserva su id. Importa tras una
+            // deduplicación: la fila superviviente puede llevar el id que le
+            // dio otro dispositivo, y volver a calcularlo aquí la duplicaría
+            // otra vez en cada escaneo.
+            id: prev?.id ?? trackId(folderId, d.path),
             folderId,
             path: d.path,
             fileName,
@@ -255,11 +261,15 @@ async function runScan(folderId: number, discovered: DiscoveredFile[]): Promise<
       });
     });
 
+    // Si esta carpeta contenía canciones que ya habían llegado por Aura Sync,
+    // ahora están dos veces: se funden antes de reconstruir los índices.
+    const merged = await dedupeLibrary();
+
     await pruneOrphanCovers();
     await rebuildAggregates();
     void fetchMissingCovers();
 
-    setScan({ phase: 'done', added, updated, removed: removedIds.length });
+    setScan({ phase: 'done', added, updated, removed: removedIds.length, merged });
     setTimeout(() => {
       if (useUiStore.getState().scan.phase === 'done') useUiStore.getState().resetScan();
     }, 6000);

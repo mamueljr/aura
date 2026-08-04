@@ -48,6 +48,11 @@ export function ScanProgressBanner() {
                     updated: scan.updated,
                     removed: scan.removed,
                   })}
+                {/* Fundir duplicados borra una fila: se dice, no se hace a
+                    espaldas del usuario. */}
+                {scan.phase === 'done' &&
+                  scan.merged > 0 &&
+                  ` · ${t('library.scanMerged', { count: scan.merged })}`}
                 {scan.phase === 'error' && t('library.scanError', { error: scan.error })}
               </p>
               {percent != null ? (

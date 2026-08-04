@@ -1,6 +1,7 @@
 import type { Track } from '@/core/types';
 import { rebuildAggregates } from '@/infrastructure/db/aggregates';
 import { db } from '@/infrastructure/db/db';
+import { dedupeLibrary } from '@/services/library/dedupe';
 
 import { TOMBSTONE_RETENTION_DAYS, type SyncSnapshot } from './types';
 
@@ -74,6 +75,8 @@ export interface MergeReport {
   settings: number;
   /** Pistas nuevas traídas de la nube. */
   tracks: number;
+  /** Filas repetidas que se fundieron con su copia local. */
+  deduped: number;
 }
 
 /**
@@ -103,6 +106,7 @@ export async function mergeSnapshot(remote: SyncSnapshot): Promise<MergeReport> 
     history: 0,
     settings: 0,
     tracks: 0,
+    deduped: 0,
   };
 
   // Fuera de la transacción: crear la carpeta de la nube puede necesitar su
@@ -183,10 +187,17 @@ export async function mergeSnapshot(remote: SyncSnapshot): Promise<MergeReport> 
     await db.covers.put({ id: incoming.id, driveFileId: incoming.driveFileId });
   }
 
+  // Si este dispositivo ya tenía en disco alguna de las canciones que acaban
+  // de llegar, ahora está dos veces (ids distintos: el suyo y el del otro
+  // dispositivo). Se funden conservando el id que el resto del ecosistema ya
+  // conoce. Va después de fusionar favoritos e historial: así esos datos ya
+  // están puestos sobre la fila de la nube y la fusión los arrastra.
+  if (report.tracks > 0) report.deduped = await dedupeLibrary();
+
   // Los índices de álbum/artista/género solo los reconstruye el escáner, así
   // que sin esto las pistas llegadas de la nube saldrían en "todas las
   // canciones" pero no en las vistas por álbum o artista.
-  if (report.tracks > 0) await rebuildAggregates();
+  if (report.tracks > 0 || report.deduped > 0) await rebuildAggregates();
 
   return report;
 }

@@ -81,6 +81,8 @@
     "readingMetadata": "Reading metadata {{processed}}/{{discovered}}",
     "savingLibrary": "Saving library…",
     "scanDone": "Scan complete: {{added}} added, {{updated}} updated, {{removed}} removed",
+    "scanMerged_one": "{{count}} duplicate merged with its copy",
+    "scanMerged_other": "{{count}} duplicates merged with their copy",
     "scanError": "Scan failed: {{error}}",
     "emptyTitle": "Your library is empty",
     "emptyBody": "Pick a folder with music files. Aura will index it and remember it next time.",

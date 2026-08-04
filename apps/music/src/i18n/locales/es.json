@@ -81,6 +81,8 @@
     "readingMetadata": "Leyendo metadatos {{processed}}/{{discovered}}",
     "savingLibrary": "Guardando biblioteca…",
     "scanDone": "Escaneo completo: {{added}} nuevas, {{updated}} actualizadas, {{removed}} eliminadas",
+    "scanMerged_one": "{{count}} repetida fundida con su copia",
+    "scanMerged_other": "{{count}} repetidas fundidas con su copia",
     "scanError": "El escaneo falló: {{error}}",
     "emptyTitle": "Tu biblioteca está vacía",
     "emptyBody": "Elige una carpeta con música. Aura la indexará y la recordará la próxima vez.",

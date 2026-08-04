@@ -148,6 +148,11 @@ export interface ScanProgress {
   added: number;
   updated: number;
   removed: number;
+  /**
+   * Filas repetidas que se fundieron con su copia. Se informa aparte de
+   * `removed`: aquí no ha desaparecido ninguna canción, solo su duplicado.
+   */
+  merged: number;
   currentFile?: string;
   error?: string;
 }

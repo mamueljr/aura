@@ -292,6 +292,29 @@ describe('snapshot — biblioteca en la nube', () => {
     expect(report.tracks).toBe(0);
   });
 
+  it('funde la copia que este dispositivo ya tenía escaneada', async () => {
+    // El caso real: A sube su música, B la recibe por sync Y además escanea su
+    // propia copia. Sin fundirlas, B ve cada canción dos veces.
+    await db.folders.put({ id: 9, name: 'Música', mode: 'fs-access', addedAt: 0 });
+    await db.tracks.put(
+      track('mia', { folderId: 9, title: 'Tema', duration: 200, path: 'rock/tema.mp3' }),
+    );
+    const remote = {
+      ...track('suya', { title: 'Tema', duration: 200 }),
+      driveFileId: 'd1',
+    } as never;
+
+    const report = await mergeSnapshot(snapshot({ tracks: [remote] }));
+
+    const rows = await db.tracks.toArray();
+    expect(report.deduped).toBe(1);
+    expect(rows).toHaveLength(1);
+    // Sobrevive el id que el otro dispositivo ya conoce, con la ruta de aquí.
+    expect(rows[0].id).toBe('suya');
+    expect(rows[0].path).toBe('rock/tema.mp3');
+    expect(rows[0].driveFileId).toBe('d1');
+  });
+
   it('sigue leyendo un respaldo v1, sin pistas', async () => {
     const report = await mergeSnapshot(snapshot({ playlists: [playlist('p1', 10)] }));
 
