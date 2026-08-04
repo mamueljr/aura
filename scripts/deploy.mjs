@@ -220,14 +220,19 @@ const hub = `<!doctype html>
 writeFileSync(path.join(OUT, 'index.html'), hub);
 
 // 404 de la raíz del sitio: Pages lo sirve para CUALQUIER ruta inexistente.
-// Redirige rutas profundas de una app a la raíz de esa app (la ruta interna se
-// pierde, pero la app carga sin error 404); lo demás cae al hub.
+// Truco spa-github-pages: en vez de tirar la sub-ruta, la codifica en la query
+// string (?/pets) y el index.html de la app la decodifica con replaceState
+// antes de montar React — así una recarga en /aura/home/pets no pierde la ruta.
 const notFound = `<!doctype html>
 <html lang="es"><head><meta charset="utf-8" />
 <script>
   (function () {
-    var m = location.pathname.match(/^(\\/aura\\/(home|music|weather))(\\/|$)/);
-    location.replace(m ? m[1] + '/' + location.hash : '/aura/');
+    var m = location.pathname.match(/^\\/aura\\/(home|music|weather)(\\/.*)?$/);
+    if (!m) { location.replace('/aura/'); return; }
+    var base = '/aura/' + m[1];
+    var rest = (m[2] || '/').replace(/&/g, '~and~');
+    var qs = location.search ? '&' + location.search.slice(1).replace(/&/g, '~and~') : '';
+    location.replace(base + '/?' + rest + qs + location.hash);
   })();
 </script>
 </head><body></body></html>

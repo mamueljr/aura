@@ -185,6 +185,14 @@ pnpm --filter aura-home preview   # previsualizar el build
   llega a molestar; para PWAs es caso menor.
 - **Home no tiene script `typecheck`**: su tipado corre dentro de `build` (`tsc -b`),
   así que `pnpm typecheck` en la raíz NO cubre Home. Para verificarlo hay que buildear.
+- ~~Warning de `setState` en `componentDidUpdate` (Home)~~ ✅ **Resuelto**: se
+  eliminó de paso en `4361497` al limpiar el `resetKey` sin uso de `ErrorBoundary`
+  (el layout ya remonta el árbol al cambiar de ruta). Único `componentDidUpdate`
+  del repo; no queda ninguno.
+- ~~404 de deploy pierde la sub-ruta al recargar~~ ✅ **Resuelto**: `404.html`
+  codifica la ruta profunda en la query (`?/pets`, truco spa-github-pages) y el
+  `index.html` de home/music la decodifica con `history.replaceState` antes de
+  montar el router. Weather no lo necesita (sin router del lado del cliente).
 - **Pre-vuelo de auth en `syncNow`**: es el único punto que sigue acoplado a Drive
   (`getAccessToken`). Se conservó a propósito para no cambiar el comportamiento: sin
   él, un fallo de sesión purgaría tombstones locales antes de fallar.
@@ -198,7 +206,7 @@ Lo que sigue es construir sobre la base:
 |---|---|
 | **Aura Sync** (en curso) | ✅ **Paso 1**: Home implementa `SyncProvider` — transporte (`drive-provider`) separado de la orquestación, contrato con payload claro/cifrado y canal de binarios.<br>✅ **Paso 2**: Cifrado E2E opt-in (`sync-crypto.service.ts` con Web Crypto API AES-GCM 256-bit + PBKDF2), UI de ajustes y 14 tests de integración/unidad en verde.<br>✅ **Paso 3**: Transporte y cifrado extraídos a **`@aura/sync`** (paquete runtime) y **Music sincronizado** (Fase A: playlists, favoritos, historial y ajustes) sobre el mismo contrato. Music estrena vitest.<br>✅ **Paso 4 (Fase B)**: biblioteca en la nube — subida reanudable del audio, descarga bajo demanda a OPFS y snapshot v2 con las pistas subidas. **Sin probar contra Drive real todavía.** Ver §9. |
 | **App nueva** (p. ej. Aura Finance) | Arrancar greenfield sobre `@aura/{tsconfig,tokens,ui,core,config}` para validar velocidad de creación con la base compartida. |
-| **Cabos sueltos** | Archivar repos originales en GitHub; warning de lint preexistente en Home (`setState` en component update); mejorar el 404 de deploy. |
+| **Cabos sueltos** | Archivar repos originales en GitHub (pendiente del usuario). ~~Warning de setState en component update~~ y ~~404 de deploy~~ ✅ resueltos. |
 
 ### Punto de entrada del ecosistema (parcialmente resuelto)
 El deploy ya publica un **hub** en `mamueljr.github.io/aura/` que enlaza las 3 apps.
