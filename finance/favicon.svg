@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="aura-finance" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6ee7b7"/>
+      <stop offset="55%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="#08120e"/>
+  <circle cx="32" cy="32" r="17" fill="none" stroke="url(#aura-finance)" stroke-width="4.5"/>
+  <path d="M32 22v20M27 26.5c0-2.5 2.2-4.5 5-4.5s5 1.8 5 4c0 5-10 3-10 8 0 2.2 2.2 4 5 4s5-2 5-4.5" fill="none" stroke="url(#aura-finance)" stroke-width="3" stroke-linecap="round"/>
+</svg>
