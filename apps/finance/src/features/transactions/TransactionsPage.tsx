@@ -7,13 +7,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@aura
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { transactionsRepository } from '@/repositories/transactions.repository';
 import type { NewTransaction, Transaction } from '@/types/transaction';
+import { formatAmount, useCurrency } from '@/lib/currency';
 import { TransactionFormDialog } from './TransactionFormDialog';
-import { formatAmount } from './format';
 
 export function TransactionsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Transaction | null>(null);
+  const [currency] = useCurrency();
   const transactions = useLiveQuery(() => transactionsRepository.getAll(), []);
 
   const income = transactions?.filter((t) => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) ?? 0;
@@ -49,14 +50,14 @@ export function TransactionsPage() {
       <Card>
         <CardHeader>
           <CardDescription>Balance</CardDescription>
-          <CardTitle className="text-3xl">{formatAmount(balance)}</CardTitle>
+          <CardTitle className="text-3xl">{formatAmount(balance, currency)}</CardTitle>
         </CardHeader>
         <CardContent className="flex gap-6 text-sm">
           <span className="text-muted-foreground">
-            Ingresos <span className="font-medium text-foreground">{formatAmount(income)}</span>
+            Ingresos <span className="font-medium text-foreground">{formatAmount(income, currency)}</span>
           </span>
           <span className="text-muted-foreground">
-            Gastos <span className="font-medium text-foreground">{formatAmount(expense)}</span>
+            Gastos <span className="font-medium text-foreground">{formatAmount(expense, currency)}</span>
           </span>
         </CardContent>
       </Card>
@@ -80,7 +81,7 @@ export function TransactionsPage() {
               <div className="flex items-center gap-2">
                 <span className={t.type === 'income' ? 'text-finance-1 font-semibold' : 'font-semibold'}>
                   {t.type === 'income' ? '+' : '-'}
-                  {formatAmount(t.amount)}
+                  {formatAmount(t.amount, currency)}
                 </span>
                 <Button
                   size="icon"

@@ -56,7 +56,7 @@ aura/
 │  ├─ home/      # Aura Home  — React 19, la joya del ecosistema
 │  ├─ music/     # Aura Music — React 19 + oxlint (offline-first)
 │  ├─ weather/   # AuraWeather — vanilla JS + Capacitor
-│  └─ finance/   # Aura Finance — React 19, primera feature (movimientos)
+│  └─ finance/   # Aura Finance — React 19, PWA instalable, v1 (ver §10)
 ├─ packages/
 │  ├─ tsconfig/  # @aura/tsconfig — presets de TypeScript compartidos
 │  ├─ tokens/    # @aura/tokens   — design tokens (OKLCH) + fuentes
@@ -206,7 +206,7 @@ Lo que sigue es construir sobre la base:
 | Frente | Entregable |
 |---|---|
 | **Aura Sync** (en curso) | ✅ **Paso 1**: Home implementa `SyncProvider` — transporte (`drive-provider`) separado de la orquestación, contrato con payload claro/cifrado y canal de binarios.<br>✅ **Paso 2**: Cifrado E2E opt-in (`sync-crypto.service.ts` con Web Crypto API AES-GCM 256-bit + PBKDF2), UI de ajustes y 14 tests de integración/unidad en verde.<br>✅ **Paso 3**: Transporte y cifrado extraídos a **`@aura/sync`** (paquete runtime) y **Music sincronizado** (Fase A: playlists, favoritos, historial y ajustes) sobre el mismo contrato. Music estrena vitest.<br>✅ **Paso 4 (Fase B)**: biblioteca en la nube — subida reanudable del audio, descarga bajo demanda a OPFS y snapshot v2 con las pistas subidas. **Sin probar contra Drive real todavía.** Ver §9. |
-| **App nueva — Aura Finance** | ✅ **Esqueleto**: `apps/finance` sobre `@aura/{tsconfig,ui,config}` (`@aura/core`/`@aura/sync` se suman cuando haya datos que sincronizar), tema propio (verde esmeralda + ámbar, como Music).<br>✅ **Primera feature**: Movimientos — Dexie local (`transactions`), alta con `Dialog`/`Tabs`/`Select` de `@aura/ui`, balance + lista con borrado. Sin moneda fija (formatea con `$` genérico, pendiente definir divisa). **En el deploy y el hub** desde este punto. |
+| **App nueva — Aura Finance** | ✅ **v1 completa** — ver detalle en §10. `apps/finance` sobre `@aura/{tsconfig,ui,config}`, tema propio (verde esmeralda + ámbar), PWA instalable, en el deploy y el hub. |
 | **Cabos sueltos** | Archivar repos originales en GitHub (pendiente del usuario). ~~Warning de setState en component update~~ y ~~404 de deploy~~ ✅ resueltos. |
 
 ### Punto de entrada del ecosistema (parcialmente resuelto)
@@ -323,3 +323,50 @@ y poder escucharla en cualquier otro. La Fase A ya replica lo irrecuperable
    almacenamiento (¿todo, o solo lo que se reproduce?).
 5. **Portadas**: hoy no viajan; se regeneran al escanear. En un dispositivo que
    nunca escanea habría que sincronizarlas o generar la carátula de relleno.
+
+---
+
+## 10. Aura Finance — v1
+
+App nueva, greenfield sobre `@aura/{tsconfig,ui,config}` (sin `@aura/core`/
+`@aura/sync` todavía — se suman cuando haya datos que sincronizar entre
+dispositivos). Tema propio (verde esmeralda + ámbar, radius 0.75rem), como
+Music: no usa `@aura/tokens`. Local-first con Dexie (`aura-finance`, tabla
+`transactions`), sin backend.
+
+**Qué hace**
+- **Movimientos**: alta/edición/borrado (con confirmación) de ingresos y
+  gastos — descripción, monto, categoría fija por tipo, fecha. Balance,
+  ingresos y gastos totales arriba de la lista.
+- **Resumen**: gastos del mes actual por categoría (lista ranqueada, barra de
+  un solo tono — una sola serie no necesita paleta categórica ni leyenda) y
+  totales de los últimos 6 meses (tabla simple, balance en verde/rojo).
+- **Ajustes**: moneda configurable (`Intl.NumberFormat` sobre una lista de
+  divisas comunes, persistida en `localStorage`; no se asumió una por
+  defecto) y exportar todos los movimientos a CSV.
+- **PWA instalable**: manifest + iconos propios (192/512 + maskable,
+  generados desde SVG fuente en `public/icons/`) + `vite-plugin-pwa`, igual
+  que Home/Music.
+
+**Decisiones/gotchas específicas de esta app**
+- Iconos PWA: `magick`/ImageMagick trae un delegado SVG interno (MSVG) que
+  **descarta silenciosamente** trazos con gradiente — no falla, solo renderiza
+  el fondo y nada más (0 avisos, PNG de 1 color). No hay `rsvg-convert`
+  instalado en esta máquina. Se resolvió rasterizando con
+  `google-chrome --headless --screenshot` sobre un HTML que envuelve el SVG,
+  que sí soporta el spec completo. Si hace falta regenerar iconos de otra app,
+  usar el mismo truco en vez de asumir que `magick icon.svg icon.png` basta.
+- Paleta verde/ámbar (`--finance-1`/`--finance-2`) validada con el script del
+  skill de dataviz: pasa como categórica en modo claro (con aviso de
+  contraste, mitigado con texto visible) pero **falla la banda de luminosidad
+  en oscuro**. Por eso el resumen por mes usa texto plano en vez de barras de
+  dos colores — evita tener que mantener un segundo par de tonos solo para
+  gráficas en oscuro.
+- Sin moneda fija por defecto a propósito: no había forma de saber la divisa
+  real del usuario, así que se resolvió con un ajuste en vez de adivinar
+  (ver `src/lib/currency.ts`).
+
+**Deliberadamente fuera de v1** (no son bugs, son alcance): presupuestos,
+cuentas múltiples, transacciones recurrentes, adjuntar comprobantes, y Aura
+Sync (sincronizar entre dispositivos). Son decisiones de producto reales;
+quedan para cuando se pidan explícitamente.

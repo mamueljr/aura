@@ -60,7 +60,7 @@ const APPS = {
     filter: 'aura-finance',
     label: 'Aura Finance',
     desc: 'Tus finanzas, en orden',
-    icon: './finance/favicon.svg',
+    icon: './finance/icons/icon-192.png',
     tone: '#10b981',
   },
 };

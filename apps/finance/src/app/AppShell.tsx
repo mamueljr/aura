@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 const TABS = [
   { to: '/', label: 'Movimientos', end: true },
   { to: '/resumen', label: 'Resumen', end: false },
+  { to: '/ajustes', label: 'Ajustes', end: false },
 ];
 
 export function AppShell() {

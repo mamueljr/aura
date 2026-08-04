@@ -10,7 +10,7 @@ Gestión: **pnpm workspaces + Turborepo**.
 
 ```
 apps/      home (React 19, la joya) · music (React 19) · weather (vanilla + Capacitor) ·
-           finance (React 19, esqueleto — sin features aún)
+           finance (React 19, v1: movimientos, resumen, ajustes — ver ESTADO-MIGRACION §10)
 packages/  @aura/tsconfig · @aura/tokens · @aura/ui (15 componentes) · @aura/core (tipos) · @aura/config (oxlint base)
 scripts/   deploy.mjs — deploy manual a GitHub Pages (sin Actions)
 ```

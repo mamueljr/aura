@@ -1,10 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Card, CardContent, CardDescription, CardHeader } from '@aura/ui/components/card';
 import { transactionsRepository } from '@/repositories/transactions.repository';
-import { formatAmount } from '@/features/transactions/format';
+import { formatAmount, useCurrency } from '@/lib/currency';
 import { currentMonthKey, expensesByCategory, monthLabel, totalsByMonth } from './aggregate';
 
 export function SummaryPage() {
+  const [currency] = useCurrency();
   const transactions = useLiveQuery(() => transactionsRepository.getAll(), []);
 
   if (!transactions) return null;
@@ -29,7 +30,7 @@ export function SummaryPage() {
                 <div key={c.category} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
                     <span>{c.category}</span>
-                    <span className="font-medium tabular-nums">{formatAmount(c.amount)}</span>
+                    <span className="font-medium tabular-nums">{formatAmount(c.amount, currency)}</span>
                   </div>
                   <div className="h-2.5 w-full rounded-full bg-muted">
                     <div
@@ -59,12 +60,12 @@ export function SummaryPage() {
                   <div key={m.month} className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">{monthLabel(m.month)}</span>
                     <div className="flex items-center gap-4 tabular-nums">
-                      <span className="text-finance-1">+{formatAmount(m.income)}</span>
-                      <span className="text-muted-foreground">-{formatAmount(m.expense)}</span>
+                      <span className="text-finance-1">+{formatAmount(m.income, currency)}</span>
+                      <span className="text-muted-foreground">-{formatAmount(m.expense, currency)}</span>
                       <span
                         className={`font-medium ${balance < 0 ? 'text-destructive' : 'text-finance-1'}`}
                       >
-                        {formatAmount(balance)}
+                        {formatAmount(balance, currency)}
                       </span>
                     </div>
                   </div>
