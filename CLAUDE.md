@@ -71,3 +71,10 @@ máquina nueva. Para saltárselo puntualmente: `git push --no-verify`.
 - **Trabajar solo en este monorepo.** Los repos originales quedaron congelados.
 - `git pull` antes de empezar y `git push` al terminar (se trabaja desde >1 máquina).
 - Confirmar cambios verificando: `pnpm build && pnpm lint && pnpm typecheck`.
+- **Autonomía en commit/push/deploy**: una vez que `pnpm build && pnpm lint &&
+  pnpm typecheck` pasan en verde, hacer `git commit`, `git push` y (si aplica)
+  `pnpm deploy` directo, sin pedir confirmación en cada paso. El pre-push hook
+  ya corre lint/typecheck/test y aborta el push si algo falla — es el freno
+  real. Seguir pidiendo confirmación explícita para lo que sí es irreversible
+  o afecta más allá de este repo: `--force`, `reset --hard`, borrar ramas,
+  archivar/despublicar algo, o cualquier acción fuera de este monorepo.
