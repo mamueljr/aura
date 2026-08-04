@@ -1,4 +1,3 @@
-import { parseAudioMetadata } from '@/infrastructure/workers/parseMetadata';
 import type {
   MetadataRequest,
   MetadataResponse,
@@ -92,6 +91,11 @@ export class MetadataWorkerPool {
 
   private async parseOnMainThread(file: File): Promise<ParseResult> {
     try {
+      // Import diferido: este es el camino de respaldo para cuando el navegador
+      // no puede crear workers. Estáticamente, arrastraba `music-metadata`
+      // (~60 KB comprimidos) a la carga inicial de todos los usuarios, aunque
+      // el worker sí funcione y la biblioteca ni siquiera se escanee.
+      const { parseAudioMetadata } = await import('@/infrastructure/workers/parseMetadata');
       const metadata = await parseAudioMetadata(file);
       return { metadata };
     } catch (error) {

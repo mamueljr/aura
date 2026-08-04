@@ -84,11 +84,16 @@ export default defineConfig({
       output: {
         // Rollup 4 (Vite 8) ya no acepta la forma de objeto aquí; el mismo
         // reparto expresado como función.
+        // Aquí solo van las dependencias que de verdad se usan desde el primer
+        // pintado. Forzar un chunk para algo que NO se usa al arrancar sale
+        // caro: `music-metadata` tenía el suyo ("media") y Rolldown acababa
+        // colgándolo del grafo estático del entry, así que sus ~60 KB
+        // comprimidos se descargaban siempre aunque solo los use el worker al
+        // escanear. Sin regla, cae en el chunk perezoso que le corresponde.
         manualChunks(id) {
           if (/node_modules\/(react|react-dom|react-router|react-router-dom)\//.test(id)) {
             return 'react';
           }
-          if (id.includes('node_modules/music-metadata/')) return 'media';
           if (id.includes('node_modules/framer-motion/')) return 'motion';
           return undefined;
         },
