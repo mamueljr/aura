@@ -2,8 +2,12 @@
 <html lang="es"><head><meta charset="utf-8" />
 <script>
   (function () {
-    var m = location.pathname.match(/^(\/aura\/(home|music|weather))(\/|$)/);
-    location.replace(m ? m[1] + '/' + location.hash : '/aura/');
+    var m = location.pathname.match(/^\/aura\/(home|music|weather)(\/.*)?$/);
+    if (!m) { location.replace('/aura/'); return; }
+    var base = '/aura/' + m[1];
+    var rest = (m[2] || '/').replace(/&/g, '~and~');
+    var qs = location.search ? '&' + location.search.slice(1).replace(/&/g, '~and~') : '';
+    location.replace(base + '/?' + rest + qs + location.hash);
   })();
 </script>
 </head><body></body></html>
