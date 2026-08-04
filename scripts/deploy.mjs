@@ -54,6 +54,15 @@ const APPS = {
     icon: './weather/assets/icons/icon-192.png',
     tone: '#f472b6',
   },
+  finance: {
+    base: '/aura/finance/',
+    dist: 'apps/finance/dist',
+    filter: 'aura-finance',
+    label: 'Aura Finance',
+    desc: 'Tus finanzas, en orden',
+    icon: './finance/favicon.svg',
+    tone: '#10b981',
+  },
 };
 
 const args = process.argv.slice(2);

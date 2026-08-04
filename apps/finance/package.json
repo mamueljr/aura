@@ -16,6 +16,8 @@
   },
   "dependencies": {
     "@aura/ui": "workspace:*",
+    "dexie": "^4.4.4",
+    "dexie-react-hooks": "^4.4.0",
     "lucide-react": "^1.25.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",

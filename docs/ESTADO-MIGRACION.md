@@ -56,7 +56,7 @@ aura/
 │  ├─ home/      # Aura Home  — React 19, la joya del ecosistema
 │  ├─ music/     # Aura Music — React 19 + oxlint (offline-first)
 │  ├─ weather/   # AuraWeather — vanilla JS + Capacitor
-│  └─ finance/   # Aura Finance — React 19, esqueleto greenfield (sin features aún)
+│  └─ finance/   # Aura Finance — React 19, primera feature (movimientos)
 ├─ packages/
 │  ├─ tsconfig/  # @aura/tsconfig — presets de TypeScript compartidos
 │  ├─ tokens/    # @aura/tokens   — design tokens (OKLCH) + fuentes
@@ -206,7 +206,7 @@ Lo que sigue es construir sobre la base:
 | Frente | Entregable |
 |---|---|
 | **Aura Sync** (en curso) | ✅ **Paso 1**: Home implementa `SyncProvider` — transporte (`drive-provider`) separado de la orquestación, contrato con payload claro/cifrado y canal de binarios.<br>✅ **Paso 2**: Cifrado E2E opt-in (`sync-crypto.service.ts` con Web Crypto API AES-GCM 256-bit + PBKDF2), UI de ajustes y 14 tests de integración/unidad en verde.<br>✅ **Paso 3**: Transporte y cifrado extraídos a **`@aura/sync`** (paquete runtime) y **Music sincronizado** (Fase A: playlists, favoritos, historial y ajustes) sobre el mismo contrato. Music estrena vitest.<br>✅ **Paso 4 (Fase B)**: biblioteca en la nube — subida reanudable del audio, descarga bajo demanda a OPFS y snapshot v2 con las pistas subidas. **Sin probar contra Drive real todavía.** Ver §9. |
-| **App nueva — Aura Finance** | ✅ **Esqueleto**: `apps/finance` sobre `@aura/{tsconfig,ui,config}` (`@aura/core`/`@aura/sync` se suman cuando haya datos que sincronizar), tema propio (verde esmeralda + ámbar, como Music), routing mínimo, `build`/`lint`/`typecheck` en verde. Sin features todavía; no está en el deploy ni en el hub. |
+| **App nueva — Aura Finance** | ✅ **Esqueleto**: `apps/finance` sobre `@aura/{tsconfig,ui,config}` (`@aura/core`/`@aura/sync` se suman cuando haya datos que sincronizar), tema propio (verde esmeralda + ámbar, como Music).<br>✅ **Primera feature**: Movimientos — Dexie local (`transactions`), alta con `Dialog`/`Tabs`/`Select` de `@aura/ui`, balance + lista con borrado. Sin moneda fija (formatea con `$` genérico, pendiente definir divisa). **En el deploy y el hub** desde este punto. |
 | **Cabos sueltos** | Archivar repos originales en GitHub (pendiente del usuario). ~~Warning de setState en component update~~ y ~~404 de deploy~~ ✅ resueltos. |
 
 ### Punto de entrada del ecosistema (parcialmente resuelto)
