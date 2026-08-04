@@ -16,6 +16,10 @@ export const transactionsRepository = {
     return transaction;
   },
 
+  update(id: string, data: NewTransaction): Promise<number> {
+    return db.transactions.update(id, data);
+  },
+
   remove(id: string): Promise<void> {
     return db.transactions.delete(id);
   },

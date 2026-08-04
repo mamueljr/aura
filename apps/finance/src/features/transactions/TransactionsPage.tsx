@@ -1,28 +1,41 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Plus, Trash2, Wallet } from 'lucide-react';
+import { Pencil, Plus, Trash2, Wallet } from 'lucide-react';
 import { Button } from '@aura/ui/components/button';
 import { Badge } from '@aura/ui/components/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@aura/ui/components/card';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { transactionsRepository } from '@/repositories/transactions.repository';
-import type { NewTransaction } from '@/types/transaction';
+import type { NewTransaction, Transaction } from '@/types/transaction';
 import { TransactionFormDialog } from './TransactionFormDialog';
 import { formatAmount } from './format';
 
 export function TransactionsPage() {
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<Transaction | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Transaction | null>(null);
   const transactions = useLiveQuery(() => transactionsRepository.getAll(), []);
 
   const income = transactions?.filter((t) => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) ?? 0;
   const expense = transactions?.filter((t) => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0) ?? 0;
   const balance = income - expense;
 
-  async function handleCreate(data: NewTransaction) {
-    await transactionsRepository.create(data);
+  function openNew() {
+    setEditing(null);
+    setFormOpen(true);
   }
 
-  async function handleRemove(id: string) {
-    await transactionsRepository.remove(id);
+  function openEdit(t: Transaction) {
+    setEditing(t);
+    setFormOpen(true);
+  }
+
+  async function handleSubmit(data: NewTransaction) {
+    if (editing) {
+      await transactionsRepository.update(editing.id, data);
+    } else {
+      await transactionsRepository.create(data);
+    }
   }
 
   return (
@@ -34,7 +47,7 @@ export function TransactionsPage() {
           </div>
           <h1 className="finance-text text-xl font-bold">Aura Finance</h1>
         </div>
-        <Button size="icon" onClick={() => setDialogOpen(true)} aria-label="Nuevo movimiento">
+        <Button size="icon" onClick={openNew} aria-label="Nuevo movimiento">
           <Plus />
         </Button>
       </header>
@@ -78,8 +91,16 @@ export function TransactionsPage() {
                 <Button
                   size="icon"
                   variant="ghost"
+                  aria-label={`Editar ${t.description}`}
+                  onClick={() => openEdit(t)}
+                >
+                  <Pencil className="size-4" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
                   aria-label={`Eliminar ${t.description}`}
-                  onClick={() => handleRemove(t.id)}
+                  onClick={() => setPendingDelete(t)}
                 >
                   <Trash2 className="size-4" />
                 </Button>
@@ -89,7 +110,24 @@ export function TransactionsPage() {
         ))}
       </section>
 
-      <TransactionFormDialog open={dialogOpen} onOpenChange={setDialogOpen} onSubmit={handleCreate} />
+      <TransactionFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        transaction={editing}
+        onSubmit={handleSubmit}
+      />
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null);
+        }}
+        title="Eliminar movimiento"
+        description={`"${pendingDelete?.description}" se eliminará permanentemente.`}
+        onConfirm={() => {
+          if (pendingDelete) void transactionsRepository.remove(pendingDelete.id);
+        }}
+      />
     </main>
   );
 }

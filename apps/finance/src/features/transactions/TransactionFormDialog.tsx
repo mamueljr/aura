@@ -12,12 +12,13 @@ import { Input } from '@aura/ui/components/input';
 import { Label } from '@aura/ui/components/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@aura/ui/components/select';
 import { Tabs, TabsList, TabsTrigger } from '@aura/ui/components/tabs';
-import type { NewTransaction, TransactionType } from '@/types/transaction';
+import type { NewTransaction, Transaction, TransactionType } from '@/types/transaction';
 import { CATEGORIES } from './categories';
 
 interface TransactionFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  transaction: Transaction | null;
   onSubmit: (data: NewTransaction) => void;
 }
 
@@ -25,22 +26,27 @@ function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function initialState() {
+function initialState(transaction: Transaction | null) {
   return {
-    type: 'expense' as TransactionType,
-    description: '',
-    amount: '',
-    category: CATEGORIES.expense[0],
-    date: today(),
+    type: transaction?.type ?? ('expense' as TransactionType),
+    description: transaction?.description ?? '',
+    amount: transaction ? String(transaction.amount) : '',
+    category: transaction?.category ?? CATEGORIES.expense[0],
+    date: transaction?.date ?? today(),
   };
 }
 
-export function TransactionFormDialog({ open, onOpenChange, onSubmit }: TransactionFormDialogProps) {
-  const [form, setForm] = useState(initialState);
+export function TransactionFormDialog({
+  open,
+  onOpenChange,
+  transaction,
+  onSubmit,
+}: TransactionFormDialogProps) {
+  const [form, setForm] = useState(() => initialState(transaction));
 
   useEffect(() => {
-    if (open) setForm(initialState());
-  }, [open]);
+    if (open) setForm(initialState(transaction));
+  }, [open, transaction]);
 
   const set = <K extends keyof ReturnType<typeof initialState>>(
     key: K,
@@ -71,7 +77,7 @@ export function TransactionFormDialog({ open, onOpenChange, onSubmit }: Transact
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nuevo movimiento</DialogTitle>
+          <DialogTitle>{transaction ? 'Editar movimiento' : 'Nuevo movimiento'}</DialogTitle>
           <DialogDescription>Registra un ingreso o un gasto.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -141,7 +147,7 @@ export function TransactionFormDialog({ open, onOpenChange, onSubmit }: Transact
               Cancelar
             </Button>
             <Button type="submit" disabled={!valid}>
-              Agregar
+              {transaction ? 'Guardar cambios' : 'Agregar'}
             </Button>
           </DialogFooter>
         </form>
