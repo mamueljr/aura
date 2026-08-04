@@ -256,19 +256,21 @@ aún de relojes de otro dispositivo.
   ni `opfs`. Al fusionar entran en una carpeta sintética `cloud` («Aura Sync»);
   nunca se pisa una pista local.
 
-**Lo que queda abierto**
-1. **Portadas**: siguen sin viajar. En un dispositivo que nunca escanea, las
-   pistas de la nube usan la carátula generada de relleno.
-2. **Cuota**: la UI muestra cuánto falta por subir, pero no consulta el espacio
-   libre real de Drive (`about?fields=storageQuota`).
-3. **Limpieza**: si se borra una pista, su archivo en Drive queda huérfano
-   (existe `removeUploadedTrack`, pero nadie lo llama todavía). Hay archivos
-   huérfanos de las pruebas: se subieron, se desinstaló la PWA y con ella se
-   perdieron los `driveFileId` que los referenciaban.
-4. **Duplicados**: si el dispositivo B además escanea su propia copia de la
-   misma música, tendrá la pista dos veces (ids distintos por `folderId`).
-5. **Velocidad de subida**: se sube de 3 en 3. Está sin medir si ese es el
-   límite real o lo es la subida de la red.
+**Lo que quedaba abierto — actualizado, resuelto en su mayoría**
+1. ~~Portadas: siguen sin viajar~~ → resuelto (`326baed`): las carátulas ya
+   sincronizan.
+2. ~~Cuota: no consulta el espacio libre real de Drive~~ → resuelto (`e4abd01`):
+   `cloudFreeBytes()` usa `about?fields=storageQuota` antes de subir.
+3. ~~Limpieza: archivos huérfanos en Drive~~ → resuelto (`a720454`): limpieza
+   automática por prefijo (`track-`, `cover-`), respetando refs de la DB local
+   y del índice publicado.
+4. ~~Borrados~~ → resuelto (`0dad338`, no listado originalmente pero relacionado):
+   tombstones propagan los borrados entre dispositivos.
+5. **Duplicados** (sigue abierto): si el dispositivo B además escanea su propia
+   copia de la misma música, tendrá la pista dos veces (ids distintos por
+   `folderId`). Sin decisión tomada.
+6. **Velocidad de subida** (sigue abierto, sin urgencia): se sube de 3 en 3.
+   Sin medir si ese es el límite real o lo es la subida de la red.
 
 > ⚠️ **Desinstalar la PWA borra su almacenamiento local**, y con él las fichas
 > de las pistas y sus `driveFileId`. El audio sigue en Drive pero queda
