@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Pencil, Plus, Trash2, Wallet } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@aura/ui/components/button';
 import { Badge } from '@aura/ui/components/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@aura/ui/components/card';
@@ -39,18 +39,12 @@ export function TransactionsPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-6 p-6">
-      <header className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="finance-gradient flex size-10 items-center justify-center rounded-xl text-white">
-            <Wallet className="size-5" aria-hidden="true" />
-          </div>
-          <h1 className="finance-text text-xl font-bold">Aura Finance</h1>
-        </div>
+    <div className="flex flex-col gap-6">
+      <div className="flex justify-end">
         <Button size="icon" onClick={openNew} aria-label="Nuevo movimiento">
           <Plus />
         </Button>
-      </header>
+      </div>
 
       <Card>
         <CardHeader>
@@ -128,6 +122,6 @@ export function TransactionsPage() {
           if (pendingDelete) void transactionsRepository.remove(pendingDelete.id);
         }}
       />
-    </main>
+    </div>
   );
 }
