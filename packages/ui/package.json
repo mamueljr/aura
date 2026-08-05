@@ -7,7 +7,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./components/*": "./src/components/*.tsx",
-    "./lib/utils": "./src/lib/utils.ts"
+    "./lib/utils": "./src/lib/utils.ts",
+    "./variants.css": "./src/variants.css"
   },
   "scripts": {
     "lint": "oxlint",

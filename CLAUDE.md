@@ -32,6 +32,12 @@ pnpm deploy       # build + publica a gh-pages (todo o: pnpm deploy home music)
 - **Tailwind 4 no escanea `node_modules`**: toda app que consuma `@aura/ui` debe
   declarar `@source '…/packages/ui/src'` en su CSS raíz, o los componentes salen
   sin estilos.
+- **…y también `@import '@aura/ui/variants.css'`**: los componentes usan las
+  utilidades cortas de shadcn (`data-active:`, `data-open:`…) pero Radix emite
+  `data-state="active|open|…"`. Sin ese import, Tailwind las interpreta como el
+  atributo `[data-active]` que nunca existe y **el estado no se estiliza, en
+  silencio**: pestañas activas indistinguibles, diálogos sin animación. Home lo
+  recibía de rebote vía `@import 'shadcn/tailwind.css'`; Music y Finance no.
 - `@aura/ui` es **just-in-time**: expone TS fuente, sin build. `cn` vive ahí.
 - **Cada app conserva sus propios tokens** (Home usa `@aura/tokens` OKLCH; Music su
   tema hex propio con degradados). Comparten componentes, no valores de token —

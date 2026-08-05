@@ -1,0 +1,78 @@
+/**
+ * Custom-variants que necesitan los componentes de @aura/ui.
+ *
+ * Radix emite `data-state="active|open|closed|checked|unchecked"` y
+ * `data-orientation="horizontal|vertical"`, pero los componentes se escriben
+ * con las utilidades cortas de shadcn (`data-active:`, `data-open:`…). Sin
+ * estas definiciones, Tailwind interpreta `data-active:` como el atributo
+ * `[data-active]` — que Radix nunca emite — y **el estado no se estiliza en
+ * absoluto, sin error ni aviso**: pestañas activas que no se distinguen,
+ * diálogos sin animación, switches sin marcar.
+ *
+ * Aura Home las recibía de rebote vía `@import 'shadcn/tailwind.css'`; Music y
+ * Finance no importaban nada equivalente. Viven aquí para que la dependencia
+ * sea del paquete que la necesita, no de que cada app se acuerde.
+ *
+ * Toda app que consuma @aura/ui debe importarlo en su CSS raíz:
+ *   @import '@aura/ui/variants.css';
+ */
+
+@custom-variant data-open {
+  &:where([data-state='open']),
+  &:where([data-open]:not([data-open='false'])) {
+    @slot;
+  }
+}
+
+@custom-variant data-closed {
+  &:where([data-state='closed']),
+  &:where([data-closed]:not([data-closed='false'])) {
+    @slot;
+  }
+}
+
+@custom-variant data-checked {
+  &:where([data-state='checked']),
+  &:where([data-checked]:not([data-checked='false'])) {
+    @slot;
+  }
+}
+
+@custom-variant data-unchecked {
+  &:where([data-state='unchecked']),
+  &:where([data-unchecked]:not([data-unchecked='false'])) {
+    @slot;
+  }
+}
+
+@custom-variant data-selected {
+  &:where([data-selected='true']) {
+    @slot;
+  }
+}
+
+@custom-variant data-disabled {
+  &:where([data-disabled='true']),
+  &:where([data-disabled]:not([data-disabled='false'])) {
+    @slot;
+  }
+}
+
+@custom-variant data-active {
+  &:where([data-state='active']),
+  &:where([data-active]:not([data-active='false'])) {
+    @slot;
+  }
+}
+
+@custom-variant data-horizontal {
+  &:where([data-orientation='horizontal']) {
+    @slot;
+  }
+}
+
+@custom-variant data-vertical {
+  &:where([data-orientation='vertical']) {
+    @slot;
+  }
+}
