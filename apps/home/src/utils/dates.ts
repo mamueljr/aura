@@ -38,6 +38,26 @@ export function daysUntil(iso: string): number {
 }
 
 /**
+ * Suma meses recortando al último día del mes destino.
+ *
+ * `setMonth` desborda: al 31 de enero le suma un mes y devuelve el 3 de marzo,
+ * porque "31 de febrero" no existe. En un pago mensual eso **se salta febrero
+ * entero** y el usuario no recibe el aviso. Recortar al 28 mantiene un aviso
+ * por periodo, que es lo que importa.
+ *
+ * Contrapartida asumida: el día se queda recortado a partir de ahí (31 → 28 →
+ * 28…), porque la siguiente ocurrencia se calcula sobre la anterior. Volver al
+ * 31 exigiría guardar el día ancla en el servicio; se prefiere no saltarse un
+ * periodo antes que conservar el día exacto.
+ */
+function addMonths(date: Date, months: number): Date {
+  const target = new Date(date.getFullYear(), date.getMonth() + months, 1)
+  const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate()
+  target.setDate(Math.min(date.getDate(), lastDay))
+  return target
+}
+
+/**
  * Siguiente ocurrencia según la frecuencia, o null si es pago único.
  */
 export function nextOccurrence(iso: string, frequency: Frequency): string | null {
@@ -52,20 +72,17 @@ export function nextOccurrence(iso: string, frequency: Frequency): string | null
       date.setDate(date.getDate() + 14)
       break
     case 'mensual':
-      date.setMonth(date.getMonth() + 1)
-      break
+      return toDateOnly(addMonths(date, 1))
     case 'bimestral':
-      date.setMonth(date.getMonth() + 2)
-      break
+      return toDateOnly(addMonths(date, 2))
     case 'trimestral':
-      date.setMonth(date.getMonth() + 3)
-      break
+      return toDateOnly(addMonths(date, 3))
     case 'semestral':
-      date.setMonth(date.getMonth() + 6)
-      break
+      return toDateOnly(addMonths(date, 6))
     case 'anual':
-      date.setFullYear(date.getFullYear() + 1)
-      break
+      // 12 meses y no `setFullYear`: al 29 de febrero le tocaría un 29 que no
+      // existe, y desbordaría al 1 de marzo.
+      return toDateOnly(addMonths(date, 12))
   }
   return toDateOnly(date)
 }

@@ -173,6 +173,22 @@ pnpm --filter aura-home preview   # previsualizar el build
   `/aura/`. Las URLs viejas siguen sirviéndose desde los repos originales hasta que
   se archiven.
 
+### Bug encontrado al cubrir las fechas de Home (ago-2026)
+
+`nextOccurrence` sumaba meses con `setMonth`, que **desborda**: al 31 de enero
+le sumaba un mes y devolvía el 3 de marzo, porque "31 de febrero" no existe.
+Con el 30 y el 29 pasaba lo mismo. En un pago mensual eso **se saltaba febrero
+entero** — ningún aviso, ningún error, y el usuario se enteraba con el corte.
+
+Ahora se recorta al último día del mes destino (31 ene → 28 feb). Contrapartida
+asumida y documentada en el código: el día se queda recortado a partir de ahí,
+porque cada ocurrencia se calcula sobre la anterior. Volver al 31 exigiría
+guardar el día ancla en el servicio; se prefiere no saltarse un periodo.
+
+> Los servicios que ya tengan una fecha desplazada por el bug se quedan como
+> están: no hay migración. Se corrigen solos al registrar el siguiente pago, o
+> a mano desde la ficha del servicio.
+
 ## 7. Deuda técnica anotada
 
 - ~~`.oxlintrc.json` duplicado idéntico en home/music~~ ✅ **Resuelto**: base en
