@@ -3,6 +3,7 @@ import type { Account } from '@/types/account';
 import type { Budget } from '@/types/budget';
 import type { RecurringRule } from '@/types/recurring';
 import type { Receipt } from '@/types/receipt';
+import type { SyncSecret } from '@/types/sync-secret';
 import type { Transaction } from '@/types/transaction';
 
 const DEFAULT_ACCOUNT_NAME = 'General';
@@ -30,6 +31,7 @@ export class FinanceDatabase extends Dexie {
   accounts!: Table<Account, string>;
   recurringRules!: Table<RecurringRule, string>;
   receipts!: Table<Receipt, string>;
+  syncSecrets!: Table<SyncSecret, string>;
 
   constructor() {
     super('aura-finance');
@@ -88,6 +90,12 @@ export class FinanceDatabase extends Dexie {
             row.updatedAt ??= now;
           });
       });
+
+    // v7: clave del cifrado E2E de Aura Sync. Deliberadamente fuera del
+    // snapshot: la clave nunca puede viajar dentro del respaldo que cifra.
+    this.version(7).stores({
+      syncSecrets: 'id',
+    });
 
     // Dexie solo corre `.upgrade()` cuando ya había datos que migrar — una
     // instalación nueva salta directo al esquema final sin pasar por ahí.

@@ -394,12 +394,28 @@ Music: no usa `@aura/tokens`. Local-first con Dexie (`aura-finance`, tabla
   de `mergeSnapshot`/`purgeOldTombstones` contra Dexie real
   (`fake-indexeddb`) — uno por cada regla de fusión documentada.
 
-  **Deliberadamente fuera de este primer paso** (mismo patrón que siguió
-  Home: Paso 1 sin cifrar → Paso 2 cifrado E2E): sin cifrado extremo a
-  extremo todavía (si llega un sobre cifrado, falla claro en vez de tratarlo
-  como datos vacíos) y **los comprobantes no sincronizan** — son locales a
-  cada dispositivo por ahora, viajarían por un `SyncBlobChannel` como el que
-  ya usa Music para el audio. Ambos son naturales "Paso 2" cuando se pidan.
+- **Cifrado E2E** (v2, Paso 2): opt-in, mismo `@aura/sync/crypto` que Home
+  (AES-GCM 256 + PBKDF2-SHA256 600k). La clave derivada se guarda **no
+  extraíble** en `syncSecrets` (Dexie v7), fuera del snapshot — subir la clave
+  dentro del respaldo que cifra lo dejaría sin sentido. `setUpEncryption()`
+  distingue **activar** de **desbloquear**: si el respaldo remoto ya viene
+  cifrado, deriva con la sal del sobre en vez de generar una clave nueva, que
+  es el error caro (dejaría el respaldo ilegible para el primer dispositivo).
+  Al activarlo se fusiona antes lo que hubiera en claro en Drive: el push
+  cifrado lo sobrescribe, y sin eso se perdería lo del otro dispositivo. Una
+  frase incorrecta se verifica descifrando **antes** de guardarla. 7 tests con
+  transporte en memoria, comprobados rompiendo el código a propósito (no
+  cifrar, tratar el sobre cifrado como vacío, guardar sin verificar, no
+  fusionar, no re-subir al desactivar: los cinco fallan).
+
+  **Sigue fuera de alcance**: **los comprobantes no sincronizan** — son
+  locales a cada dispositivo, viajarían por un `SyncBlobChannel` como el que
+  ya usa Music para el audio. Es el siguiente paso natural cuando se pida.
+
+  ⚠️ **Sin probar contra Drive real todavía**: el ciclo completo (activar,
+  desbloquear en otro dispositivo, frase incorrecta, desactivar) está
+  verificado en la app con el transporte sustituido, pero el popup de OAuth no
+  se puede ejercitar sin navegador con sesión.
 
 **Decisiones/gotchas específicas de esta app**
 - Iconos PWA: `magick`/ImageMagick trae un delegado SVG interno (MSVG) que
@@ -420,6 +436,7 @@ Music: no usa `@aura/tokens`. Local-first con Dexie (`aura-finance`, tabla
   (ver `src/lib/currency.ts`).
 
 **v2 completa**: cuentas múltiples, transacciones recurrentes, adjuntar
-comprobantes y Aura Sync (Paso 1, sin cifrado ni comprobantes todavía — ver
-arriba). Sin decisiones de producto pendientes que no se hayan pedido ya;
-lo que sigue es cifrado E2E, sync de comprobantes, o lo que se pida después.
+comprobantes y Aura Sync (Pasos 1 y 2: fusión registro a registro **y**
+cifrado E2E opt-in). Sin decisiones de producto pendientes que no se hayan
+pedido ya; lo que sigue es sincronizar los comprobantes, o lo que se pida
+después.

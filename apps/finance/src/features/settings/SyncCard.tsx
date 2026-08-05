@@ -1,12 +1,27 @@
-import { useState } from 'react';
-import { Cloud, RefreshCw } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Cloud, Lock, RefreshCw } from 'lucide-react';
 import { Button } from '@aura/ui/components/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@aura/ui/components/card';
+import { Input } from '@aura/ui/components/input';
+import { Label } from '@aura/ui/components/label';
+import { Separator } from '@aura/ui/components/separator';
+import { Switch } from '@aura/ui/components/switch';
 import { APP_CONFIG } from '@/config/app';
-import { connect, disconnect, syncNow, type SyncResult } from '@/services/sync';
+import {
+  connect,
+  disableEncryption,
+  disconnect,
+  isEncryptionEnabled,
+  setUpEncryption,
+  syncNow,
+  type SyncResult,
+} from '@/services/sync';
 import { useSyncStore } from '@/stores/syncStore';
 
 type Feedback = { kind: 'ok' | 'error'; message: string } | null;
+
+/** Suficiente para que la derivación tenga algo que proteger. */
+const MIN_PASSPHRASE = 8;
 
 function formatSyncDate(iso: string): string {
   return new Date(iso).toLocaleString('es', {
@@ -31,9 +46,165 @@ function resultMessage(result: SyncResult): string {
 }
 
 /**
+ * Cifrado extremo a extremo, opt-in.
+ *
+ * Deliberadamente explícito sobre la contrapartida: sin la frase no hay forma
+ * de recuperar el respaldo, así que la advertencia va ANTES de activarlo y no
+ * escondida en un texto de ayuda.
+ */
+function EncryptionSection() {
+  const encrypted = useSyncStore((s) => s.encrypted);
+  const setEncrypted = useSyncStore((s) => s.setEncrypted);
+
+  const [asking, setAsking] = useState(false);
+  const [passphrase, setPassphrase] = useState('');
+  const [confirmation, setConfirmation] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<Feedback>(null);
+
+  // El interruptor refleja la tabla `syncSecrets`, no un booleano suelto: si
+  // se borran los datos del navegador, la clave desaparece y el estado
+  // persistido mentiría.
+  useEffect(() => {
+    void isEncryptionEnabled().then(setEncrypted);
+  }, [setEncrypted]);
+
+  function reset() {
+    setAsking(false);
+    setPassphrase('');
+    setConfirmation('');
+  }
+
+  async function handleEnable() {
+    if (passphrase.length < MIN_PASSPHRASE) {
+      setNote({ kind: 'error', message: `Usa al menos ${MIN_PASSPHRASE} caracteres.` });
+      return;
+    }
+    if (passphrase !== confirmation) {
+      setNote({ kind: 'error', message: 'Las dos frases no coinciden.' });
+      return;
+    }
+    setBusy(true);
+    setNote(null);
+    try {
+      const outcome = await setUpEncryption(passphrase);
+      reset();
+      setNote({
+        kind: 'ok',
+        message:
+          outcome === 'unlocked'
+            ? 'Dispositivo desbloqueado: ya puede leer el respaldo cifrado.'
+            : 'Cifrado activado. El respaldo en Drive ya no es legible sin tu frase.',
+      });
+    } catch (error) {
+      setNote({
+        kind: 'error',
+        message: error instanceof Error ? error.message : 'No se pudo activar el cifrado.',
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDisable() {
+    setBusy(true);
+    setNote(null);
+    try {
+      await disableEncryption();
+      setNote({ kind: 'ok', message: 'Cifrado desactivado.' });
+    } catch (error) {
+      setNote({
+        kind: 'error',
+        message: error instanceof Error ? error.message : 'No se pudo desactivar el cifrado.',
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <Separator />
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-1">
+          <Label className="flex items-center gap-2">
+            <Lock className="size-4 text-primary" /> Cifrado extremo a extremo
+          </Label>
+          <p className="text-sm text-muted-foreground">
+            {encrypted
+              ? 'Tus movimientos viajan cifrados: nadie con acceso al archivo puede leerlos.'
+              : 'Opcional. Cifra el respaldo con una frase tuya antes de subirlo a Drive.'}
+          </p>
+        </div>
+        <Switch
+          checked={encrypted}
+          disabled={busy}
+          aria-label="Cifrado extremo a extremo"
+          onCheckedChange={(checked) => {
+            setNote(null);
+            if (checked) setAsking(true);
+            else void handleDisable();
+          }}
+        />
+      </div>
+
+      {asking && !encrypted && (
+        <div className="space-y-3 rounded-lg border border-border p-3">
+          <p className="text-sm text-destructive">
+            Guarda bien tu frase: si la olvidas, el respaldo en Drive queda irrecuperable. No hay
+            forma de restablecerla.
+          </p>
+          <div className="space-y-2">
+            <Label htmlFor="finance-passphrase">Frase de cifrado</Label>
+            <Input
+              id="finance-passphrase"
+              type="password"
+              autoComplete="new-password"
+              value={passphrase}
+              onChange={(event) => setPassphrase(event.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="finance-passphrase-confirm">Repítela</Label>
+            <Input
+              id="finance-passphrase-confirm"
+              type="password"
+              autoComplete="new-password"
+              value={confirmation}
+              onChange={(event) => setConfirmation(event.target.value)}
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button disabled={busy} onClick={() => void handleEnable()}>
+              {busy ? 'Cifrando…' : 'Activar cifrado'}
+            </Button>
+            <Button variant="ghost" disabled={busy} onClick={reset}>
+              Cancelar
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Si ya cifraste este respaldo en otro dispositivo, escribe la misma frase para
+            desbloquearlo aquí.
+          </p>
+        </div>
+      )}
+
+      {note && (
+        <p
+          role="status"
+          className={note.kind === 'ok' ? 'text-sm text-primary' : 'text-sm text-destructive'}
+        >
+          {note.message}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
  * Sincronización con Google Drive — mismo Client ID que Home/Music, mismo
- * contrato (`@aura/core/sync`). Sin cifrado E2E ni sincronización de
- * comprobantes todavía (ver ESTADO-MIGRACION §10).
+ * contrato (`@aura/core/sync`). Los comprobantes todavía no viajan (ver
+ * ESTADO-MIGRACION §10).
  */
 export function SyncCard() {
   const enabled = useSyncStore((s) => s.enabled);
@@ -118,6 +289,9 @@ export function SyncCard() {
             {feedback.message}
           </p>
         )}
+
+        {/* El cifrado solo tiene sentido cuando ya hay algo que subir. */}
+        {enabled && <EncryptionSection />}
       </CardContent>
     </Card>
   );

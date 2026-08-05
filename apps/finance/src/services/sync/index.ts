@@ -1,8 +1,23 @@
-import type { AuraSyncEnvelope, SyncPayload, SyncResult as CoreSyncResult } from '@aura/core/sync';
+import type {
+  AuraSyncEnvelope,
+  EncryptedEnvelope,
+  SyncPayload,
+  SyncResult as CoreSyncResult,
+} from '@aura/core/sync';
 
 import { db } from '@/db/db';
 import { APP_CONFIG } from '@/config/app';
 import { useSyncStore } from '@/stores/syncStore';
+import {
+  clearKey,
+  decryptEnvelope,
+  deriveKey,
+  encryptEnvelope,
+  loadKey,
+  newKdfParams,
+  saveKey,
+  SyncCryptoError,
+} from './crypto';
 import { BACKUP_KEY, provider } from './provider';
 import { exportSnapshot, mergeSnapshot, purgeOldTombstones, totalMerged, type SyncSnapshot } from './snapshot';
 
@@ -13,13 +28,16 @@ import { exportSnapshot, mergeSnapshot, purgeOldTombstones, totalMerged, type Sy
  * que Home y Music; este archivo solo decide qué lado gana. Qué se replica y
  * cómo se fusiona vive en `snapshot.ts`.
  *
- * Alcance de esta primera versión (documentado en ESTADO-MIGRACION §10):
- * transacciones, cuentas, presupuestos y recurrentes viajan en claro, sin
- * cifrado E2E todavía. Los comprobantes (fotos) NO sincronizan — son locales
- * a cada dispositivo por ahora.
+ * El cifrado extremo a extremo es **opt-in**: mientras no se active, el
+ * respaldo viaja en JSON legible (como cualquier respaldo de Drive). Al
+ * activarlo, lo que se sube deja de poder leerse sin la frase del usuario.
+ *
+ * Fuera de alcance todavía: los comprobantes (fotos) NO sincronizan — son
+ * locales a cada dispositivo. Ver ESTADO-MIGRACION §10.
  */
 
 export { loadGis, SyncAuthError } from '@aura/sync/drive';
+export { SyncCryptoError } from './crypto';
 export type { SyncSnapshot };
 
 export type SyncResult = Extract<
@@ -57,21 +75,31 @@ async function push(): Promise<SyncResult> {
     exportedAt: new Date().toISOString(),
     data,
   };
-  await provider.push(BACKUP_KEY, envelope);
+  // Con clave en este dispositivo, lo que sale hacia Drive va cifrado.
+  const secret = await loadKey();
+  const payload = secret ? await encryptEnvelope(envelope, secret.key, secret.kdf) : envelope;
+  await provider.push(BACKUP_KEY, payload);
   useSyncStore.getState().setLastSync(envelope.exportedAt);
   return { action: 'pushed', syncedAt: envelope.exportedAt };
 }
 
-function openPayload(payload: SyncPayload): AuraSyncEnvelope<SyncSnapshot> {
-  // Sin cifrado E2E en esta versión: si llega un sobre cifrado (p. ej.
-  // activado por una versión futura, o compartiendo espacio por error con
-  // otra app), fallar claro es mejor que tratarlo como datos vacíos.
-  if ('ciphertext' in payload) {
-    throw new Error(
-      'El respaldo remoto está cifrado. Aura Finance todavía no soporta cifrado E2E.',
+/**
+ * Devuelve el sobre en claro, descifrando si hace falta.
+ *
+ * Sin clave en este dispositivo no se puede seguir: fallar claro es mucho mejor
+ * que tratar un sobre cifrado como un respaldo vacío, porque eso subiría
+ * después lo local encima y borraría los datos del otro dispositivo.
+ */
+async function openPayload(payload: SyncPayload): Promise<AuraSyncEnvelope<SyncSnapshot>> {
+  if (!('ciphertext' in payload)) return payload as AuraSyncEnvelope<SyncSnapshot>;
+
+  const secret = await loadKey();
+  if (!secret) {
+    throw new SyncCryptoError(
+      'El respaldo está cifrado. Escribe tu frase de cifrado en Ajustes para usarlo en este dispositivo.',
     );
   }
-  return payload as AuraSyncEnvelope<SyncSnapshot>;
+  return (await decryptEnvelope(payload, secret.key)) as AuraSyncEnvelope<SyncSnapshot>;
 }
 
 /**
@@ -87,7 +115,7 @@ export async function syncNow(opts?: { interactive?: boolean }): Promise<SyncRes
   const payload = await provider.pull(BACKUP_KEY);
   if (!payload) return push();
 
-  const remote = openPayload(payload);
+  const remote = await openPayload(payload);
   const { lastSyncAt } = useSyncStore.getState();
   const localChange = await latestLocalChange();
 
@@ -123,4 +151,71 @@ export async function connect(): Promise<string> {
 export function disconnect(): void {
   provider.disconnect?.();
   useSyncStore.getState().disconnect();
+}
+
+// ---------- Cifrado extremo a extremo (opt-in) ----------
+
+/** ¿Hay clave de cifrado en este dispositivo? */
+export async function isEncryptionEnabled(): Promise<boolean> {
+  return (await loadKey()) !== null;
+}
+
+/**
+ * Desbloquea este dispositivo contra un respaldo YA cifrado en otro: la sal
+ * viaja en el sobre, así que la misma frase deriva la misma clave.
+ *
+ * Se verifica descifrando ANTES de guardar, para que una frase incorrecta no
+ * quede registrada y rompa las siguientes sincronizaciones.
+ */
+async function unlockWith(payload: EncryptedEnvelope, passphrase: string): Promise<void> {
+  if (!payload.kdf) {
+    throw new SyncCryptoError('El respaldo cifrado no indica cómo derivar la clave.');
+  }
+  const key = await deriveKey(passphrase, payload.kdf);
+  await decryptEnvelope(payload, key);
+  await saveKey(key, payload.kdf);
+  useSyncStore.getState().setEncrypted(true);
+}
+
+/**
+ * Punto de entrada de la UI para activar el cifrado.
+ *
+ * Si el respaldo remoto YA está cifrado, este dispositivo se desbloquea con la
+ * frase existente en vez de activar el cifrado de cero. La distinción evita el
+ * error caro: que un segundo dispositivo genere su propia clave y deje el
+ * respaldo ilegible para el primero.
+ *
+ * ⚠️ Si se olvida la frase, el respaldo en Drive queda irrecuperable: la clave
+ * no sale del dispositivo y no hay puerta trasera.
+ */
+export async function setUpEncryption(passphrase: string): Promise<'unlocked' | 'enabled'> {
+  await provider.getAccessToken({ interactive: true });
+
+  const payload = await provider.pull(BACKUP_KEY);
+  if (payload && 'ciphertext' in payload) {
+    await unlockWith(payload, passphrase);
+    return 'unlocked';
+  }
+
+  // Si había un respaldo en claro, se incorpora ANTES de cifrar: el push de
+  // abajo lo sobrescribe, y sin esto se perdería lo que el otro dispositivo
+  // hubiera subido y aquí todavía no estuviera.
+  if (payload) await mergeSnapshot((payload as AuraSyncEnvelope<SyncSnapshot>).data);
+
+  const kdf = newKdfParams();
+  await saveKey(await deriveKey(passphrase, kdf), kdf);
+  useSyncStore.getState().setEncrypted(true);
+  // Vuelve a subirlo todo, ya cifrado: si no, el archivo en claro seguiría en
+  // Drive hasta el siguiente cambio local.
+  await push();
+  return 'enabled';
+}
+
+/** Desactiva el cifrado y deja el respaldo remoto legible otra vez. */
+export async function disableEncryption(): Promise<void> {
+  if (!(await loadKey())) return;
+  await provider.getAccessToken({ interactive: true });
+  await clearKey();
+  useSyncStore.getState().setEncrypted(false);
+  await push();
 }
