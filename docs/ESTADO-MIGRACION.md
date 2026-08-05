@@ -168,9 +168,10 @@ pnpm --filter aura-home preview   # previsualizar el build
   Home como puerta / shell unificado. Recomendación: mantener acceso separado y añadir
   un hub cuando madure. Revisar en la fase de diferenciación.
 - **Archivar repos originales** en GitHub (pendiente que lo haga el usuario).
-- **Estrategia de deploy** (Fase 4): GitHub Actions con filtros de ruta, o `gh-pages`
-  por app. Decidir también si el repo pasa a público (necesario para Pages en plan
-  gratuito) y si se conservan las URLs actuales.
+- ~~**Estrategia de deploy**~~ ✅ **Decidida**: sin Actions (pedía tarjeta), el repo
+  pasó a público y `scripts/deploy.mjs` publica las 4 apps a la rama `gh-pages` bajo
+  `/aura/`. Las URLs viejas siguen sirviéndose desde los repos originales hasta que
+  se archiven.
 
 ## 7. Deuda técnica anotada
 
@@ -184,8 +185,8 @@ pnpm --filter aura-home preview   # previsualizar el build
 - **404 de deploy**: el `404.html` raíz redirige rutas profundas a la raíz de la app
   (se pierde la sub-ruta al recargar). Mejorable con el truco de codificar la ruta si
   llega a molestar; para PWAs es caso menor.
-- **Home no tiene script `typecheck`**: su tipado corre dentro de `build` (`tsc -b`),
-  así que `pnpm typecheck` en la raíz NO cubre Home. Para verificarlo hay que buildear.
+- ~~Home no tiene script `typecheck`~~ ✅ **Resuelto**: Home expone `typecheck`
+  (`tsc -b`) y entra en el `turbo run typecheck` de la raíz, igual que el resto.
 - ~~Warning de `setState` en `componentDidUpdate` (Home)~~ ✅ **Resuelto**: se
   eliminó de paso en `4361497` al limpiar el `resetKey` sin uso de `ErrorBoundary`
   (el layout ya remonta el árbol al cambiar de ruta). Único `componentDidUpdate`
