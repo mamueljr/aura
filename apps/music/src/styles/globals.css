@@ -1,6 +1,10 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+/* Los estados de Radix (data-state="active|open"…) que usan los componentes
+   de @aura/ui. Sin esto no se estiliza ninguno, en silencio. */
+@import '@aura/ui/variants.css';
+
 /* Tailwind no escanea node_modules: declara el fuente de @aura/ui para
    generar las clases usadas dentro de sus componentes compartidos. */
 @source '../../../../packages/ui/src';
