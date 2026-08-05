@@ -11,6 +11,7 @@ import { Switch } from '@aura/ui/components/switch';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { AccountFormDialog } from '@/features/accounts/AccountFormDialog';
 import { RecurringFormDialog } from '@/features/recurring/RecurringFormDialog';
+import { SyncCard } from '@/features/settings/SyncCard';
 import { CATEGORIES } from '@/features/transactions/categories';
 import { CURRENCIES, formatAmount, useCurrency } from '@/lib/currency';
 import { downloadTextFile, transactionsToCsv } from '@/lib/csv';
@@ -88,6 +89,8 @@ export function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <SyncCard />
+
       <Card>
         <CardHeader>
           <CardTitle>Moneda</CardTitle>

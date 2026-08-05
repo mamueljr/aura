@@ -379,6 +379,27 @@ Music: no usa `@aura/tokens`. Local-first con Dexie (`aura-finance`, tabla
   En el formulario: botón de cámara/galería con preview y opción de quitar;
   en la lista, un ícono de clip abre un visor. Borrar el movimiento borra
   también su comprobante — nunca queda un Blob huérfano.
+- **Aura Sync** (v2, Paso 1): mismo contrato (`@aura/core/sync`), mismo
+  transporte (`@aura/sync/drive`, Google Drive vía `createDriveProvider`) y
+  mismo Client ID de OAuth que Home/Music — las tres apps comparten
+  `appDataFolder` pero escriben su propio archivo
+  (`aura-finance-backup.json`), así que no se pisan. `transactions`,
+  `accounts`, `budgets` y `recurringRules` ganaron `updatedAt`/`deletedAt`
+  (migración v6, con backfill para lo existente) para poder fusionar
+  registro a registro con última-escritura-gana, tombstones incluidos —
+  sin esto, borrar en un dispositivo no se propagaría al otro (revive el
+  registro al fusionar). `budgets` se fusiona por `category`, no por `id`
+  (no tiene). Auto-sync silencioso al abrir la app si ya hay cuenta
+  conectada; conectar/sincronizar manual/desconectar desde Ajustes. 9 tests
+  de `mergeSnapshot`/`purgeOldTombstones` contra Dexie real
+  (`fake-indexeddb`) — uno por cada regla de fusión documentada.
+
+  **Deliberadamente fuera de este primer paso** (mismo patrón que siguió
+  Home: Paso 1 sin cifrar → Paso 2 cifrado E2E): sin cifrado extremo a
+  extremo todavía (si llega un sobre cifrado, falla claro en vez de tratarlo
+  como datos vacíos) y **los comprobantes no sincronizan** — son locales a
+  cada dispositivo por ahora, viajarían por un `SyncBlobChannel` como el que
+  ya usa Music para el audio. Ambos son naturales "Paso 2" cuando se pidan.
 
 **Decisiones/gotchas específicas de esta app**
 - Iconos PWA: `magick`/ImageMagick trae un delegado SVG interno (MSVG) que
@@ -398,7 +419,7 @@ Music: no usa `@aura/tokens`. Local-first con Dexie (`aura-finance`, tabla
   real del usuario, así que se resolvió con un ajuste en vez de adivinar
   (ver `src/lib/currency.ts`).
 
-**Deliberadamente fuera de v1** (no son bugs, son alcance): cuentas
-múltiples, transacciones recurrentes, adjuntar comprobantes, y Aura Sync
-(sincronizar entre dispositivos). Son decisiones de producto reales;
-quedan para cuando se pidan explícitamente.
+**v2 completa**: cuentas múltiples, transacciones recurrentes, adjuntar
+comprobantes y Aura Sync (Paso 1, sin cifrado ni comprobantes todavía — ver
+arriba). Sin decisiones de producto pendientes que no se hayan pedido ya;
+lo que sigue es cifrado E2E, sync de comprobantes, o lo que se pida después.

@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRecurringTransactions } from '@/hooks/useRecurringTransactions';
+import { useFinanceSync } from '@/hooks/useFinanceSync';
 
 const TABS = [
   { to: '/', label: 'Movimientos', end: true },
@@ -11,6 +12,7 @@ const TABS = [
 
 export function AppShell() {
   useRecurringTransactions();
+  useFinanceSync();
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-6 p-6">

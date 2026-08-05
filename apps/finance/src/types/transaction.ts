@@ -11,6 +11,9 @@ export interface Transaction {
   /** Referencia a un Blob en la tabla `receipts` — la foto del comprobante, si hay una. */
   receiptId?: string;
   createdAt: string;
+  updatedAt: string;
+  /** Tombstone de Aura Sync: se propaga en vez de borrar, para que la eliminación llegue a otros dispositivos. */
+  deletedAt?: string;
 }
 
-export type NewTransaction = Omit<Transaction, 'id' | 'createdAt'>;
+export type NewTransaction = Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>;

@@ -9,5 +9,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    // IndexedDB en memoria para poder probar Dexie fuera del navegador.
+    setupFiles: ['fake-indexeddb/auto'],
   },
 });

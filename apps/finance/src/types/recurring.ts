@@ -13,6 +13,11 @@ export interface RecurringRule {
   /** "YYYY-MM" del último mes en que ya se generó el movimiento — evita duplicarlo. */
   lastRunMonth: string | null;
   createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
 }
 
-export type NewRecurringRule = Omit<RecurringRule, 'id' | 'lastRunMonth' | 'createdAt'>;
+export type NewRecurringRule = Omit<
+  RecurringRule,
+  'id' | 'lastRunMonth' | 'createdAt' | 'updatedAt' | 'deletedAt'
+>;

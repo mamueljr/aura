@@ -7,6 +7,17 @@ import type { Transaction } from '@/types/transaction';
 
 const DEFAULT_ACCOUNT_NAME = 'General';
 
+function newDefaultAccount(): Account {
+  const now = new Date().toISOString();
+  return {
+    id: crypto.randomUUID(),
+    name: DEFAULT_ACCOUNT_NAME,
+    color: '#10b981',
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
 /**
  * Base de datos local de Aura Finance (IndexedDB vía Dexie).
  *
@@ -38,12 +49,7 @@ export class FinanceDatabase extends Dexie {
         transactions: 'id, type, category, date, accountId',
       })
       .upgrade(async (tx) => {
-        const defaultAccount: Account = {
-          id: crypto.randomUUID(),
-          name: DEFAULT_ACCOUNT_NAME,
-          color: '#10b981',
-          createdAt: new Date().toISOString(),
-        };
+        const defaultAccount = newDefaultAccount();
         await tx.table('accounts').add(defaultAccount);
         await tx.table('transactions').toCollection().modify({ accountId: defaultAccount.id });
       });
@@ -59,6 +65,30 @@ export class FinanceDatabase extends Dexie {
       receipts: 'id',
     });
 
+    // v6: Aura Sync. transactions/accounts/budgets/recurringRules ganan
+    // updatedAt (última-escritura-gana) y deletedAt (tombstone: borrar se
+    // propaga en vez de resucitar el registro al fusionar). Los registros
+    // existentes se backfillean con updatedAt = createdAt.
+    this.version(6)
+      .stores({})
+      .upgrade(async (tx) => {
+        const now = new Date().toISOString();
+        for (const table of ['transactions', 'accounts', 'recurringRules']) {
+          await tx
+            .table(table)
+            .toCollection()
+            .modify((row: { createdAt: string; updatedAt?: string }) => {
+              row.updatedAt ??= row.createdAt;
+            });
+        }
+        await tx
+          .table('budgets')
+          .toCollection()
+          .modify((row: { updatedAt?: string }) => {
+            row.updatedAt ??= now;
+          });
+      });
+
     // Dexie solo corre `.upgrade()` cuando ya había datos que migrar — una
     // instalación nueva salta directo al esquema final sin pasar por ahí.
     // `ready` sí corre siempre (instalación nueva o existente), así que es
@@ -66,12 +96,7 @@ export class FinanceDatabase extends Dexie {
     this.on('ready', async () => {
       const count = await this.accounts.count();
       if (count === 0) {
-        await this.accounts.add({
-          id: crypto.randomUUID(),
-          name: DEFAULT_ACCOUNT_NAME,
-          color: '#10b981',
-          createdAt: new Date().toISOString(),
-        });
+        await this.accounts.add(newDefaultAccount());
       }
     });
   }
