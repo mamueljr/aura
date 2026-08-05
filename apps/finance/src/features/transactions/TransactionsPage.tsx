@@ -4,22 +4,31 @@ import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@aura/ui/components/button';
 import { Badge } from '@aura/ui/components/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@aura/ui/components/card';
+import { cn } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { accountsRepository } from '@/repositories/accounts.repository';
 import { transactionsRepository } from '@/repositories/transactions.repository';
 import type { NewTransaction, Transaction } from '@/types/transaction';
 import { formatAmount, useCurrency } from '@/lib/currency';
+import { balanceOf } from './balances';
 import { TransactionFormDialog } from './TransactionFormDialog';
 
 export function TransactionsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Transaction | null>(null);
+  const [accountFilter, setAccountFilter] = useState<string | null>(null);
   const [currency] = useCurrency();
   const transactions = useLiveQuery(() => transactionsRepository.getAll(), []);
+  const accounts = useLiveQuery(() => accountsRepository.getAll(), []);
 
-  const income = transactions?.filter((t) => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) ?? 0;
-  const expense = transactions?.filter((t) => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0) ?? 0;
+  if (!transactions || !accounts) return null;
+
+  const visible = accountFilter ? transactions.filter((t) => t.accountId === accountFilter) : transactions;
+  const income = visible.filter((t) => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+  const expense = visible.filter((t) => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
   const balance = income - expense;
+  const accountName = accounts.find((a) => a.id === accountFilter)?.name;
 
   function openNew() {
     setEditing(null);
@@ -47,9 +56,45 @@ export function TransactionsPage() {
         </Button>
       </div>
 
+      {accounts.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          <button
+            type="button"
+            onClick={() => setAccountFilter(null)}
+            className={cn(
+              'shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
+              accountFilter === null
+                ? 'border-primary bg-primary/10 text-primary'
+                : 'border-border text-muted-foreground',
+            )}
+          >
+            Todas
+          </button>
+          {accounts.map((a) => (
+            <button
+              key={a.id}
+              type="button"
+              onClick={() => setAccountFilter(a.id)}
+              className={cn(
+                'flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
+                accountFilter === a.id
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border text-muted-foreground',
+              )}
+            >
+              <span className="size-2 rounded-full" style={{ backgroundColor: a.color }} aria-hidden="true" />
+              {a.name}
+              <span className="tabular-nums">
+                {formatAmount(balanceOf(transactions.filter((t) => t.accountId === a.id)), currency)}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
       <Card>
         <CardHeader>
-          <CardDescription>Balance</CardDescription>
+          <CardDescription>Balance{accountName ? ` — ${accountName}` : ''}</CardDescription>
           <CardTitle className="text-3xl">{formatAmount(balance, currency)}</CardTitle>
         </CardHeader>
         <CardContent className="flex gap-6 text-sm">
@@ -63,18 +108,23 @@ export function TransactionsPage() {
       </Card>
 
       <section className="flex flex-col gap-2">
-        {transactions?.length === 0 && (
+        {visible.length === 0 && (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Sin movimientos todavía. Agrega el primero con el botón de arriba.
+            {accountFilter
+              ? 'Sin movimientos en esta cuenta todavía.'
+              : 'Sin movimientos todavía. Agrega el primero con el botón de arriba.'}
           </p>
         )}
-        {transactions?.map((t) => (
+        {visible.map((t) => (
           <Card key={t.id} size="sm">
             <CardContent className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="truncate font-medium">{t.description}</p>
                 <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                   <Badge variant="secondary">{t.category}</Badge>
+                  {!accountFilter && accounts.length > 1 && (
+                    <span>{accounts.find((a) => a.id === t.accountId)?.name}</span>
+                  )}
                   <span>{t.date}</span>
                 </div>
               </div>
@@ -109,6 +159,7 @@ export function TransactionsPage() {
         open={formOpen}
         onOpenChange={setFormOpen}
         transaction={editing}
+        accounts={accounts}
         onSubmit={handleSubmit}
       />
 

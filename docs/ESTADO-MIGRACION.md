@@ -352,6 +352,16 @@ Music: no usa `@aura/tokens`. Local-first con Dexie (`aura-finance`, tabla
   Resumen, la categoría con presupuesto muestra "gastado / límite" y la
   barra pasa de `bg-primary` a `bg-destructive` al superarlo; sin
   presupuesto sigue la barra de magnitud de siempre.
+- **Cuentas múltiples** (v2, en curso): cada movimiento pertenece a una
+  cuenta (`accounts`: nombre + color). Migración v3 con `.upgrade()`
+  crea una cuenta "General" y le asigna todos los movimientos existentes;
+  las instalaciones nuevas (sin datos que migrar, así que Dexie no corre
+  `.upgrade()`) la reciben vía `db.on('ready', …)`, que sí corre siempre —
+  verificado con `fake-indexeddb` en ambos escenarios. Movimientos gana
+  selector de cuenta; con más de una cuenta aparecen chips filtrables con
+  el balance de cada una arriba de la lista. Ajustes → Cuentas: alta,
+  edición (nombre/color) y borrado — bloqueado si es la última cuenta o si
+  tiene movimientos (evita huérfanos).
 
 **Decisiones/gotchas específicas de esta app**
 - Iconos PWA: `magick`/ImageMagick trae un delegado SVG interno (MSVG) que

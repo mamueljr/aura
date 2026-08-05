@@ -7,6 +7,7 @@ export interface Transaction {
   amount: number;
   category: string;
   date: string;
+  accountId: string;
   createdAt: string;
 }
 
