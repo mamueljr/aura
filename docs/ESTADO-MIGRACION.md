@@ -347,6 +347,11 @@ Music: no usa `@aura/tokens`. Local-first con Dexie (`aura-finance`, tabla
 - **PWA instalable**: manifest + iconos propios (192/512 + maskable,
   generados desde SVG fuente en `public/icons/`) + `vite-plugin-pwa`, igual
   que Home/Music.
+- **Presupuestos** (v1.1): límite mensual por categoría de gasto, editable en
+  Ajustes (tabla `budgets`, un registro por categoría — 0 lo quita). En
+  Resumen, la categoría con presupuesto muestra "gastado / límite" y la
+  barra pasa de `bg-primary` a `bg-destructive` al superarlo; sin
+  presupuesto sigue la barra de magnitud de siempre.
 
 **Decisiones/gotchas específicas de esta app**
 - Iconos PWA: `magick`/ImageMagick trae un delegado SVG interno (MSVG) que
@@ -366,7 +371,7 @@ Music: no usa `@aura/tokens`. Local-first con Dexie (`aura-finance`, tabla
   real del usuario, así que se resolvió con un ajuste en vez de adivinar
   (ver `src/lib/currency.ts`).
 
-**Deliberadamente fuera de v1** (no son bugs, son alcance): presupuestos,
-cuentas múltiples, transacciones recurrentes, adjuntar comprobantes, y Aura
-Sync (sincronizar entre dispositivos). Son decisiones de producto reales;
+**Deliberadamente fuera de v1** (no son bugs, son alcance): cuentas
+múltiples, transacciones recurrentes, adjuntar comprobantes, y Aura Sync
+(sincronizar entre dispositivos). Son decisiones de producto reales;
 quedan para cuando se pidan explícitamente.

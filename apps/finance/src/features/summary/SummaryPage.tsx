@@ -1,15 +1,19 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Card, CardContent, CardDescription, CardHeader } from '@aura/ui/components/card';
+import { budgetsRepository } from '@/repositories/budgets.repository';
 import { transactionsRepository } from '@/repositories/transactions.repository';
 import { formatAmount, useCurrency } from '@/lib/currency';
+import { budgetProgress } from './budget-progress';
 import { currentMonthKey, expensesByCategory, monthLabel, totalsByMonth } from './aggregate';
 
 export function SummaryPage() {
   const [currency] = useCurrency();
   const transactions = useLiveQuery(() => transactionsRepository.getAll(), []);
+  const budgets = useLiveQuery(() => budgetsRepository.getAll(), []);
 
-  if (!transactions) return null;
+  if (!transactions || !budgets) return null;
 
+  const limitByCategory = new Map(budgets.map((b) => [b.category, b.monthlyLimit]));
   const month = currentMonthKey();
   const categories = expensesByCategory(transactions, month);
   const maxCategory = Math.max(...categories.map((c) => c.amount), 0);
@@ -26,20 +30,33 @@ export function SummaryPage() {
             <p className="text-sm text-muted-foreground">Sin gastos este mes todavía.</p>
           ) : (
             <div className="space-y-3">
-              {categories.map((c) => (
-                <div key={c.category} className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>{c.category}</span>
-                    <span className="font-medium tabular-nums">{formatAmount(c.amount, currency)}</span>
+              {categories.map((c) => {
+                const limit = limitByCategory.get(c.category);
+                const progress = limit ? budgetProgress(c.amount, limit) : null;
+                return (
+                  <div key={c.category} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>{c.category}</span>
+                      <span
+                        className={`font-medium tabular-nums ${progress?.over ? 'text-destructive' : ''}`}
+                      >
+                        {formatAmount(c.amount, currency)}
+                        {progress && (
+                          <span className="text-muted-foreground"> / {formatAmount(limit!, currency)}</span>
+                        )}
+                      </span>
+                    </div>
+                    <div className="h-2.5 w-full rounded-full bg-muted">
+                      <div
+                        className={`h-full rounded-full ${progress?.over ? 'bg-destructive' : 'bg-primary'}`}
+                        style={{
+                          width: `${progress ? progress.pct : maxCategory ? (c.amount / maxCategory) * 100 : 0}%`,
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-2.5 w-full rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-primary"
-                      style={{ width: `${maxCategory ? (c.amount / maxCategory) * 100 : 0}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>

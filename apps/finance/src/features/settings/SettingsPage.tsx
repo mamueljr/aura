@@ -1,14 +1,20 @@
+import { useLiveQuery } from 'dexie-react-hooks';
 import { Download } from 'lucide-react';
 import { Button } from '@aura/ui/components/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@aura/ui/components/card';
+import { Input } from '@aura/ui/components/input';
 import { Label } from '@aura/ui/components/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@aura/ui/components/select';
+import { CATEGORIES } from '@/features/transactions/categories';
 import { CURRENCIES, useCurrency } from '@/lib/currency';
 import { downloadTextFile, transactionsToCsv } from '@/lib/csv';
+import { budgetsRepository } from '@/repositories/budgets.repository';
 import { transactionsRepository } from '@/repositories/transactions.repository';
 
 export function SettingsPage() {
   const [currency, setCurrency] = useCurrency();
+  const budgets = useLiveQuery(() => budgetsRepository.getAll(), []);
+  const limitByCategory = new Map(budgets?.map((b) => [b.category, b.monthlyLimit]));
 
   async function handleExport() {
     const transactions = await transactionsRepository.getAll();
@@ -38,6 +44,32 @@ export function SettingsPage() {
               ))}
             </SelectContent>
           </Select>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Presupuestos</CardTitle>
+          <CardDescription>Límite mensual por categoría de gasto. Déjalo en 0 para quitarlo.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {CATEGORIES.expense.map((category) => (
+            <div key={category} className="flex items-center justify-between gap-3">
+              <Label htmlFor={`budget-${category}`} className="flex-1 font-normal">
+                {category}
+              </Label>
+              <Input
+                id={`budget-${category}`}
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="1"
+                className="w-28"
+                defaultValue={limitByCategory.get(category) ?? ''}
+                onBlur={(e) => void budgetsRepository.set(category, Number(e.target.value))}
+              />
+            </div>
+          ))}
         </CardContent>
       </Card>
 
