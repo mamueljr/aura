@@ -9,8 +9,9 @@ import type { Transaction } from '@/types/transaction';
  * `AuraSyncEnvelope`. Incluye tombstones (`deletedAt`) a propósito: sin
  * ellos, borrar en un dispositivo no se propagaría al fusionar.
  *
- * Los comprobantes (Blob en `receipts`) NO viajan aquí todavía — ver
- * ESTADO-MIGRACION §10.
+ * Los bytes de los comprobantes (`receipts`) NO viajan aquí: van por el canal
+ * de binarios (`receipts.ts`) y en el snapshot solo queda su referencia, dentro
+ * de la propia transacción (`receiptDriveFileId`).
  */
 export interface SyncSnapshot {
   transactions: Transaction[];

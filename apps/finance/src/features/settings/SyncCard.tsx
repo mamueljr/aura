@@ -132,8 +132,8 @@ function EncryptionSection() {
           </Label>
           <p className="text-sm text-muted-foreground">
             {encrypted
-              ? 'Tus movimientos viajan cifrados: nadie con acceso al archivo puede leerlos.'
-              : 'Opcional. Cifra el respaldo con una frase tuya antes de subirlo a Drive.'}
+              ? 'Tus movimientos y comprobantes viajan cifrados: nadie con acceso al archivo puede leerlos.'
+              : 'Opcional. Cifra el respaldo y los comprobantes con una frase tuya antes de subirlos a Drive.'}
           </p>
         </div>
         <Switch
@@ -203,8 +203,8 @@ function EncryptionSection() {
 
 /**
  * Sincronización con Google Drive — mismo Client ID que Home/Music, mismo
- * contrato (`@aura/core/sync`). Los comprobantes todavía no viajan (ver
- * ESTADO-MIGRACION §10).
+ * contrato (`@aura/core/sync`). Los comprobantes viajan por el canal de
+ * binarios, no dentro del respaldo.
  */
 export function SyncCard() {
   const enabled = useSyncStore((s) => s.enabled);

@@ -408,14 +408,35 @@ Music: no usa `@aura/tokens`. Local-first con Dexie (`aura-finance`, tabla
   cifrar, tratar el sobre cifrado como vacío, guardar sin verificar, no
   fusionar, no re-subir al desactivar: los cinco fallan).
 
-  **Sigue fuera de alcance**: **los comprobantes no sincronizan** — son
-  locales a cada dispositivo, viajarían por un `SyncBlobChannel` como el que
-  ya usa Music para el audio. Es el siguiente paso natural cuando se pida.
-
   ⚠️ **Sin probar contra Drive real todavía**: el ciclo completo (activar,
   desbloquear en otro dispositivo, frase incorrecta, desactivar) está
   verificado en la app con el transporte sustituido, pero el popup de OAuth no
   se puede ejercitar sin navegador con sesión.
+
+- **Comprobantes** (v2, Paso 3): las fotos viajan por el `SyncBlobChannel` del
+  proveedor — el mismo canal por el que Home sube documentos y Music audio — y
+  en el snapshot solo queda `receiptDriveFileId` (+ `receiptType`, porque el
+  cifrado no conserva el MIME), dentro de la propia transacción.
+
+  Tres detalles que evitan perder la foto:
+  1. **Anotar la referencia mueve `updatedAt`.** La fusión es
+     última-escritura-gana: sin mover la marca, la fila entrante empataría con
+     la del otro dispositivo, se descartaría, y la foto sería inalcanzable
+     desde allí para siempre.
+  2. **Si cambió alguna referencia, se vuelve a publicar el snapshot.** Es
+     exactamente el fallo que costó una tarde en Music: el archivo sube pero el
+     índice no, y el otro dispositivo ve el registro sin poder descargarlo.
+  3. **Activar/desactivar el cifrado reescribe los comprobantes ya subidos**
+     (sobre el mismo archivo de Drive, no uno nuevo). Si no, quedarían con el
+     formato anterior e ilegibles para el otro dispositivo. Al desactivar se
+     bajan primero: soltar la clave con una foto cifrada que solo exista en la
+     nube la volvería irrecuperable.
+
+  La limpieza en Drive espera a que **caduque la lápida** (30 días), no al
+  borrado: hasta entonces el otro dispositivo puede no haberse enterado.
+  11 tests con canal de binarios en memoria, comprobados rompiendo el código a
+  propósito. Verificado además en la app real: subir → publicar → recuperar en
+  otro dispositivo → cifrar → recuperar descifrado → volver a claro.
 
 **Decisiones/gotchas específicas de esta app**
 - Iconos PWA: `magick`/ImageMagick trae un delegado SVG interno (MSVG) que
@@ -436,7 +457,7 @@ Music: no usa `@aura/tokens`. Local-first con Dexie (`aura-finance`, tabla
   (ver `src/lib/currency.ts`).
 
 **v2 completa**: cuentas múltiples, transacciones recurrentes, adjuntar
-comprobantes y Aura Sync (Pasos 1 y 2: fusión registro a registro **y**
-cifrado E2E opt-in). Sin decisiones de producto pendientes que no se hayan
-pedido ya; lo que sigue es sincronizar los comprobantes, o lo que se pida
-después.
+comprobantes y Aura Sync completo — fusión registro a registro, cifrado E2E
+opt-in y comprobantes por el canal de binarios. Sin decisiones de producto
+pendientes que no se hayan pedido ya. Lo único que falta es **probarlo contra
+Drive real, en dos dispositivos**.

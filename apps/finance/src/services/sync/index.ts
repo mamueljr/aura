@@ -19,6 +19,7 @@ import {
   SyncCryptoError,
 } from './crypto';
 import { BACKUP_KEY, provider } from './provider';
+import { purgeExpiredReceipts, reuploadReceipts, syncReceipts } from './receipts';
 import { exportSnapshot, mergeSnapshot, purgeOldTombstones, totalMerged, type SyncSnapshot } from './snapshot';
 
 /**
@@ -32,8 +33,8 @@ import { exportSnapshot, mergeSnapshot, purgeOldTombstones, totalMerged, type Sy
  * respaldo viaja en JSON legible (como cualquier respaldo de Drive). Al
  * activarlo, lo que se sube deja de poder leerse sin la frase del usuario.
  *
- * Fuera de alcance todavía: los comprobantes (fotos) NO sincronizan — son
- * locales a cada dispositivo. Ver ESTADO-MIGRACION §10.
+ * Los comprobantes (fotos) no caben en el snapshot: viajan por el canal de
+ * binarios (`receipts.ts`) y aquí solo queda su referencia.
  */
 
 export { loadGis, SyncAuthError } from '@aura/sync/drive';
@@ -110,8 +111,21 @@ async function openPayload(payload: SyncPayload): Promise<AuraSyncEnvelope<SyncS
 export async function syncNow(opts?: { interactive?: boolean }): Promise<SyncResult> {
   // Pre-vuelo: falla rápido si la sesión ya no sirve, antes de tocar nada.
   await provider.getAccessToken(opts);
+  // Antes de purgar las lápidas: después ya no queda de dónde sacar qué
+  // comprobantes sobran en Drive.
+  await purgeExpiredReceipts();
   await purgeOldTombstones();
 
+  const result = await reconcile();
+
+  // Los comprobantes van después del snapshot: hasta fusionarlo no se sabe qué
+  // movimientos existen ni cuáles traen referencia.
+  if (await syncReceipts()) await push();
+  return result;
+}
+
+/** Decide qué lado gana y deja el snapshot al día en ambos. */
+async function reconcile(): Promise<SyncResult> {
   const payload = await provider.pull(BACKUP_KEY);
   if (!payload) return push();
 
@@ -203,18 +217,29 @@ export async function setUpEncryption(passphrase: string): Promise<'unlocked' | 
   if (payload) await mergeSnapshot((payload as AuraSyncEnvelope<SyncSnapshot>).data);
 
   const kdf = newKdfParams();
-  await saveKey(await deriveKey(passphrase, kdf), kdf);
+  const key = await deriveKey(passphrase, kdf);
+  await saveKey(key, kdf);
   useSyncStore.getState().setEncrypted(true);
+  // Los comprobantes ya subidos están en claro: hay que reescribirlos, o el
+  // otro dispositivo se encontraría el respaldo cifrado y las fotos no.
+  await reuploadReceipts(key);
   // Vuelve a subirlo todo, ya cifrado: si no, el archivo en claro seguiría en
   // Drive hasta el siguiente cambio local.
   await push();
   return 'enabled';
 }
 
-/** Desactiva el cifrado y deja el respaldo remoto legible otra vez. */
+/**
+ * Desactiva el cifrado y deja el respaldo remoto legible otra vez.
+ *
+ * Primero se baja lo que falte: soltar la clave con un comprobante cifrado que
+ * solo exista en la nube lo volvería irrecuperable.
+ */
 export async function disableEncryption(): Promise<void> {
   if (!(await loadKey())) return;
   await provider.getAccessToken({ interactive: true });
+  await syncReceipts();
+  await reuploadReceipts(null);
   await clearKey();
   useSyncStore.getState().setEncrypted(false);
   await push();
