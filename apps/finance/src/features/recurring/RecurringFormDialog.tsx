@@ -88,10 +88,16 @@ export function RecurringFormDialog({ open, onOpenChange, rule, accounts, onSubm
         <form onSubmit={handleSubmit} className="space-y-4">
           <Tabs value={form.type} onValueChange={(v) => setType(v as TransactionType)}>
             <TabsList className="w-full">
-              <TabsTrigger value="expense" className="flex-1">
+              <TabsTrigger
+                value="expense"
+                className="flex-1 data-active:bg-destructive/15 data-active:text-destructive"
+              >
                 Gasto
               </TabsTrigger>
-              <TabsTrigger value="income" className="flex-1">
+              <TabsTrigger
+                value="income"
+                className="flex-1 data-active:bg-finance-1/15 data-active:text-finance-1"
+              >
                 Ingreso
               </TabsTrigger>
             </TabsList>
