@@ -2,6 +2,7 @@ import Dexie, { type Table } from 'dexie';
 import type { Account } from '@/types/account';
 import type { Budget } from '@/types/budget';
 import type { RecurringRule } from '@/types/recurring';
+import type { Receipt } from '@/types/receipt';
 import type { Transaction } from '@/types/transaction';
 
 const DEFAULT_ACCOUNT_NAME = 'General';
@@ -17,6 +18,7 @@ export class FinanceDatabase extends Dexie {
   budgets!: Table<Budget, string>;
   accounts!: Table<Account, string>;
   recurringRules!: Table<RecurringRule, string>;
+  receipts!: Table<Receipt, string>;
 
   constructor() {
     super('aura-finance');
@@ -49,6 +51,12 @@ export class FinanceDatabase extends Dexie {
     // v4: transacciones recurrentes (mensuales).
     this.version(4).stores({
       recurringRules: 'id, category, accountId',
+    });
+
+    // v5: comprobantes (foto del recibo) como Blob nativo, fuera del JSON
+    // de la transacción — igual que documentBlobs en Home.
+    this.version(5).stores({
+      receipts: 'id',
     });
 
     // Dexie solo corre `.upgrade()` cuando ya había datos que migrar — una

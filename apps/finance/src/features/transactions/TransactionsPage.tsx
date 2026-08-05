@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Paperclip, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@aura/ui/components/button';
 import { Badge } from '@aura/ui/components/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@aura/ui/components/card';
@@ -11,6 +11,7 @@ import { transactionsRepository } from '@/repositories/transactions.repository';
 import type { NewTransaction, Transaction } from '@/types/transaction';
 import { formatAmount, useCurrency } from '@/lib/currency';
 import { balanceOf } from './balances';
+import { ReceiptViewerDialog } from './ReceiptViewerDialog';
 import { TransactionFormDialog } from './TransactionFormDialog';
 
 export function TransactionsPage() {
@@ -18,6 +19,7 @@ export function TransactionsPage() {
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Transaction | null>(null);
   const [accountFilter, setAccountFilter] = useState<string | null>(null);
+  const [viewingReceiptId, setViewingReceiptId] = useState<string | null>(null);
   const [currency] = useCurrency();
   const transactions = useLiveQuery(() => transactionsRepository.getAll(), []);
   const accounts = useLiveQuery(() => accountsRepository.getAll(), []);
@@ -126,6 +128,16 @@ export function TransactionsPage() {
                     <span>{accounts.find((a) => a.id === t.accountId)?.name}</span>
                   )}
                   <span>{t.date}</span>
+                  {t.receiptId && (
+                    <button
+                      type="button"
+                      onClick={() => setViewingReceiptId(t.receiptId ?? null)}
+                      aria-label={`Ver comprobante de ${t.description}`}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <Paperclip className="size-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -172,6 +184,13 @@ export function TransactionsPage() {
         description={`"${pendingDelete?.description}" se eliminará permanentemente.`}
         onConfirm={() => {
           if (pendingDelete) void transactionsRepository.remove(pendingDelete.id);
+        }}
+      />
+
+      <ReceiptViewerDialog
+        receiptId={viewingReceiptId}
+        onOpenChange={(open) => {
+          if (!open) setViewingReceiptId(null);
         }}
       />
     </div>

@@ -8,6 +8,8 @@ export interface Transaction {
   category: string;
   date: string;
   accountId: string;
+  /** Referencia a un Blob en la tabla `receipts` — la foto del comprobante, si hay una. */
+  receiptId?: string;
   createdAt: string;
 }
 

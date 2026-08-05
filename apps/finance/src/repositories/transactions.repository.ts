@@ -1,5 +1,6 @@
 import { db } from '@/db/db';
 import type { NewTransaction, Transaction } from '@/types/transaction';
+import { receiptsRepository } from './receipts.repository';
 
 export const transactionsRepository = {
   getAll(): Promise<Transaction[]> {
@@ -20,7 +21,10 @@ export const transactionsRepository = {
     return db.transactions.update(id, data);
   },
 
-  remove(id: string): Promise<void> {
-    return db.transactions.delete(id);
+  /** Borra el movimiento y, si tenía uno, su comprobante — nunca deja el Blob huérfano. */
+  async remove(id: string): Promise<void> {
+    const transaction = await db.transactions.get(id);
+    await db.transactions.delete(id);
+    if (transaction?.receiptId) await receiptsRepository.remove(transaction.receiptId);
   },
 };

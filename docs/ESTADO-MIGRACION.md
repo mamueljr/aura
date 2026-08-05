@@ -372,6 +372,13 @@ Music: no usa `@aura/tokens`. Local-first con Dexie (`aura-finance`, tabla
   abra tarde). Gestión en Ajustes → Recurrentes: alta/edición/borrado y un
   switch para activar/desactivar sin editar. 5 tests de `dueRules`
   (la lógica pura de "qué reglas vencen hoy").
+- **Adjuntar comprobantes** (v2, en curso): foto del recibo por movimiento,
+  Blob nativo en tabla `receipts` (fuera del registro de la transacción,
+  igual que `documentBlobs` en Home) referenciado por `transaction.receiptId`.
+  Comprime a JPEG antes de guardar (`compressReceiptImage`, máx. 1600px).
+  En el formulario: botón de cámara/galería con preview y opción de quitar;
+  en la lista, un ícono de clip abre un visor. Borrar el movimiento borra
+  también su comprobante — nunca queda un Blob huérfano.
 
 **Decisiones/gotchas específicas de esta app**
 - Iconos PWA: `magick`/ImageMagick trae un delegado SVG interno (MSVG) que
