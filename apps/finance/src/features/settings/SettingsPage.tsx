@@ -1,31 +1,41 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Download, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Badge } from '@aura/ui/components/badge';
 import { Button } from '@aura/ui/components/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@aura/ui/components/card';
 import { Input } from '@aura/ui/components/input';
 import { Label } from '@aura/ui/components/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@aura/ui/components/select';
+import { Switch } from '@aura/ui/components/switch';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { AccountFormDialog } from '@/features/accounts/AccountFormDialog';
+import { RecurringFormDialog } from '@/features/recurring/RecurringFormDialog';
 import { CATEGORIES } from '@/features/transactions/categories';
-import { CURRENCIES, useCurrency } from '@/lib/currency';
+import { CURRENCIES, formatAmount, useCurrency } from '@/lib/currency';
 import { downloadTextFile, transactionsToCsv } from '@/lib/csv';
 import { accountsRepository } from '@/repositories/accounts.repository';
 import { budgetsRepository } from '@/repositories/budgets.repository';
+import { recurringRepository } from '@/repositories/recurring.repository';
 import { transactionsRepository } from '@/repositories/transactions.repository';
 import type { Account, NewAccount } from '@/types/account';
+import type { NewRecurringRule, RecurringRule } from '@/types/recurring';
 
 export function SettingsPage() {
   const [currency, setCurrency] = useCurrency();
   const budgets = useLiveQuery(() => budgetsRepository.getAll(), []);
   const accounts = useLiveQuery(() => accountsRepository.getAll(), []);
+  const recurringRules = useLiveQuery(() => recurringRepository.getAll(), []);
   const limitByCategory = new Map(budgets?.map((b) => [b.category, b.monthlyLimit]));
 
   const [accountFormOpen, setAccountFormOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<Account | null>(null);
+  const [pendingDeleteAccount, setPendingDeleteAccount] = useState<Account | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const [ruleFormOpen, setRuleFormOpen] = useState(false);
+  const [editingRule, setEditingRule] = useState<RecurringRule | null>(null);
+  const [pendingDeleteRule, setPendingDeleteRule] = useState<RecurringRule | null>(null);
 
   async function handleExport() {
     const transactions = await transactionsRepository.getAll();
@@ -53,9 +63,27 @@ export function SettingsPage() {
   }
 
   async function handleAccountDelete() {
-    if (!pendingDelete) return;
-    const result = await accountsRepository.remove(pendingDelete.id);
+    if (!pendingDeleteAccount) return;
+    const result = await accountsRepository.remove(pendingDeleteAccount.id);
     setDeleteError(result.ok ? null : result.reason);
+  }
+
+  function openNewRule() {
+    setEditingRule(null);
+    setRuleFormOpen(true);
+  }
+
+  function openEditRule(r: RecurringRule) {
+    setEditingRule(r);
+    setRuleFormOpen(true);
+  }
+
+  async function handleRuleSubmit(data: NewRecurringRule) {
+    if (editingRule) {
+      await recurringRepository.update(editingRule.id, data);
+    } else {
+      await recurringRepository.create(data);
+    }
   }
 
   return (
@@ -117,8 +145,65 @@ export function SettingsPage() {
                   aria-label={`Eliminar ${a.name}`}
                   onClick={() => {
                     setDeleteError(null);
-                    setPendingDelete(a);
+                    setPendingDeleteAccount(a);
                   }}
+                >
+                  <Trash2 className="size-3.5" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Recurrentes</CardTitle>
+              <CardDescription>Renta, salario, suscripciones — se generan solas cada mes.</CardDescription>
+            </div>
+            <Button size="icon" variant="outline" onClick={openNewRule} aria-label="Nuevo recurrente">
+              <Plus />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {recurringRules?.length === 0 && (
+            <p className="text-sm text-muted-foreground">Sin recurrentes todavía.</p>
+          )}
+          {recurringRules?.map((r) => (
+            <div key={r.id} className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{r.description}</p>
+                <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                  <Badge variant="secondary">{r.category}</Badge>
+                  <span>día {r.dayOfMonth}</span>
+                  <span className={r.type === 'income' ? 'text-finance-1' : ''}>
+                    {r.type === 'income' ? '+' : '-'}
+                    {formatAmount(r.amount, currency)}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <Switch
+                  checked={r.active}
+                  onCheckedChange={(active) => void recurringRepository.update(r.id, { active })}
+                  aria-label={r.active ? `Desactivar ${r.description}` : `Activar ${r.description}`}
+                />
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  aria-label={`Editar ${r.description}`}
+                  onClick={() => openEditRule(r)}
+                >
+                  <Pencil className="size-3.5" />
+                </Button>
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  aria-label={`Eliminar ${r.description}`}
+                  onClick={() => setPendingDeleteRule(r)}
                 >
                   <Trash2 className="size-3.5" />
                 </Button>
@@ -174,13 +259,33 @@ export function SettingsPage() {
       />
 
       <ConfirmDialog
-        open={pendingDelete !== null}
+        open={pendingDeleteAccount !== null}
         onOpenChange={(open) => {
-          if (!open) setPendingDelete(null);
+          if (!open) setPendingDeleteAccount(null);
         }}
         title="Eliminar cuenta"
-        description={`"${pendingDelete?.name}" se eliminará permanentemente.`}
+        description={`"${pendingDeleteAccount?.name}" se eliminará permanentemente.`}
         onConfirm={() => void handleAccountDelete()}
+      />
+
+      <RecurringFormDialog
+        open={ruleFormOpen}
+        onOpenChange={setRuleFormOpen}
+        rule={editingRule}
+        accounts={accounts ?? []}
+        onSubmit={handleRuleSubmit}
+      />
+
+      <ConfirmDialog
+        open={pendingDeleteRule !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDeleteRule(null);
+        }}
+        title="Eliminar recurrente"
+        description={`"${pendingDeleteRule?.description}" se eliminará permanentemente.`}
+        onConfirm={() => {
+          if (pendingDeleteRule) void recurringRepository.remove(pendingDeleteRule.id);
+        }}
       />
     </div>
   );

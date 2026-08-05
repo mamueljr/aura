@@ -1,6 +1,7 @@
 import Dexie, { type Table } from 'dexie';
 import type { Account } from '@/types/account';
 import type { Budget } from '@/types/budget';
+import type { RecurringRule } from '@/types/recurring';
 import type { Transaction } from '@/types/transaction';
 
 const DEFAULT_ACCOUNT_NAME = 'General';
@@ -15,6 +16,7 @@ export class FinanceDatabase extends Dexie {
   transactions!: Table<Transaction, string>;
   budgets!: Table<Budget, string>;
   accounts!: Table<Account, string>;
+  recurringRules!: Table<RecurringRule, string>;
 
   constructor() {
     super('aura-finance');
@@ -43,6 +45,11 @@ export class FinanceDatabase extends Dexie {
         await tx.table('accounts').add(defaultAccount);
         await tx.table('transactions').toCollection().modify({ accountId: defaultAccount.id });
       });
+
+    // v4: transacciones recurrentes (mensuales).
+    this.version(4).stores({
+      recurringRules: 'id, category, accountId',
+    });
 
     // Dexie solo corre `.upgrade()` cuando ya había datos que migrar — una
     // instalación nueva salta directo al esquema final sin pasar por ahí.

@@ -362,6 +362,16 @@ Music: no usa `@aura/tokens`. Local-first con Dexie (`aura-finance`, tabla
   el balance de cada una arriba de la lista. Ajustes → Cuentas: alta,
   edición (nombre/color) y borrado — bloqueado si es la última cuenta o si
   tiene movimientos (evita huérfanos).
+- **Transacciones recurrentes** (v2, en curso): reglas mensuales
+  (`recurringRules` — descripción, monto, categoría, cuenta, día del mes
+  1–28, activo, `lastRunMonth`). Al abrir la app (`useRecurringTransactions`
+  en `AppShell`), `runDue()` genera el movimiento de cada regla activa cuyo
+  día ya llegó y no se ha corrido este mes, y marca `lastRunMonth` para no
+  duplicar. La fecha del movimiento generado es el día de la regla, no el
+  día en que se abrió la app (para que caiga en el mes correcto aunque se
+  abra tarde). Gestión en Ajustes → Recurrentes: alta/edición/borrado y un
+  switch para activar/desactivar sin editar. 5 tests de `dueRules`
+  (la lógica pura de "qué reglas vencen hoy").
 
 **Decisiones/gotchas específicas de esta app**
 - Iconos PWA: `magick`/ImageMagick trae un delegado SVG interno (MSVG) que
