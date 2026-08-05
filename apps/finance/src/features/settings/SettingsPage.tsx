@@ -14,7 +14,7 @@ import { RecurringFormDialog } from '@/features/recurring/RecurringFormDialog';
 import { SyncCard } from '@/features/settings/SyncCard';
 import { CATEGORIES } from '@/features/transactions/categories';
 import { CURRENCIES, formatAmount, useCurrency } from '@/lib/currency';
-import { downloadTextFile, transactionsToCsv } from '@/lib/csv';
+import { downloadCsv, transactionsToCsv } from '@/lib/csv';
 import { accountsRepository } from '@/repositories/accounts.repository';
 import { budgetsRepository } from '@/repositories/budgets.repository';
 import { recurringRepository } from '@/repositories/recurring.repository';
@@ -42,7 +42,7 @@ export function SettingsPage() {
     const transactions = await transactionsRepository.getAll();
     const csv = transactionsToCsv(transactions);
     const today = new Date().toISOString().slice(0, 10);
-    downloadTextFile(csv, `aura-finance-${today}.csv`, 'text/csv');
+    downloadCsv(csv, `aura-finance-${today}.csv`);
   }
 
   function openNewAccount() {

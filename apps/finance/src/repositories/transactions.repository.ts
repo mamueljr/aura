@@ -26,8 +26,9 @@ export const transactionsRepository = {
 
   /**
    * Borrado suave (tombstone): se propaga a otros dispositivos al sincronizar
-   * en vez de resucitar. Si tenía comprobante, ese sí se borra ya — los
-   * comprobantes todavía no viajan por Aura Sync (ver ESTADO-MIGRACION §10).
+   * en vez de resucitar. El comprobante local se borra ya; el de Drive espera
+   * a que caduque la lápida (`purgeExpiredReceipts`), porque hasta entonces el
+   * otro dispositivo puede no haberse enterado del borrado.
    */
   async remove(id: string): Promise<void> {
     const transaction = await db.transactions.get(id);

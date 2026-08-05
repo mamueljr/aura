@@ -15,6 +15,18 @@ export function transactionsToCsv(transactions: Transaction[]): string {
   return [HEADERS.join(','), ...rows].join('\n');
 }
 
+/**
+ * Marca de orden de bytes. Excel no detecta UTF-8 por su cuenta al abrir un
+ * `.csv`: sin esto, "categoría" y "descripción" salen como "categorÃ­a". Es
+ * invisible en cualquier otro programa.
+ */
+const BOM = '﻿';
+
+/** Descarga el CSV en un formato que Excel abre sin romper los acentos. */
+export function downloadCsv(content: string, fileName: string) {
+  downloadTextFile(BOM + content, fileName, 'text/csv;charset=utf-8');
+}
+
 export function downloadTextFile(content: string, fileName: string, mimeType: string) {
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);

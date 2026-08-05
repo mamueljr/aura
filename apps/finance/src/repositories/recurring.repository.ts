@@ -1,6 +1,6 @@
 import { db } from '@/db/db';
 import type { NewRecurringRule, RecurringRule } from '@/types/recurring';
-import { dueRules } from '@/features/recurring/due-rules';
+import { dueRules, localMonth } from '@/features/recurring/due-rules';
 import { transactionsRepository } from './transactions.repository';
 
 export const recurringRepository = {
@@ -35,7 +35,7 @@ export const recurringRepository = {
   async runDue(today = new Date()): Promise<number> {
     const rules = await recurringRepository.getAll();
     const due = dueRules(rules, today);
-    const month = today.toISOString().slice(0, 7);
+    const month = localMonth(today);
 
     for (const rule of due) {
       await transactionsRepository.create({
