@@ -1,0 +1,1 @@
+import{r as e}from"./dexie-react-hooks-C_OS1hkj.js";import{n as t}from"./AudioEngine-CI4KkaZl.js";async function n(n){let r=await e.tracks.get(n);if(!r)return;await e.tracks.update(n,{favorite:+!r.favorite,favoriteAt:Date.now()});let{currentTrack:i}=t.getState();if(i?.id===n){let r=await e.tracks.get(n);r&&t.setState({currentTrack:r})}}export{n as t};
