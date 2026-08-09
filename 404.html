@@ -2,7 +2,7 @@
 <html lang="es"><head><meta charset="utf-8" />
 <script>
   (function () {
-    var m = location.pathname.match(/^\/aura\/(home|music|weather)(\/.*)?$/);
+    var m = location.pathname.match(/^\/aura\/(home|music|weather|finance)(\/.*)?$/);
     if (!m) { location.replace('/aura/'); return; }
     var base = '/aura/' + m[1];
     var rest = (m[2] || '/').replace(/&/g, '~and~');
