@@ -142,6 +142,32 @@ aura/
 **Verificación en cada paso:** `pnpm build` construye las 3 apps (3/3); typecheck y
 lint en verde; smoke tests en runtime de Music y Home sin errores de consola.
 
+### Fase 5 — Correcciones de bugs (ago-2026)
+- **v1.2** **5 bugs de integridad de datos/deploy corregidos** (commit `fd1c6f4`,
+  "fix: corregir 5 bugs: sync de favoritos, watermark, recurrentes, datos de clima y
+  404 de finance"):
+  - **Music — tecla F sin marcar favorito**: `useKeyboardShortcuts` actualizaba
+    `isFavorite` a mano y no escribía `favoriteAt`, así que el favorito no se
+    propagaba por Aura Sync. Ahora delega en `toggleFavorite(track.id)`.
+  - **Home — carrera de relojes en Aura Sync**: tras pull/up-to-date se usaba
+    `new Date().toISOString()` como watermark (reloj local), abriendo una ventana de
+    pérdida de pushes remotos hechos "en el futuro" del dispositivo. Ahora se usa
+    `remote.exportedAt` como marca; el reloj local ya no participa.
+  - **Finance — recurrentes duplicados en StrictMode**: `runDue()` creaba el
+    movimiento y marcaba `lastRunMonth` en dos pasos, duplicando si se invocaba
+    dos veces (React StrictMode en dev). Ahora es una sola transacción Dexie sobre
+    `[recurringRules, transactions]` (atómica y serializada).
+  - **Weather — datos fabricados**: se reportaban sensación térmica (= real), hora
+    de sol/luna y UV inventados desde JSON opcionales. Ahora `weather-data.js`
+    **computa** sensación térmica (fórmula BOM) y sol/luna (algoritmo NOAA, ±2 min,
+    respeta DST y offset local); UV queda `null` (BrightSky no lo reporta). La UI
+    muestra `N/D` donde no hay dato. 10 tests nuevos.
+  - **Deploy — 404 no cubría Finance**: la regex de `scripts/deploy.mjs` solo
+    reconocía `home|music|weather`, así que un deep-link de Finance caía en 404.
+    Ahora cubre las 4 apps (Finance ya decodificaba `?/ruta` en su `index.html`).
+- **Verificación:** `pnpm build` 4/4 (ahora con finance), lint y typecheck en verde,
+  tests: weather 23/23, home 78/78, finance OK. Publicado con `pnpm deploy`.
+
 ---
 
 ## 5. Cómo trabajar

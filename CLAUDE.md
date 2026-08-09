@@ -52,7 +52,11 @@ pnpm deploy       # build + publica a gh-pages (todo o: pnpm deploy home music)
 **Fases 0–4 ✅ completas. Migración cerrada.** Monorepo, design system, `@aura/core`,
 `@aura/config`, y **deploy en vivo** desde el monorepo a GitHub Pages (rama
 `gh-pages`, sin Actions): `mamueljr.github.io/aura/` → `/home/`, `/music/`,
-`/weather/`. Repo `aura` ahora **público**. Re-deploy: `pnpm deploy`.
+`/weather/`, `/finance/`. Repo `aura` ahora **público**. Re-deploy: `pnpm deploy`.
+
+**Fase 5 (ago-2026):** 5 bugs corregidos (sync de favoritos en Music, watermark de
+Aura Sync en Home, recurrentes duplicados en Finance, datos fabricados en Weather,
+404 que no cubría Finance) — bitácora en `docs/ESTADO-MIGRACION.md` §4.
 
 **Siguiente (ya no es migración):** implementar **Aura Sync** (`SyncProvider` de
 `@aura/core` en el `drive-sync` de Home) — ver `docs/ESTADO-MIGRACION.md` §8.
