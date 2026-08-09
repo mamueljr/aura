@@ -2,7 +2,7 @@
  * AuraWeather - Lógica Principal (Premium Javascript)
  */
 
-import { getUVDescription, mapBrightSkyToOpenMeteo } from './lib/weather-data.js';
+import { escapeHtml, getUVDescription, mapBrightSkyToOpenMeteo } from './lib/weather-data.js';
 
 // Variable global para controlar la instalación de la PWA
 let deferredPrompt = null;
@@ -302,8 +302,8 @@ function renderSearchResults(results) {
     const displayName = `${city.name}${state}, ${city.country}`;
     
     li.innerHTML = `
-      <span>${displayName}</span>
-      <span class="country-code">${city.country_code ? city.country_code.toUpperCase() : ''}</span>
+      <span>${escapeHtml(displayName)}</span>
+      <span class="country-code">${escapeHtml(city.country_code ? city.country_code.toUpperCase() : '')}</span>
     `;
     
     li.addEventListener('click', () => {
@@ -790,7 +790,7 @@ function renderFavoritesList() {
     const shortName = fav.name.split(',')[0];
     
     badge.innerHTML = `
-      <span>${shortName}</span>
+      <span>${escapeHtml(shortName)}</span>
       <button class="btn-remove-fav" title="Eliminar favorito">
         <i data-lucide="x"></i>
       </button>
@@ -866,7 +866,7 @@ function showToast(message, iconName = 'info') {
   toast.className = 'toast';
   toast.innerHTML = `
     <i data-lucide="${iconName}"></i>
-    <span>${message}</span>
+    <span>${escapeHtml(message)}</span>
   `;
   
   elements.toastContainer.appendChild(toast);
