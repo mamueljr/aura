@@ -33,22 +33,30 @@ export const recurringRepository = {
 
   /** Genera el movimiento del mes para cada regla vencida y marca el mes como corrido. */
   async runDue(today = new Date()): Promise<number> {
-    const rules = await recurringRepository.getAll();
-    const due = dueRules(rules, today);
     const month = localMonth(today);
 
-    for (const rule of due) {
-      await transactionsRepository.create({
-        type: rule.type,
-        description: rule.description,
-        amount: rule.amount,
-        category: rule.category,
-        accountId: rule.accountId,
-        date: `${month}-${String(rule.dayOfMonth).padStart(2, '0')}`,
-      });
-      await recurringRepository.update(rule.id, { lastRunMonth: month });
-    }
+    // Todo en una sola transacción: crear el movimiento y marcar `lastRunMonth`
+    // es atómico. Sin ella, un fallo entre los dos pasos (o un cierre de
+    // pestaña) dejaba el mes sin marcar y el movimiento ya creado → se
+    // duplicaba al reabrir. Además Dexie serializa las transacciones sobre las
+    // mismas tablas: una segunda invocación concurrente (p. ej. StrictMode en
+    // dev) lee el `lastRunMonth` ya marcado y no vuelve a generar.
+    return db.transaction('rw', [db.recurringRules, db.transactions], async () => {
+      const due = dueRules(await recurringRepository.getAll(), today);
 
-    return due.length;
+      for (const rule of due) {
+        await transactionsRepository.create({
+          type: rule.type,
+          description: rule.description,
+          amount: rule.amount,
+          category: rule.category,
+          accountId: rule.accountId,
+          date: `${month}-${String(rule.dayOfMonth).padStart(2, '0')}`,
+        });
+        await recurringRepository.update(rule.id, { lastRunMonth: month });
+      }
+
+      return due.length;
+    });
   },
 };

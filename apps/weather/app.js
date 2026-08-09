@@ -520,15 +520,18 @@ function renderWeather(data, cityName) {
     ? `${current.relative_humidity_2m}%`
     : 'N/D';
   elements.windVal.textContent = `${current.wind_speed_10m} km/h`;
-  elements.feelsLikeVal.textContent = formatTemp(current.apparent_temperature);
+  elements.feelsLikeVal.textContent = current.apparent_temperature != null
+    ? formatTemp(current.apparent_temperature)
+    : 'N/D';
   elements.pressureVal.textContent = `${Math.round(current.pressure_msl)} hPa`;
   
   // 7. Aura Insight & Métricas secundarias
   const rainProb = daily.precipitation_probability_max[0];
+  // BrightSky no reporta UV: 'N/D' en vez de un valor inventado.
   const maxUV = daily.uv_index_max[0];
   
   elements.rainChance.textContent = `${rainProb}%`;
-  elements.uvIndex.textContent = getUVDescription(maxUV);
+  elements.uvIndex.textContent = maxUV != null ? getUVDescription(maxUV) : 'N/D';
   
   generateAuraInsight(current.temperature_2m, current.weather_code, rainProb, maxUV, current.wind_speed_10m, current.is_day);
   
@@ -1257,7 +1260,9 @@ window.addEventListener('appinstalled', () => {
 function updateAstronomy(data) {
   const daily = data.daily;
   
-  if (!daily || !daily.sunrise || !daily.sunset) return;
+  // Si la fuente no trajo horas (o cayeron en sol de medianoche/noche polar),
+  // no hay arco que dibujar: mejor salir que pintar "Invalid Date".
+  if (!daily || !daily.sunrise || !daily.sunset || !daily.sunrise[0] || !daily.sunset[0]) return;
   
   const sunriseStr = daily.sunrise[0];
   const sunsetStr = daily.sunset[0];

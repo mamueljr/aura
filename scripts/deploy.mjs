@@ -8,9 +8,10 @@
 //   https://mamueljr.github.io/aura/home/       → Aura Home
 //   https://mamueljr.github.io/aura/music/      → Aura Music
 //   https://mamueljr.github.io/aura/weather/    → AuraWeather
+//   https://mamueljr.github.io/aura/finance/    → Aura Finance
 //
 // Uso:
-//   pnpm deploy                 # las 3 apps
+//   pnpm deploy                 # las 4 apps
 //   pnpm deploy home music      # solo algunas
 //   node scripts/deploy.mjs --dry-run   # construye y ensambla, NO publica
 
@@ -236,7 +237,7 @@ const notFound = `<!doctype html>
 <html lang="es"><head><meta charset="utf-8" />
 <script>
   (function () {
-    var m = location.pathname.match(/^\\/aura\\/(home|music|weather)(\\/.*)?$/);
+    var m = location.pathname.match(/^\\/aura\\/(home|music|weather|finance)(\\/.*)?$/);
     if (!m) { location.replace('/aura/'); return; }
     var base = '/aura/' + m[1];
     var rest = (m[2] || '/').replace(/&/g, '~and~');

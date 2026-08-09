@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { db } from '@/infrastructure/db/db';
+import { toggleFavorite } from '@/services/library/actions';
 import { player } from '@/services/audio/AudioEngine';
 import { usePlayerStore } from '@/stores/playerStore';
 import { useSettingsStore } from '@/stores/settingsStore';
@@ -69,13 +69,7 @@ export function useKeyboardShortcuts() {
         case 'f':
         case 'F': {
           const track = usePlayerStore.getState().currentTrack;
-          if (track) {
-            void db.tracks.update(track.id, { favorite: track.favorite ? 0 : 1 }).then(() => {
-              void db.tracks.get(track.id).then((t) => {
-                if (t) usePlayerStore.setState({ currentTrack: t });
-              });
-            });
-          }
+          if (track) void toggleFavorite(track.id);
           break;
         }
         case 'q':

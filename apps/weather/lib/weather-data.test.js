@@ -2,7 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   brightSkyIconToWmoCode,
+  estimateApparentTemperature,
   estimateHumidityFromDewPoint,
+  estimateSunTimes,
   getUVDescription,
   mapBrightSkyToOpenMeteo,
 } from './weather-data.js';
@@ -58,6 +60,52 @@ describe('humedad estimada desde el punto de rocío', () => {
   it('devuelve null si falta algún dato, en vez de inventarlo', () => {
     expect(estimateHumidityFromDewPoint(null, 10)).toBeNull();
     expect(estimateHumidityFromDewPoint(20, undefined)).toBeNull();
+  });
+});
+
+describe('sensación térmica estimada (fórmula BOM)', () => {
+  it('con humedad alta y sin viento se siente más cálida que la temperatura', () => {
+    expect(estimateApparentTemperature(20, 100, 0)).toBeGreaterThan(20);
+  });
+
+  it('el viento enfría la sensación', () => {
+    expect(estimateApparentTemperature(20, 50, 0)).toBeGreaterThan(
+      estimateApparentTemperature(20, 50, 40),
+    );
+  });
+
+  it('valor de referencia conocido', () => {
+    expect(estimateApparentTemperature(20, 50, 10)).toBeCloseTo(17.9, 0);
+  });
+
+  it('null si falta algún dato, en vez de inventarlo', () => {
+    expect(estimateApparentTemperature(null, 50, 10)).toBeNull();
+    expect(estimateApparentTemperature(20, undefined, 10)).toBeNull();
+  });
+});
+
+describe('salida y puesta del sol estimadas (algoritmo NOAA)', () => {
+  // El parámetro es offset de `getTimezoneOffset()` (minutos al OESTE de UTC):
+  // Madrid en verano es UTC+2 → -120; en invierno UTC+1 → -60.
+  it('Madrid en verano: día largo, amanece temprano', () => {
+    const s = estimateSunTimes(40.42, -3.7, new Date('2026-06-21T12:00:00'), -120);
+    const dayMin = (s.sunset - s.sunrise) / 60000;
+    expect(s.sunrise.getHours()).toBe(6);
+    expect(s.sunset.getHours()).toBe(21);
+    expect(dayMin).toBeGreaterThan(14.5 * 60);
+    expect(dayMin).toBeLessThan(15.5 * 60);
+  });
+
+  it('Madrid en invierno: día corto, amanece tarde', () => {
+    const s = estimateSunTimes(40.42, -3.7, new Date('2026-12-21T12:00:00'), -60);
+    const dayMin = (s.sunset - s.sunrise) / 60000;
+    expect(s.sunrise.getHours()).toBe(8);
+    expect(dayMin).toBeGreaterThan(9 * 60);
+    expect(dayMin).toBeLessThan(9.6 * 60);
+  });
+
+  it('en sol de medianoche no hay puesta: null en vez de horas falsas', () => {
+    expect(estimateSunTimes(69.65, 18.96, new Date('2026-06-21T12:00:00'), -120)).toBeNull();
   });
 });
 
@@ -150,5 +198,29 @@ describe('BrightSky → estructura de Open-Meteo', () => {
     expect(data).toHaveProperty('daily');
     expect(Array.isArray(data.hourly.time)).toBe(true);
     expect(data.hourly.temperature_2m.length).toBe(data.hourly.time.length);
+  });
+
+  it('no inventa sensación térmica, sol/luna ni UV', () => {
+    const data = mapBrightSkyToOpenMeteo({ weather: horas(48) }, 40, -3);
+
+    // Sensación térmica computada (el viento de la fixture la enfría), no una
+    // copia de la temperatura.
+    expect(data.current.apparent_temperature).not.toBeNull();
+    expect(data.current.apparent_temperature).toBeLessThan(data.current.temperature_2m);
+
+    // BrightSky no reporta UV: null en vez de un 5 / 0 inventado.
+    expect(data.hourly.uv_index.every((v) => v === null)).toBe(true);
+    expect(data.daily.uv_index_max.every((v) => v === null)).toBe(true);
+
+    // Salida/puesta reales (formato YYYY-MM-DDTHH:MM), no el 06:30/20:30 fijo.
+    // Se validan en hora local del dispositivo (como el resto de la app); las
+    // horas astronómicas exactas se comprueban en `estimateSunTimes` con una
+    // zona explícita.
+    expect(data.daily.sunrise[0]).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
+    expect(data.daily.sunset[0]).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
+    expect(data.daily.sunrise[0]).not.toContain('06:30');
+    expect(data.daily.sunset[0]).not.toContain('20:30');
+    expect(Number.isNaN(new Date(data.daily.sunrise[0]).getTime())).toBe(false);
+    expect(Number.isNaN(new Date(data.daily.sunset[0]).getTime())).toBe(false);
   });
 });

@@ -193,14 +193,20 @@ async function syncMetadata(): Promise<SyncResult> {
   const localChanged = lastSyncAt ? (localChange ?? '') > lastSyncAt : localChange !== null
 
   if (!remoteChanged && !localChanged) {
-    const syncedAt = new Date().toISOString()
+    // Nada cambió: el watermark ya cubre el remoto visto. No avanzarlo con el
+    // reloj local — un reloj adelantado abriría una ventana en la que un push
+    // del otro dispositivo parecería viejo y se perdería (ver branch `pulled`).
+    const syncedAt = lastSyncAt ?? remote.exportedAt
     useSyncStore.getState().setLastSync(syncedAt)
     return { action: 'up-to-date', syncedAt }
   }
   if (localChanged && !remoteChanged) return push()
   if (remoteChanged && !localChanged) {
     const imported = await importBackup(JSON.stringify(remote))
-    const syncedAt = new Date().toISOString()
+    // El watermark sube hasta donde llegó el remoto (exportedAt), NO hasta el
+    // reloj local: si este dispositivo va adelantado, marcar `now` escondería
+    // un push del otro dispositivo hecho dentro de esa ventana (T1 < cambio < T2).
+    const syncedAt = remote.exportedAt
     useSyncStore.getState().setLastSync(syncedAt)
     return { action: 'pulled', syncedAt, imported }
   }
