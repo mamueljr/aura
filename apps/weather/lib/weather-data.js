@@ -302,3 +302,22 @@ export function getUVDescription(uv) {
   if (uv <= 10) return `Muy Alto (${Math.round(uv)})`;
   return `Extremo (${Math.round(uv)})`;
 }
+
+/**
+ * Escapa texto antes de interpolarlo en `innerHTML`.
+ *
+ * Sin esto, los nombres de ciudad que vienen de la API de geocodificación (y
+ * los favoritos guardados en `localStorage`) se incrustan tal cual en el HTML:
+ * una ciudad llamada `<img src=x onerror=...>` ejecutaría JavaScript. Los
+ * números y las etiquetas internas no necesitan escaparse; esto es para todo
+ * lo que provenga del exterior o de almacenamiento persistente.
+ */
+export function escapeHtml(value) {
+  const str = String(value ?? '');
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}

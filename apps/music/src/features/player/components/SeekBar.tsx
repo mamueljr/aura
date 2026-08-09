@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Slider } from '@/components/ui/slider';
 import { formatDuration } from '@/lib/utils';
@@ -6,6 +7,7 @@ import { player } from '@/services/audio/AudioEngine';
 import { usePlayerStore } from '@/stores/playerStore';
 
 export function SeekBar({ withTimes = true }: { withTimes?: boolean }) {
+  const { t } = useTranslation();
   const position = usePlayerStore((s) => s.position);
   const duration = usePlayerStore((s) => s.duration);
   const [dragValue, setDragValue] = useState<number | null>(null);
@@ -20,7 +22,8 @@ export function SeekBar({ withTimes = true }: { withTimes?: boolean }) {
         </span>
       ) : null}
       <Slider
-        aria-label="Seek"
+        aria-label={t('common.seek')}
+        aria-valuetext={formatDuration(value)}
         min={0}
         max={Math.max(1, duration)}
         step={1}

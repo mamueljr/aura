@@ -39,7 +39,7 @@ export function DetailHero({
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label="Back"
+          aria-label={t('common.back')}
           onClick={() => navigate(-1)}
           className="absolute left-2 top-2 md:left-4"
         >

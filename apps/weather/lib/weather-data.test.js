@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   brightSkyIconToWmoCode,
+  escapeHtml,
   estimateApparentTemperature,
   estimateHumidityFromDewPoint,
   estimateSunTimes,
@@ -124,6 +125,33 @@ describe('descripción del índice UV', () => {
     // Un 7 es "Alto", no "Muy Alto": equivocarse aquí exagera la alarma.
     expect(getUVDescription(7)).toContain('Alto');
     expect(getUVDescription(7)).not.toContain('Muy');
+  });
+});
+
+describe('escapeHtml (XSS)', () => {
+  it('escapa caracteres HTML peligrosos', () => {
+    expect(escapeHtml('<img src=x onerror=alert(1)>')).toBe(
+      '&lt;img src=x onerror=alert(1)&gt;',
+    );
+    expect(escapeHtml('a & b')).toBe('a &amp; b');
+    expect(escapeHtml('"comilla" y \'apóstrofe\'')).toBe(
+      '&quot;comilla&quot; y &#39;apóstrofe&#39;',
+    );
+  });
+
+  it('los nombres de ciudad maliciosos no forman nodos nuevos', () => {
+    const payload = `<img src=x onerror=alert(1)><b>Chihuahua</b>`;
+    const escaped = escapeHtml(payload);
+    expect(escaped).not.toContain('<img');
+    expect(escaped).not.toContain('<b>');
+    expect(escaped).toContain('Chihuahua');
+  });
+
+  it('deja pasar texto plano y valores nulos', () => {
+    expect(escapeHtml('Madrid, España')).toBe('Madrid, España');
+    expect(escapeHtml(null)).toBe('');
+    expect(escapeHtml(undefined)).toBe('');
+    expect(escapeHtml(0)).toBe('0');
   });
 });
 

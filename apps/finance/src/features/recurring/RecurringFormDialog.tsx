@@ -142,9 +142,9 @@ export function RecurringFormDialog({ open, onOpenChange, rule, accounts, onSubm
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Categoría</Label>
+              <Label htmlFor="rr-category">Categoría</Label>
               <Select value={form.category} onValueChange={(v) => set('category', v)}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="rr-category" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -157,9 +157,9 @@ export function RecurringFormDialog({ open, onOpenChange, rule, accounts, onSubm
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Cuenta</Label>
+              <Label htmlFor="rr-account">Cuenta</Label>
               <Select value={form.accountId} onValueChange={(v) => set('accountId', v)}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="rr-account" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

@@ -53,6 +53,12 @@ export function AppLayout() {
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground"
+      >
+        Saltar al contenido
+      </a>
       <div className="flex min-h-0 flex-1">
         <Sidebar />
         <main className="relative min-h-0 flex-1 overflow-y-auto" id="main-content">

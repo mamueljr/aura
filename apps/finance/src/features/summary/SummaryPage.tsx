@@ -41,6 +41,7 @@ export function SummaryPage() {
                         className={`font-medium tabular-nums ${progress?.over ? 'text-destructive' : ''}`}
                       >
                         {formatAmount(c.amount, currency)}
+                        {progress?.over && <span className="sr-only">, sobre el presupuesto</span>}
                         {progress && (
                           <span className="text-muted-foreground"> / {formatAmount(limit!, currency)}</span>
                         )}

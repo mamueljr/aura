@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Download, FileStack, MoreVertical, Trash2 } from 'lucide-react'
 import { Badge } from '@aura/ui/components/badge'
@@ -111,9 +111,18 @@ function PreviewOverlay({ doc, onClose }: { doc: AuraDocument; onClose: () => vo
   const isPdf = doc.fileType === 'application/pdf'
   const blobUrl = useDocumentBlobUrl(doc.id)
 
+  useEffect(() => {
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onEsc)
+    return () => document.removeEventListener('keydown', onEsc)
+  }, [onClose])
+
   return (
     <div
       role="dialog"
+      aria-modal="true"
       aria-label={doc.title}
       className="fixed inset-0 z-50 flex flex-col bg-black/85 p-4"
     >
@@ -190,6 +199,7 @@ export function DocumentsPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Buscar documento…"
+          aria-label="Buscar documento"
           className="min-w-40 flex-1"
         />
         <Button onClick={() => setFormOpen(true)}>

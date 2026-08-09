@@ -110,6 +110,7 @@ export default function PlaylistsPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t('common.name')}
+              aria-label={t('common.name')}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') void create();
               }}
@@ -118,6 +119,7 @@ export default function PlaylistsPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={`${t('common.description')} (${t('common.optional')})`}
+              aria-label={t('common.description')}
             />
           </div>
           <DialogFooter>

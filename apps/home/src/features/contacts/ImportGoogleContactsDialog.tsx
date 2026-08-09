@@ -165,12 +165,12 @@ export function ImportGoogleContactsDialog({
         {status === 'ready' && googleContacts.length > 0 && (
           <div className="min-h-0 flex-1 space-y-3 overflow-y-auto">
             <div className="space-y-2">
-              <Label>Categoría para los importados</Label>
+              <Label htmlFor="import-category">Categoría para los importados</Label>
               <Select
                 value={category}
                 onValueChange={(v) => setCategory(v as ContactCategory)}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="import-category" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -221,6 +221,7 @@ export function ImportGoogleContactsDialog({
                     <Checkbox
                       checked={selected.has(c.resourceName)}
                       onCheckedChange={() => toggle(c.resourceName)}
+                      aria-label={`Seleccionar ${c.name}`}
                     />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{c.name}</p>

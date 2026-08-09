@@ -207,12 +207,14 @@ function TaskCard({
                       value={subtaskTitle}
                       onChange={(e) => setSubtaskTitle(e.target.value)}
                       placeholder="Nueva subtarea…"
+                      aria-label="Nueva subtarea"
                       className="h-8 text-sm"
                     />
                     <Button
                       type="submit"
                       size="sm"
                       variant="outline"
+                      aria-label="Agregar subtarea"
                       disabled={!subtaskTitle.trim()}
                     >
                       <Plus className="size-4" />
@@ -287,6 +289,7 @@ export function TasksPage() {
           value={quickTitle}
           onChange={(e) => setQuickTitle(e.target.value)}
           placeholder="Agregar tarea rápida…"
+          aria-label="Agregar tarea rápida"
         />
         <Button type="submit" disabled={!quickTitle.trim()}>
           <Plus />

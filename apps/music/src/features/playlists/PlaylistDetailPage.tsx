@@ -112,7 +112,7 @@ export default function PlaylistDetailPage() {
         actions={
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm" aria-label="More">
+              <Button variant="ghost" size="icon-sm" aria-label={t('common.more')}>
                 <MoreHorizontal />
               </Button>
             </DropdownMenuTrigger>
@@ -194,11 +194,12 @@ export default function PlaylistDetailPage() {
             <DialogTitle>{t('playlists.renameTitle')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} />
+            <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} aria-label={t('common.name')} />
             <Input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={`${t('common.description')} (${t('common.optional')})`}
+              aria-label={t('common.description')}
             />
           </div>
           <DialogFooter>
@@ -273,7 +274,7 @@ function PlaylistRow({
     >
       <button
         type="button"
-        aria-label="Reorder"
+        aria-label={t('common.reorder')}
         className="cursor-grab touch-none p-1 text-muted-foreground/50 active:cursor-grabbing"
         {...attributes}
         {...listeners}

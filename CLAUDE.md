@@ -58,6 +58,10 @@ pnpm deploy       # build + publica a gh-pages (todo o: pnpm deploy home music)
 Aura Sync en Home, recurrentes duplicados en Finance, datos fabricados en Weather,
 404 que no cubría Finance) — bitácora en `docs/ESTADO-MIGRACION.md` §4.
 
+**Fase 6 (ago-2026):** XSS en Weather corregido (`escapeHtml`), code-splitting en
+Finance (527→377 kB), y auditoría a11y con fixes en las 3 apps React (labels,
+`aria-pressed`, `aria-modal`, skip link, i18n) — bitácora en `docs/ESTADO-MIGRACION.md` §4.
+
 **Siguiente (ya no es migración):** implementar **Aura Sync** (`SyncProvider` de
 `@aura/core` en el `drive-sync` de Home) — ver `docs/ESTADO-MIGRACION.md` §8.
 Pendiente del usuario: **archivar los repos originales** (`App_Clima`, `Aura-music`,

@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Play } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 import { Artwork } from '@/components/Artwork';
 import { cn } from '@/lib/utils';
@@ -25,6 +26,7 @@ export function MediaCard({
   round?: boolean;
   onPlay?: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <motion.div whileHover={{ y: -3 }} transition={{ duration: 0.18 }}>
       <Link
@@ -41,7 +43,7 @@ export function MediaCard({
           {onPlay ? (
             <button
               type="button"
-              aria-label="Play"
+              aria-label={t('common.play')}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();

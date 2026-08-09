@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ChevronDown,
   Disc3,
@@ -57,6 +57,15 @@ export function NowPlayingOverlay() {
   const playbackRate = useSettingsStore((s) => s.playbackRate);
   const setPlaybackRate = useSettingsStore((s) => s.setPlaybackRate);
 
+  useEffect(() => {
+    if (!open) return;
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('keydown', onEsc);
+    return () => document.removeEventListener('keydown', onEsc);
+  }, [open, setOpen]);
+
   return (
     <AnimatePresence>
       {open && track ? (
@@ -67,6 +76,7 @@ export function NowPlayingOverlay() {
           transition={{ type: 'spring', stiffness: 260, damping: 30 }}
           className="fixed inset-0 z-40 flex flex-col bg-background"
           role="dialog"
+          aria-modal="true"
           aria-label={t('player.nowPlaying')}
         >
           {/* Ambient aura backdrop */}

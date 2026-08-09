@@ -68,9 +68,10 @@ export function AccountFormDialog({ open, onOpenChange, account, onSubmit }: Acc
                   key={color}
                   type="button"
                   aria-label={`Color ${color}`}
+                  aria-pressed={form.color === color}
                   onClick={() => setForm((f) => ({ ...f, color }))}
                   className={cn(
-                    'size-8 rounded-full ring-offset-2 ring-offset-background transition-shadow',
+                    'size-8 rounded-full ring-offset-2 ring-offset-background transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                     form.color === color && 'ring-2 ring-ring',
                   )}
                   style={{ backgroundColor: color }}

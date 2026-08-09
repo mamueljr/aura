@@ -62,6 +62,7 @@ export function TransactionsPage() {
         <div className="flex gap-2 overflow-x-auto pb-1">
           <button
             type="button"
+            aria-pressed={accountFilter === null}
             onClick={() => setAccountFilter(null)}
             className={cn(
               'shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
@@ -76,6 +77,7 @@ export function TransactionsPage() {
             <button
               key={a.id}
               type="button"
+              aria-pressed={accountFilter === a.id}
               onClick={() => setAccountFilter(a.id)}
               className={cn(
                 'flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',

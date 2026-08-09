@@ -419,6 +419,7 @@ export function SyncSection() {
             <Switch
               checked={encrypted}
               disabled={busy}
+              aria-label={t('settings.encryption')}
               onCheckedChange={(checked) => {
                 setNote(null);
                 if (checked) setAsking(true);

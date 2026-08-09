@@ -168,6 +168,33 @@ lint en verde; smoke tests en runtime de Music y Home sin errores de consola.
 - **Verificación:** `pnpm build` 4/4 (ahora con finance), lint y typecheck en verde,
   tests: weather 23/23, home 78/78, finance OK. Publicado con `pnpm deploy`.
 
+### Fase 6 — Seguridad, rendimiento y accesibilidad (ago-2026)
+- **XSS en AuraWeather**: `innerHTML` interpolaba sin escapar nombres de ciudad de la
+  API de geocodificación y favoritos de `localStorage` (`renderSearchResults`,
+  `renderFavoritesList`, `showToast`). Un nombre como `<img src=x onerror=…>`
+  habría ejecutado JS. Nuevo `escapeHtml()` en `lib/weather-data.js` (escapando
+  `&<>"'`), aplicado en los 3 vectores + 10 tests. **Weather 26/26.**
+- **Code-splitting en Aura Finance**: las 3 páginas ahora cargan con `React.lazy` +
+  `Suspense` (fallback con spinner y `role="status"`). El chunk principal baja de
+  **527 kB → 377 kB** (166 → 121 gzip); cada ruta en su propio chunk. Workbox sigue
+  precacheando todos los chunks → la PWA conserva el modo offline completo.
+- **A11y (auditoría con sub-agentes + fixes en las 3 apps React)**:
+  - `@aura/ui/dialog`: el botón de cerrar decía "Close"; ahora `closeLabel` con
+    default **"Cerrar"** (afecta a todos los diálogos de Home/Music/Finance).
+  - **Music**: skip link en `AppLayout`, `aria-modal` + cierre con `Escape` en
+    `NowPlayingOverlay` y `QueueSheet`, `aria-label` en inputs de playlists y en el
+    switch de cifrado, y los 6 `aria-label` hardcodeados en inglés pasan a i18n
+    (`common.play/back/more/reorder/seek/skipToContent` en es/en).
+  - **Finance**: `aria-pressed` en los pills de filtro por cuenta y en los swatches
+    de color, `htmlFor`+`id` en los labels de selects, indicador sr-only de "sobre
+    presupuesto" (WCAG 1.4.1), y `focus-visible:ring` en los tabs.
+  - **Home**: `aria-pressed` en habitaciones y días del calendario, `aria-label` en
+    inputs de subtarea/tarea rápida/compras/búsquedas y en el switch de cifrado,
+    checkbox de importación de Google con nombre accesible, y el preview de
+    documentos ahora es `aria-modal` y cierra con `Escape`.
+- **Verificación:** `pnpm build` 4/4, lint 7/7, typecheck 6/6, tests: weather 26/26,
+  home 78/78, finance 55/55. Publicado con `pnpm deploy`.
+
 ---
 
 ## 5. Cómo trabajar

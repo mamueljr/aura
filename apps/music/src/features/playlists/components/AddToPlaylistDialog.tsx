@@ -47,6 +47,7 @@ export function AddToPlaylistDialog() {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder={t('playlists.newPlaylist')}
+            aria-label={t('playlists.newPlaylist')}
             onKeyDown={(e) => {
               if (e.key === 'Enter') void createAndAdd();
             }}

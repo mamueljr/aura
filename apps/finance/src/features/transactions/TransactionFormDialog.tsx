@@ -208,9 +208,9 @@ export function TransactionFormDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Categoría</Label>
+              <Label htmlFor="tx-category">Categoría</Label>
               <Select value={form.category} onValueChange={(v) => set('category', v)}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="tx-category" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -223,9 +223,9 @@ export function TransactionFormDialog({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Cuenta</Label>
+              <Label htmlFor="tx-account">Cuenta</Label>
               <Select value={form.accountId} onValueChange={(v) => set('accountId', v)}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="tx-account" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

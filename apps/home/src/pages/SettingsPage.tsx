@@ -139,6 +139,7 @@ function EncryptionSection() {
         <Switch
           checked={encrypted}
           disabled={busy}
+          aria-label="Cifrado extremo a extremo"
           onCheckedChange={(checked) => {
             setNote(null)
             if (checked) setAsking(true)

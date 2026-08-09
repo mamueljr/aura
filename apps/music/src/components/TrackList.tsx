@@ -203,7 +203,7 @@ export function TrackMenu({
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label="More"
+          aria-label={t('common.more')}
           className="focus-visible:opacity-100 data-[state=open]:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
           onClick={(e) => e.stopPropagation()}
         >

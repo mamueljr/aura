@@ -18,7 +18,9 @@ import { CSS } from '@dnd-kit/utilities';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { AnimatePresence, motion } from 'framer-motion';
 import { GripVertical, ListMusic, X } from 'lucide-react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+
 
 import { Artwork } from '@/components/Artwork';
 import { Button } from '@aura/ui/components/button';
@@ -55,6 +57,15 @@ export function QueueSheet() {
     if (from >= 0 && to >= 0) player.moveInQueue(from, to);
   };
 
+  useEffect(() => {
+    if (!open) return;
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('keydown', onEsc);
+    return () => document.removeEventListener('keydown', onEsc);
+  }, [open, setOpen]);
+
   return (
     <AnimatePresence>
       {open ? (
@@ -73,6 +84,7 @@ export function QueueSheet() {
             transition={{ type: 'spring', stiffness: 300, damping: 32 }}
             className="glass fixed bottom-0 right-0 top-0 z-50 flex w-full max-w-sm flex-col border-l pt-[env(safe-area-inset-top)] shadow-2xl"
             role="dialog"
+            aria-modal="true"
             aria-label={t('player.queue')}
           >
             <div className="flex items-center justify-between border-b px-4 py-3">
@@ -151,7 +163,7 @@ function QueueRow({
     >
       <button
         type="button"
-        aria-label="Reorder"
+        aria-label={t('common.reorder')}
         className="cursor-grab touch-none p-1 text-muted-foreground/60 active:cursor-grabbing"
         {...attributes}
         {...listeners}

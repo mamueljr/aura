@@ -60,7 +60,7 @@ function ItemRow({
         type="button"
         onClick={onPriority}
         className="min-w-0 flex-1 text-left"
-        title="Cambiar prioridad"
+        aria-label={`Cambiar prioridad de ${item.name}`}
       >
         <p className="truncate text-sm font-medium">{item.name}</p>
       </button>
@@ -161,10 +161,11 @@ export function ShoppingPage() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Agregar producto…"
+          aria-label="Agregar producto"
           className="min-w-40 flex-1"
         />
         <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="w-44" aria-label="Categoría">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

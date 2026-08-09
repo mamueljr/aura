@@ -31,7 +31,7 @@ export function AppShell() {
             end={tab.end}
             className={({ isActive }) =>
               cn(
-                'flex-1 rounded-md py-1.5 text-center text-sm font-medium transition-colors',
+                'flex-1 rounded-md py-1.5 text-center text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 isActive ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground',
               )
             }

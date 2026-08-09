@@ -160,6 +160,7 @@ export function ContactsPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Buscar contacto…"
+          aria-label="Buscar contacto"
           className="min-w-40 flex-1"
         />
         {APP_CONFIG.googleClientId && (

@@ -165,7 +165,7 @@ export function MaintenancePage() {
           value={areaFilter}
           onValueChange={(v) => setAreaFilter(v as MaintenanceArea | 'todas')}
         >
-          <SelectTrigger className="w-52">
+          <SelectTrigger className="w-52" aria-label="Filtrar por área">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

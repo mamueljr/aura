@@ -255,7 +255,8 @@ export function CalendarPage() {
                       key={dateOnly}
                       type="button"
                       onClick={() => setSelected(dateOnly)}
-                      aria-label={`${dayLabel(dateOnly)}${kindsSummary}`}
+                      aria-pressed={isSelected}
+                      aria-label={`${dayLabel(dateOnly)}${isToday ? ', hoy' : ''}${kindsSummary}`}
                       className={cn(
                         'flex aspect-square flex-col items-center justify-center gap-0.5 rounded-lg text-sm transition-colors sm:aspect-auto sm:py-2',
                         !inMonth && 'text-muted-foreground/40',
