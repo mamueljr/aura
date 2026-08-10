@@ -211,6 +211,9 @@ importers:
       '@aura/sync':
         specifier: workspace:*
         version: link:../../packages/sync
+      '@aura/tokens':
+        specifier: workspace:*
+        version: link:../../packages/tokens
       '@aura/ui':
         specifier: workspace:*
         version: link:../../packages/ui

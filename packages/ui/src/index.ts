@@ -20,4 +20,7 @@ export * from "./components/sheet"
 export * from "./components/skeleton"
 export * from "./components/textarea"
 
+// Ecosistema
+export * from "./components/ecosystem-nav"
+
 export { cn } from "./lib/utils"

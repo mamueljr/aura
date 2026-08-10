@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { Wallet } from 'lucide-react';
+import { EcosystemNav } from '@aura/ui';
 import { cn } from '@/lib/utils';
 import { useRecurringTransactions } from '@/hooks/useRecurringTransactions';
 import { useFinanceSync } from '@/hooks/useFinanceSync';
@@ -22,6 +23,8 @@ export function AppShell() {
         </div>
         <h1 className="finance-text text-xl font-bold">Aura Finance</h1>
       </header>
+
+      <EcosystemNav current="finance" variant="bar" />
 
       <nav className="flex gap-1 rounded-lg bg-muted p-1">
         {TABS.map((tab) => (

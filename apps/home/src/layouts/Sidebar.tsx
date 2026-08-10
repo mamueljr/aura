@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { Palette, Settings } from 'lucide-react'
+import { EcosystemNav } from '@aura/ui'
 import { MODULES, NAV_HOME } from '@/config/navigation'
 import { APP_CONFIG } from '@/config/app'
 import { cn } from '@/lib/utils'
@@ -54,6 +55,7 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t px-3 py-3">
+        <EcosystemNav current="home" className="mb-2" />
         <SidebarLink to="/ajustes" label="Ajustes" icon={Settings} />
         <SidebarLink to="/design" label="Aura Design" icon={Palette} />
         <p className="px-3 pt-2 text-xs text-muted-foreground/60">

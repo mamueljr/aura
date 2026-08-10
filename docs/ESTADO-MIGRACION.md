@@ -229,6 +229,24 @@ lint en verde; smoke tests en runtime de Music y Home sin errores de consola.
 - **Verificación:** `pnpm build` 4/4, lint 7/7, typecheck 6/6, tests: weather 26/26,
   home 78/78, music 57/57, finance 55/55. Publicado con `pnpm deploy`.
 
+### Fase 8 — Tokens de Music y nav entre apps (ago-2026)
+- **Music hereda la base del ecosistema**: `globals.css` importa
+  `@aura/tokens/index.css` (fuentes Inter Variable + esqueleto shadcn en OKLCH) y
+  ya no define duplicadas las 16 variables semánticas ni el `--font-sans`; solo
+  sobreescribe su identidad (`--aura-1/2/3` violeta·cyan·rosa, `--surface-glass`,
+  `--radius: 0.75rem`). Nueva dependencia `@aura/tokens` en `music/package.json`.
+  Verificado: el CSS final conserva `@font-face`/Inter, `bg-aura-2`, `tailwind glass`,
+  `aura-gradient` y `--radius:.75rem` sobre el `1rem` del ecosistema.
+- **Nav cruzada entre apps**: nuevo `EcosystemNav` en `@aura/ui`
+  (`components/ecosystem-nav.tsx`) — launcher a Home/Music/Weather/Finanzas que
+  deriva la raíz del ecosistema de `BASE_URL` de la app actual (`/aura/<app>` →
+  enlaces `/aura/<otra>/`; en dev base `/`). Variante `sidebar` (lista vertical,
+  Home y Music) y `bar` (fila compacta, Finance). Weather añade el launcher en su
+  footer en HTML/CSS vanilla (`aria-current` + `data-lucide`). Bump del cache de
+  Weather a v26 (tocados `index.html` y `style.css`).
+- **Verificación:** `pnpm build` 4/4, lint 7/7, typecheck 6/6, tests: weather 26/26,
+  home 78/78, music 57/57, finance 55/55. Publicado con `pnpm deploy`.
+
 ---
 
 ## 5. Cómo trabajar
@@ -313,18 +331,21 @@ Lo que sigue es construir sobre la base:
 | **App nueva — Aura Finance** | ✅ **v1 completa** — ver detalle en §10. `apps/finance` sobre `@aura/{tsconfig,ui,config}`, tema propio (verde esmeralda + ámbar), PWA instalable, en el deploy y el hub. |
 | **Cabos sueltos** | Archivar repos originales en GitHub (pendiente del usuario). ~~Warning de setState en component update~~ y ~~404 de deploy~~ ✅ resueltos. |
 
-### Punto de entrada del ecosistema (parcialmente resuelto)
-El deploy ya publica un **hub** en `mamueljr.github.io/aura/` que enlaza las 3 apps.
-Es una landing simple, no un shell unificado. La decisión de fondo (apps
-independientes vs hub-puerta vs shell) sigue abierta para la fase de diferenciación.
+### Punto de entrada del ecosistema (resuelto — nav cruzada)
+El deploy publica un **hub** en `mamueljr.github.io/aura/` que enlaza las 4 apps.
+Además, desde la **Fase 8** cada app lleva un **launcher del ecosistema**
+(`EcosystemNav` en `@aura/ui`, estático en Weather) para saltar de app a app sin
+pasar por el hub. La decisión de fondo (apps independientes vs shell unificado)
+quedó **resuelta como apps independientes + nav cruzada**: no hay shell que
+fusiono código; cada app conserva su instalabilidad PWA y su tema.
 
-### Decisión pendiente: ¿unificar tokens de Music con `@aura/tokens`?
+### Decisión pendiente: ¿unificar tokens de Music con `@aura/tokens`? — ✅ resuelta
 
-Music conserva su tema propio (violeta + cyan + rosa, glass, radius 0.75rem, hex);
-Home usa `@aura/tokens` (violeta OKLCH, radius 1rem). Ambos comparten los mismos
-**componentes**, pero con **valores de token distintos** — patrón sano de design
-system. Convergerlos cambiaría el look de Music y es una decisión de identidad,
-no técnica. Se deja abierta para la fase de diferenciación.
+Music conserva su identidad (triada violeta + cyan + rosa, glass, radius
+0.75rem) **pero sobre la base del ecosistema**: desde la Fase 8 importa
+`@aura/tokens/index.css` (fuentes Inter Variable + esqueleto de variables
+semánticas shadcn) y solo sobreescribe lo propio (`--aura-1/2/3`,
+`--surface-glass`, `--radius`). Ya no duplica las 16 variables ni el `--font-sans`.
 
 ---
 

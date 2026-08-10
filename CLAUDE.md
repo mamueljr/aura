@@ -68,6 +68,11 @@ documentos en Home con `Dialog` Radix, `TrackList` con `<button>` real, radiogro
 flechas y `progressbar` en Music, `noopener` en Weather) y hub del ecosistema con
 estado en vivo por tarjeta y sección "Cómo instalar" — bitácora en §4.
 
+**Fase 8 (ago-2026):** Music hereda la base de `@aura/tokens` (fuentes + esqueleto
+shadcn) conservando su identidad (auras, glass, radius 0.75rem), y **nav entre apps**:
+`EcosystemNav` en `@aura/ui` dentro de Home/Music/Finance + launcher vanilla en Weather
+para saltar de app a app sin pasar por el hub — bitácora en §4.
+
 **Siguiente (ya no es migración):** implementar **Aura Sync** (`SyncProvider` de
 `@aura/core` en el `drive-sync` de Home) — ver `docs/ESTADO-MIGRACION.md` §8.
 Pendiente del usuario: **archivar los repos originales** (`App_Clima`, `Aura-music`,

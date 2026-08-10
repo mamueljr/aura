@@ -126,6 +126,7 @@ function SegmentedControl<T extends string>({
     <div
       className="flex rounded-full bg-muted p-1"
       role="radiogroup"
+      tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
           e.preventDefault();

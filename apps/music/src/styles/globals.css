@@ -1,6 +1,11 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+/* Base del ecosistema: fuentes variables (Inter/Sora) y variables semánticas
+   (convención shadcn) en OKLCH. Music NO las redefine: hereda el esqueleto y
+   a continuación solo sobreescribe su identidad (auras, glass y radios). */
+@import '@aura/tokens/index.css';
+
 /* Los estados de Radix (data-state="active|open"…) que usan los componentes
    de @aura/ui. Sin esto no se estiliza ninguno, en silencio. */
 @import '@aura/ui/variants.css';
@@ -11,28 +16,9 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ── Identidad de Music sobre la base de @aura/tokens ──────────────── */
 :root {
-  /* ── Aura light theme ─────────────────────────────── */
-  --background: #f6f5fa;
-  --foreground: #17151f;
-  --card: #ffffff;
-  --card-foreground: #17151f;
-  --popover: #ffffff;
-  --popover-foreground: #17151f;
-  --primary: #7c3aed;
-  --primary-foreground: #ffffff;
-  --secondary: #ece9f6;
-  --secondary-foreground: #17151f;
-  --muted: #eceaf3;
-  --muted-foreground: #6b6880;
-  --accent: #e6e2f5;
-  --accent-foreground: #17151f;
-  --destructive: #dc2626;
-  --destructive-foreground: #ffffff;
-  --border: #e2dfec;
-  --input: #e2dfec;
-  --ring: #8b5cf6;
-
+  /* Paleta propia (triada violeta · cyan · rosa) y superficie glass. */
   --aura-1: #8b5cf6;
   --aura-2: #22d3ee;
   --aura-3: #f472b6;
@@ -40,31 +26,11 @@
   --surface-glass: rgba(255, 255, 255, 0.72);
   --surface-glass-border: rgba(23, 21, 31, 0.08);
 
+  /* Radio propio (más compacto que el 1rem del ecosistema). */
   --radius: 0.75rem;
 }
 
 .dark {
-  /* ── Aura dark theme ──────────────────────────────── */
-  --background: #0b0a12;
-  --foreground: #eceaf4;
-  --card: #14121e;
-  --card-foreground: #eceaf4;
-  --popover: #171525;
-  --popover-foreground: #eceaf4;
-  --primary: #a78bfa;
-  --primary-foreground: #14101f;
-  --secondary: #201d30;
-  --secondary-foreground: #eceaf4;
-  --muted: #1d1a2b;
-  --muted-foreground: #9a95b8;
-  --accent: #252138;
-  --accent-foreground: #eceaf4;
-  --destructive: #f87171;
-  --destructive-foreground: #1c0b0b;
-  --border: #262336;
-  --input: #2b2740;
-  --ring: #a78bfa;
-
   --surface-glass: rgba(20, 18, 30, 0.66);
   --surface-glass-border: rgba(236, 234, 244, 0.08);
 }
@@ -98,9 +64,7 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  --font-sans:
-    'Inter var', Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, sans-serif;
+  /* La fuente (Inter Variable) la aporta @aura/tokens. */
 
   --animate-aura-spin: aura-spin 14s linear infinite;
 
