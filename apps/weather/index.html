@@ -2,6 +2,10 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'sha256-Sm1HlCPtavt0jR371itRNFZhRwa/wLB3Xhw9C1fknS4='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.brightsky.dev https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.bigdatacloud.net; object-src 'none'; base-uri 'self'; form-action 'self'"
+  >
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AuraWeather - Tu Pronóstico Premium</title>
 
@@ -343,7 +347,7 @@
 
     <!-- PIE DE PÁGINA -->
     <footer class="app-footer">
-      <p>Desarrollado con <i data-lucide="heart" class="heart-icon"></i> por <a href="https://mamueljr.github.io/esiscom/" target="_blank" class="footer-link">ESISCOM</a></p>
+      <p>Desarrollado con <i data-lucide="heart" class="heart-icon"></i> por <a href="https://mamueljr.github.io/esiscom/" target="_blank" rel="noopener noreferrer" class="footer-link">ESISCOM</a></p>
       <p class="pwa-badge">Versión PWA Instalable</p>
     </footer>
 

@@ -122,7 +122,11 @@ const links = targets
              diferirlos solo retrasa lo primero que se ve. -->
         <img class="icon" src="${app.icon}" alt="" width="64" height="64" decoding="async" />
         <div class="body">
-          <h2>${app.label}</h2>
+          <div class="row">
+            <h2>${app.label}</h2>
+            <span class="status is-checking" data-app="${t}" role="status"
+                  aria-label="${app.label} — comprobando disponibilidad"><span class="dot" aria-hidden="true"></span></span>
+          </div>
           <p>${app.desc}</p>
         </div>
         <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
@@ -130,13 +134,18 @@ const links = targets
   })
   .join('\n      ');
 
+// Etiquetas por app para el chequeo en vivo del hub (aria-label + fallback).
+const labelsJson = JSON.stringify(
+  Object.fromEntries(targets.map((t) => [t, APPS[t].label])),
+);
+
 const hub = `<!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="theme-color" content="#0b0b12" />
-<meta name="description" content="Aura — tus apps: hogar, música y clima. Funcionan sin internet." />
+<meta name="description" content="Aura — tus apps: hogar, música, clima y finanzas. Funcionan sin internet." />
 <title>Aura — Tus apps</title>
 <link rel="icon" href="./home/icons/favicon.svg" />
 <style>
@@ -168,7 +177,7 @@ const hub = `<!doctype html>
   }
   header p { margin: 0; font-size: clamp(.95rem, 3.6vw, 1.05rem); line-height: 1.5; color: #b9b9c6; }
 
-  main { display: grid; gap: .9rem; width: 100%; max-width: 30rem; }
+  main { display: grid; gap: 1.1rem; width: 100%; max-width: 30rem; }
 
   .card {
     position: relative; display: flex; align-items: center; gap: 1rem;
@@ -195,8 +204,30 @@ const hub = `<!doctype html>
     box-shadow: 0 6px 20px -8px color-mix(in srgb, var(--tone) 80%, transparent);
   }
   .body { position: relative; min-width: 0; flex: 1; }
-  .card h2 { margin: 0 0 .2rem; font-size: 1.15rem; font-weight: 600; letter-spacing: -.01em; }
-  .card p { margin: 0; font-size: .9rem; line-height: 1.4; color: #a8a8b8; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: .6rem; }
+  .body .row h2 { margin: 0 0 .2rem; font-size: 1.15rem; font-weight: 600; letter-spacing: -.01em; overflow-wrap: anywhere; }
+  .body p { margin: 0; font-size: .9rem; line-height: 1.4; color: #a8a8b8; }
+
+  /* Estado en vivo de cada app: verde = responde, gris/rojo = no disponible. */
+  .status {
+    display: inline-flex; align-items: center; flex: 0 0 auto; padding: .15rem;
+    border-radius: 999px; border: 1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.05);
+  }
+  .dot { width: .55rem; height: .55rem; border-radius: 999px; background: #7c7c8c; }
+  .status.is-checking .dot { background: #facc15; animation: pulse 1s ease-in-out infinite; }
+  .status.is-online .dot { background: #34d399; box-shadow: 0 0 8px rgba(52,211,153,.7); }
+  .status.is-offline .dot { background: #f87171; }
+  @keyframes pulse { 50% { opacity: .35; } }
+
+  /* Sección "Cómo instalar" bajo las tarjetas. */
+  .install {
+    border: 1px solid rgba(255,255,255,.09); border-radius: 1.35rem;
+    background: rgba(255,255,255,.04); padding: 1.1rem 1.2rem;
+  }
+  .install h2 { margin: 0 0 .5rem; font-size: 1rem; font-weight: 600; letter-spacing: -.01em; }
+  .install ol { margin: 0; padding-left: 1.15rem; font-size: .9rem; line-height: 1.6; color: #a8a8b8; }
+  .install strong { color: #f4f4f8; font-weight: 600; }
 
   .chev {
     position: relative; flex: 0 0 auto; width: 20px; height: 20px; fill: none;
@@ -208,7 +239,7 @@ const hub = `<!doctype html>
   footer { font-size: .8rem; color: #7c7c8c; text-align: center; }
 
   @media (prefers-reduced-motion: reduce) {
-    .card, .chev { transition: none; }
+    .card, .chev, .dot { transition: none; animation: none; }
     .card:hover { transform: none; }
   }
 </style>
@@ -221,9 +252,50 @@ const hub = `<!doctype html>
 
   <main>
       ${links}
+
+      <section class="install" aria-labelledby="como-instalar">
+        <h2 id="como-instalar">Cómo instalar una app</h2>
+        <ol>
+          <li>Entra en la app que quieras desde estas tarjetas.</li>
+          <li>En tu navegador elige <strong>Instalar app</strong> (o
+            <em>Agregar a la pantalla de inicio</em>).</li>
+          <li>Queda instalada en tu dispositivo, lista incluso sin internet.</li>
+        </ol>
+      </section>
   </main>
 
-  <footer>Funcionan sin internet · Se instalan desde tu navegador</footer>
+  <footer>Funcionan sin internet y se instalan desde el navegador</footer>
+
+  <script>
+    // Chequeo en vivo de disponibilidad: cada tarjeta hace un HEAD ligero a su
+    // propia subruta en GitHub Pages y marca el indicador según responda.
+    (function () {
+      var labels = ${labelsJson};
+      var states = ['is-checking', 'is-online', 'is-offline'];
+      function mark(app, cls, text) {
+        var card = document.querySelector('[data-app="' + app + '"]');
+        if (!card) return;
+        states.forEach(function (s) { card.classList.remove(s); });
+        card.classList.add(cls);
+        card.setAttribute('aria-label', labels[app] + ' — ' + text);
+      }
+      function check(app) {
+        var ctrl = new AbortController();
+        var timer = setTimeout(function () { ctrl.abort(); }, 5000);
+        fetch('./' + app + '/', { method: 'HEAD', signal: ctrl.signal })
+          .then(function (r) {
+            if (r.ok && r.status >= 200 && r.status < 400) mark(app, 'is-online', 'disponible');
+            else mark(app, 'is-offline', 'no disponible');
+          })
+          .catch(function () {
+            if (ctrl.signal.aborted) mark(app, 'is-checking', 'sin respuesta');
+            else mark(app, 'is-offline', 'no disponible');
+          })
+          .finally(function () { clearTimeout(timer); });
+      }
+      Object.keys(labels).forEach(check);
+    })();
+  </script>
 </body>
 </html>
 `;

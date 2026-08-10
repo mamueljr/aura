@@ -1,9 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Download, FileStack, MoreVertical, Trash2 } from 'lucide-react'
 import { Badge } from '@aura/ui/components/badge'
 import { Button } from '@aura/ui/components/button'
 import { Card, CardContent } from '@aura/ui/components/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@aura/ui/components/dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,7 +21,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { Plus } from 'lucide-react'
 import { useDocuments } from '@/hooks/queries'
 import { useDocumentBlobUrl } from '@/hooks/useDocumentBlobUrl'
-import { daysUntil, parseLocalDate, relativeDayLabel } from '@/utils/dates'
+import { daysUntil, relativeDayLabel } from '@/utils/dates'
 import type { AuraDocument, DocumentCategory } from '@/types/entities'
 import {
   DOCUMENT_CATEGORY_META,
@@ -111,58 +117,41 @@ function PreviewOverlay({ doc, onClose }: { doc: AuraDocument; onClose: () => vo
   const isPdf = doc.fileType === 'application/pdf'
   const blobUrl = useDocumentBlobUrl(doc.id)
 
-  useEffect(() => {
-    const onEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', onEsc)
-    return () => document.removeEventListener('keydown', onEsc)
-  }, [onClose])
-
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={doc.title}
-      className="fixed inset-0 z-50 flex flex-col bg-black/85 p-4"
-    >
-      <div className="mb-3 flex items-center justify-between gap-3 text-white">
-        <div className="min-w-0">
-          <p className="truncate font-medium">{doc.title}</p>
-          <p className="text-xs text-white/70">
-            {parseLocalDate(doc.createdAt).toLocaleDateString('es-MX', {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-            })}
-          </p>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent
+        closeLabel="Cerrar"
+        className="h-[85vh] max-w-3xl flex-col bg-background"
+      >
+        <DialogHeader>
+          <DialogTitle>{doc.title}</DialogTitle>
+        </DialogHeader>
+
+        <div className="flex flex-1 items-center justify-center overflow-auto">
+          {!blobUrl ? (
+            <p className="text-muted-foreground">
+              Descargando el archivo desde tu otro dispositivo…
+            </p>
+          ) : isImage ? (
+            <img src={blobUrl} alt={doc.title} className="max-h-full max-w-full rounded-lg" />
+          ) : isPdf ? (
+            <iframe src={blobUrl} title={doc.title} className="size-full rounded-lg bg-white" />
+          ) : (
+            <p className="text-muted-foreground">
+              Vista previa no disponible para este tipo de archivo. Descárgalo para verlo.
+            </p>
+          )}
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+
+        <div className="flex justify-end gap-2">
           <Button size="sm" variant="secondary" asChild disabled={!blobUrl}>
             <a href={blobUrl ?? undefined} download={doc.fileName}>
               <Download className="size-4" /> Descargar
             </a>
           </Button>
-          <Button size="sm" variant="secondary" onClick={onClose}>
-            Cerrar
-          </Button>
         </div>
-      </div>
-
-      <div className="flex flex-1 items-center justify-center overflow-auto">
-        {!blobUrl ? (
-          <p className="text-white/80">Descargando el archivo desde tu otro dispositivo…</p>
-        ) : isImage ? (
-          <img src={blobUrl} alt={doc.title} className="max-h-full max-w-full rounded-lg" />
-        ) : isPdf ? (
-          <iframe src={blobUrl} title={doc.title} className="size-full rounded-lg bg-white" />
-        ) : (
-          <p className="text-white/80">
-            Vista previa no disponible para este tipo de archivo. Descárgalo para verlo.
-          </p>
-        )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 

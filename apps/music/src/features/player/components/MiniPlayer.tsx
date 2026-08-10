@@ -33,7 +33,14 @@ export function MiniPlayer() {
           className="glass relative z-30 border-t"
         >
           {/* Thin progress line on mobile (full seek bar lives on desktop row) */}
-          <div className="absolute inset-x-0 top-0 h-0.5 bg-muted-foreground/15 md:hidden">
+          <div
+            className="absolute inset-x-0 top-0 h-0.5 bg-muted-foreground/15 md:hidden"
+            role="progressbar"
+            aria-label={t('player.seek')}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={duration ? Math.round((position / duration) * 100) : 0}
+          >
             <div
               className="h-full aura-gradient transition-[width] duration-300"
               style={{ width: duration ? `${(position / duration) * 100}%` : '0%' }}

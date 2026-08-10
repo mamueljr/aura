@@ -195,6 +195,40 @@ lint en verde; smoke tests en runtime de Music y Home sin errores de consola.
 - **Verificación:** `pnpm build` 4/4, lint 7/7, typecheck 6/6, tests: weather 26/26,
   home 78/78, finance 55/55. Publicado con `pnpm deploy`.
 
+### Fase 7 — CSP + a11y restante + hub (ago-2026)
+- **Content-Security-Policy en las 4 apps** (meta tag; GitHub Pages no permite
+  headers): `script-src` con `'self'` + hosts de terceros + **sha256 de los scripts
+  inline** (restauración de ruta `?/ruta` en Home/Music/Finance, registro de SW en
+  Weather); `style-src 'unsafe-inline'` (React y el `<style>` del splash); `connect-src`
+  solo a los hosts que cada app consulta:
+  - **Home**: GIS (`accounts.google.com`), Drive, People API, OAuth.
+  - **Music**: GIS, Drive, OAuth, `lrclib.net`, `coverartarchive.org`; `media-src blob:`
+    (audio desde IndexedDB/OPFS) y `worker-src blob:`.
+  - **Finance**: GIS, Drive, OAuth.
+  - **Weather**: `cdn.jsdelivr.net` (lucide, chart.js), `fonts.googleapis.com/gstatic.com`,
+    las 4 APIs de clima (brightsky, open-meteo, geocoding, bigdatacloud).
+  - `img-src` con `blob:` donde hacen falta (`documents` de Home, portadas de Music),
+    `frame-src` con `blob:` (PDF/portadas en `iframe`) y `https://accounts.google.com`
+    (GIS usa FedCM, sin siervos extra). `object-src 'none'`, `base-uri 'self'`,
+    `form-action 'self'`.
+  - Ojo futuro: si se toca un script inline, hay que recalcular su sha256.
+- **Deuda a11y restante (seguimiento de la auditoría de la Fase 6)**:
+  - **Home**: el preview de documentos deja de ser un `<div>` a mano y pasa a un
+    `Dialog` Radix (`@aura/ui`): foco, `aria-modal` y Escape reales; el botón de
+    descarga es un `<a download>` accesible.
+  - **Music**: `TrackList` quita el `role="button"` de una fila y ahora usa un
+    `<button>` real alrededor del bloque reproducible (favorito y menú quedan como
+    hermanos); el `SegmentedControl` de Ajustes es un radiogroup con navegación por
+    flechas y un solo tab-stop; la barra de progreso del `MiniPlayer` en móvil tiene
+    `role="progressbar"` y `aria-valuemin/max/now`.
+  - **Weather**: enlaces del footer con `rel="noopener noreferrer"`.
+- **Hub del ecosistema** (`scripts/deploy.mjs`): rediseño ligero — sección "Cómo
+  instalar", cada tarjeta muestra **estado en vivo** (HEAD a su subruta, indicador
+  online/offline/checking con `aria-label` de disponibilidad) y se corrigió la
+  descripción que omitía Finance. Es puro HTML/CSS/JS inline, sin build.
+- **Verificación:** `pnpm build` 4/4, lint 7/7, typecheck 6/6, tests: weather 26/26,
+  home 78/78, music 57/57, finance 55/55. Publicado con `pnpm deploy`.
+
 ---
 
 ## 5. Cómo trabajar

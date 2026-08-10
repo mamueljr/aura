@@ -62,6 +62,12 @@ Aura Sync en Home, recurrentes duplicados en Finance, datos fabricados en Weathe
 Finance (527→377 kB), y auditoría a11y con fixes en las 3 apps React (labels,
 `aria-pressed`, `aria-modal`, skip link, i18n) — bitácora en `docs/ESTADO-MIGRACION.md` §4.
 
+**Fase 7 (ago-2026):** Content-Security-Policy por meta tag en las 4 apps (sha256 de
+los scripts inline — **recalcular si se tocan**), deuda a11y restante (preview de
+documentos en Home con `Dialog` Radix, `TrackList` con `<button>` real, radiogroup con
+flechas y `progressbar` en Music, `noopener` en Weather) y hub del ecosistema con
+estado en vivo por tarjeta y sección "Cómo instalar" — bitácora en §4.
+
 **Siguiente (ya no es migración):** implementar **Aura Sync** (`SyncProvider` de
 `@aura/core` en el `drive-sync` de Home) — ver `docs/ESTADO-MIGRACION.md` §8.
 Pendiente del usuario: **archivar los repos originales** (`App_Clima`, `Aura-music`,

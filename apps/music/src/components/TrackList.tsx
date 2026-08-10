@@ -118,57 +118,54 @@ export const TrackRow = memo(function TrackRow({
 
   return (
     <div
-      role="button"
-      tabIndex={0}
-      onClick={onPlay}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') onPlay();
-      }}
       className={cn(
-        'group flex h-14 w-full cursor-pointer items-center gap-3 rounded-xl px-2 text-left transition-colors hover:bg-accent/70 md:px-3',
+        'group flex h-14 w-full items-center gap-3 rounded-xl px-2 text-left transition-colors hover:bg-accent/70 md:px-3',
         isCurrent && 'bg-accent',
       )}
-      aria-label={`${track.title} — ${track.artist}`}
     >
-      {showTrackNo ? (
-        <div className="relative w-7 shrink-0 text-center text-sm tabular-nums text-muted-foreground">
-          <span className="group-hover:invisible">{track.trackNo ?? '–'}</span>
-          <Play className="invisible absolute inset-0 m-auto size-4 group-hover:visible" />
-        </div>
-      ) : showArtwork ? (
-        <div className="relative shrink-0">
-          <Artwork coverId={track.coverId} name={track.album || track.title} className="size-10" />
-          <div className="absolute inset-0 hidden items-center justify-center rounded-lg bg-black/40 group-hover:flex">
-            <Play className="size-4 fill-white text-white" />
+      <button
+        type="button"
+        onClick={onPlay}
+        className="flex min-w-0 flex-1 items-center gap-3 text-left"
+        aria-label={`${track.title} — ${track.artist}`}
+      >
+        {showTrackNo ? (
+          <div className="relative w-7 shrink-0 text-center text-sm tabular-nums text-muted-foreground">
+            <span className="group-hover:invisible">{track.trackNo ?? '–'}</span>
+            <Play className="invisible absolute inset-0 m-auto size-4 group-hover:visible" />
           </div>
+        ) : showArtwork ? (
+          <div className="relative shrink-0">
+            <Artwork coverId={track.coverId} name={track.album || track.title} className="size-10" />
+            <div className="absolute inset-0 hidden items-center justify-center rounded-lg bg-black/40 group-hover:flex">
+              <Play className="size-4 fill-white text-white" />
+            </div>
+          </div>
+        ) : null}
+
+        <div className="min-w-0 flex-1">
+          <p className={cn('truncate text-sm font-medium', isCurrent && 'aura-text')}>
+            {track.title}
+          </p>
+          <p className="truncate text-xs text-muted-foreground">
+            {track.artist || t('common.unknownArtist')}
+          </p>
         </div>
-      ) : null}
 
-      <div className="min-w-0 flex-1">
-        <p className={cn('truncate text-sm font-medium', isCurrent && 'aura-text')}>
-          {track.title}
-        </p>
-        <p className="truncate text-xs text-muted-foreground">
-          {track.artist || t('common.unknownArtist')}
-        </p>
-      </div>
-
-      {showAlbum ? (
-        <p className="hidden w-2/5 truncate text-xs text-muted-foreground lg:block">
-          {track.album || t('common.unknownAlbum')}
-        </p>
-      ) : null}
+        {showAlbum ? (
+          <p className="hidden w-2/5 truncate text-xs text-muted-foreground lg:block">
+            {track.album || t('common.unknownAlbum')}
+          </p>
+        ) : null}
+      </button>
 
       <button
         type="button"
         aria-label={track.favorite ? t('player.removeFromFavorites') : t('player.addToFavorites')}
         aria-pressed={!!track.favorite}
-        onClick={(e) => {
-          e.stopPropagation();
-          void toggleFavorite(track.id);
-        }}
+        onClick={() => void toggleFavorite(track.id)}
         className={cn(
-          'rounded-full p-1.5 text-muted-foreground transition-all hover:text-foreground focus-visible:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100',
+          'shrink-0 rounded-full p-1.5 text-muted-foreground transition-all hover:text-foreground focus-visible:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100',
           track.favorite && 'text-aura-3 opacity-100',
         )}
       >

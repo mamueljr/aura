@@ -116,14 +116,33 @@ function SegmentedControl<T extends string>({
   options: { value: T; label: React.ReactNode }[];
   onChange: (value: T) => void;
 }) {
+  const move = (dir: 1 | -1) => {
+    const i = options.findIndex((o) => o.value === value);
+    const next = options[(i + dir + options.length) % options.length];
+    if (next) onChange(next.value);
+  };
+
   return (
-    <div className="flex rounded-full bg-muted p-1" role="radiogroup">
+    <div
+      className="flex rounded-full bg-muted p-1"
+      role="radiogroup"
+      onKeyDown={(e) => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+          e.preventDefault();
+          move(1);
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          move(-1);
+        }
+      }}
+    >
       {options.map((option) => (
         <button
           key={option.value}
           type="button"
           role="radio"
           aria-checked={value === option.value}
+          tabIndex={value === option.value ? 0 : -1}
           onClick={() => onChange(option.value)}
           className={cn(
             'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium text-muted-foreground transition-all',
