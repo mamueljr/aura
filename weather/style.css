@@ -1237,6 +1237,55 @@ body.weather-storm     { --icon-color: #fde047; }
   gap: 0.25rem;
 }
 
+/* Launcher del ecosistema Aura: salta a las otras apps sin pasar por el hub */
+.ecosystem-nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem;
+  margin-bottom: 0.25rem;
+}
+
+.ecosystem-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-right: 0.25rem;
+}
+
+.ecosystem-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  transition: var(--transition-fast);
+}
+
+.ecosystem-link i {
+  width: 14px;
+  height: 14px;
+}
+
+.ecosystem-link:hover {
+  color: var(--theme-accent);
+  border-color: var(--theme-accent);
+}
+
+.ecosystem-link[aria-current="page"] {
+  color: var(--theme-accent);
+  border-color: var(--theme-accent);
+  background: rgba(56, 189, 248, 0.08);
+}
+
 .footer-link {
   color: var(--theme-accent);
   text-decoration: none;

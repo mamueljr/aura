@@ -1,0 +1,1 @@
+import{r as e}from"./transactions.repository-C8ddKrJs.js";var t={async getAll(){return(await e.budgets.toArray()).filter(e=>!e.deletedAt)},async set(t,n){let r=new Date().toISOString();n>0?await e.budgets.put({category:t,monthlyLimit:n,updatedAt:r}):await e.budgets.put({category:t,monthlyLimit:0,updatedAt:r,deletedAt:r})}};export{t};
