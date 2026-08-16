@@ -78,6 +78,15 @@ en Biblioteca/Artistas/Álbumes/Géneros/Favoritos/Búsqueda, con confirmación;
 copia OPFS y audio de Drive, el archivo en disco no se toca) y botón **"Eliminar
 duplicados"** en Ajustes que corre `dedupeLibrary` a demanda — bitácora en §4.
 
+**Fase 10 (ago-2026):** el **selector de cuenta de Google** reaparecía en cada entrada
+o cambio de app (el token vivía solo en memoria). Ahora `@aura/sync/drive` acepta
+`getToken`/`setToken` y las 3 apps persisten el token en `localStorage` bajo la **misma
+clave** (`aura:google:drive-token`): comparten origen + Client ID, así que un token vale
+para todas y cambiar de app no pide nada mientras siga vivo (~1h; el re-canje silencioso
+de GIS/FedCM lo renueva sin UI casi siempre). El token de Contactos de Home se persiste
+aparte (`aura:google:contacts-token`). Límite: sin backend, Google emite tokens de 1h —
+como mucho pedirá 1 vez por hora, no en cada entrada — bitácora en §4.
+
 **Siguiente (ya no es migración):** implementar **Aura Sync** (`SyncProvider` de
 `@aura/core` en el `drive-sync` de Home) — ver `docs/ESTADO-MIGRACION.md` §8.
 Pendiente del usuario: **archivar los repos originales** (`App_Clima`, `Aura-music`,

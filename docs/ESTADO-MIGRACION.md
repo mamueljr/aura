@@ -270,6 +270,33 @@ lint en verde; smoke tests en runtime de Music y Home sin errores de consola.
   home 78/78, music 61/61 (4 nuevos de `removeTrackFromLibrary`), finance 55/55.
   Publicado con `pnpm deploy`.
 
+### Fase 10 — Autorización de Google sin re-prompt por app (ago-2026)
+- **Problema:** entrar a una app o saltar de una a otra volvía a abrir el **selector de
+  cuenta de Google** en cada navegación. Causa: el token de acceso de OAuth vivía solo
+  en memoria (`cachedToken`), y cada app es una página nueva → se perdía → GIS pedía
+  cuenta otra vez.
+- **Solución:** persistir el token de acceso y reutilizarlo mientras siga vivo:
+  - `@aura/sync/drive` (`packages/sync/src/drive.ts`): nuevos hooks `getToken`/`setToken`
+    en `DriveProviderConfig` (patrón `getFileId`/`setFileId`) + helpers
+    `tokenFromStorage`/`tokenToStorage`. El token sembrado se reusa sin consultar GIS;
+    se guarda al emitirse y se borra ante un 401 (también en el reintento) y en
+    `disconnect()` (revoca).
+  - Las 3 apps cablean **la misma clave de `localStorage`** `aura:google:drive-token` en
+    sus providers (`drive-provider.ts` de Home, `services/sync/provider.ts` de Music y
+    de Finance). Comparten origen y Client ID, así que **un token sirve para las tres**:
+    cambiar de app no pide nada.
+  - Home: el token de **Contactos** (scope `contacts.readonly`, otro token) se persiste
+    aparte en `aura:google:contacts-token` para que re-importar dentro de la hora no
+    repita el prompt.
+- **Límite honesto:** sin backend no hay refresh token; Google emite tokens de ~1h. Con
+  este cambio, entrar/cambiar de app no pide nada mientras el token siga vivo y el
+  re-canje silencioso de GIS/FedCM lo renueva sin UI casi siempre. Como mucho, el
+  selector reaparece 1 vez por hora en vez de en cada entrada.
+- **Nota de seguridad:** el token en `localStorage` es legible por cualquier script del
+  origen; aceptable para una PWA local-first con CSP fuerte, anotado como deuda.
+- **Verificación:** `pnpm build` 4/4, lint 7/7, typecheck 6/6, tests 30/30 en `@aura/sync`
+  (4 nuevos de persistencia) y el resto sin regresión. Publicado con `pnpm deploy`.
+
 ---
 
 ## 5. Cómo trabajar

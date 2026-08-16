@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { createDriveProvider } from './drive'
+import {
+  createDriveProvider,
+  tokenFromStorage,
+  tokenToStorage,
+} from './drive'
 
 /**
  * Transporte de Drive contra un `fetch` simulado.
@@ -247,5 +251,88 @@ describe('cuota', () => {
     // Las cuentas sin límite no traen `limit`; tratarlo como 0 haría creer
     // que no cabe nada.
     expect(await provider().quota!()).toEqual({ used: 5000, limit: null })
+  })
+})
+
+describe('persistencia del token', () => {
+  // `localStorage` no existe en Node; se monta un stub mínimo por test.
+  let store: Map<string, string>
+  beforeEach(() => {
+    store = new Map()
+    ;(globalThis as unknown as { localStorage: Storage }).localStorage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => void store.set(key, String(value)),
+      removeItem: (key: string) => void store.delete(key),
+      clear: () => store.clear(),
+      key: (i: number) => [...store.keys()][i] ?? null,
+      get length() {
+        return store.size
+      },
+    } as unknown as Storage
+  })
+
+  it('reutiliza el token persistido sin volver a llamar a GIS', async () => {
+    const setToken = vi.fn()
+    handler = () => ok({ dato: 1 })
+
+    const result = await provider({
+      getToken: () => ({ value: 'persistido', expiresAt: Date.now() + 3_600_000 }),
+      setToken,
+      getFileId: () => 'x',
+    }).pull('b.json')
+
+    // El token sembrado viaja en la cabecera tal cual: GIS no se consulta.
+    expect(result).toEqual({ dato: 1 })
+    expect(calls[0].headers?.Authorization).toBe('Bearer persistido')
+    expect(setToken).not.toHaveBeenCalled()
+  })
+
+  it('guarda el token al obtenerlo y lo limpia ante un 401', async () => {
+    const setToken = vi.fn()
+    handler = () => ({ status: 401 })
+
+    await expect(
+      provider({ setToken, getFileId: () => 'x' }).pull('b.json'),
+    ).rejects.toThrow('401')
+
+    expect(setToken).toHaveBeenCalledWith(
+      expect.objectContaining({ value: expect.any(String) }),
+    )
+    expect(setToken).toHaveBeenLastCalledWith(null)
+  })
+
+  it('disconnect revoca y borra el token persistido', async () => {
+    const setToken = vi.fn()
+    const p = provider({
+      getToken: () => ({ value: 'vivo', expiresAt: Date.now() + 3_600_000 }),
+      setToken,
+    })
+
+    p.disconnect!()
+
+    expect(setToken).toHaveBeenCalledWith(null)
+  })
+
+  it('tokenFromStorage tolera JSON roto y tokens a punto de expirar', () => {
+    const ls = (globalThis as unknown as { localStorage: Storage }).localStorage
+
+    ls.setItem('k', 'no-json{')
+    expect(tokenFromStorage('k')).toBeNull()
+
+    ls.setItem('k', JSON.stringify({ value: 'caduco', expiresAt: Date.now() + 1_000 }))
+    expect(tokenFromStorage('k')).toBeNull()
+
+    ls.setItem('k', JSON.stringify({ value: 'fresco', expiresAt: Date.now() + 3_600_000 }))
+    expect(tokenFromStorage('k')).toEqual({ value: 'fresco', expiresAt: expect.any(Number) })
+  })
+
+  it('tokenToStorage borra la clave cuando se pasa null', () => {
+    const ls = (globalThis as unknown as { localStorage: Storage }).localStorage
+
+    tokenToStorage('k', { value: 'x', expiresAt: Date.now() + 3_600_000 })
+    expect(ls.getItem('k')).toContain('x')
+
+    tokenToStorage('k', null)
+    expect(ls.getItem('k')).toBeNull()
   })
 })

@@ -1,3 +1,4 @@
+import { tokenFromStorage, tokenToStorage } from '@aura/sync/drive'
 import { APP_CONFIG } from '@/config/app'
 import { loadGis } from '@/services/drive-sync.service'
 import { useSyncStore } from '@/stores/sync.store'
@@ -14,6 +15,13 @@ const SCOPE = 'https://www.googleapis.com/auth/contacts.readonly'
 const TOKEN_TIMEOUT_MS = 15_000
 const PAGE_SIZE = 1000
 const MAX_PAGES = 10
+/**
+ * El token de contactos se persiste aparte del de Drive: tiene otro scope, así
+ * que no es intercambiable con las apps (que piden `drive.appdata`). Se guarda
+ * en su propia clave para que re-importar dentro de la hora no vuelva a pedir
+ * el selector de cuenta.
+ */
+const TOKEN_KEY = 'aura:google:contacts-token'
 
 export class ContactsImportError extends Error {
   constructor(message = 'Se requiere iniciar sesión con Google para importar contactos.') {
@@ -36,7 +44,7 @@ interface PersonApiShape {
   emailAddresses?: { value?: string }[]
 }
 
-let cachedToken: { value: string; expiresAt: number } | null = null
+let cachedToken: { value: string; expiresAt: number } | null = tokenFromStorage(TOKEN_KEY)
 
 function requestToken(prompt: '' | 'consent'): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -68,6 +76,7 @@ function requestToken(prompt: '' | 'consent'): Promise<string> {
             value: response.access_token,
             expiresAt: Date.now() + (response.expires_in ?? 3600) * 1000,
           }
+          tokenToStorage(TOKEN_KEY, cachedToken)
           resolve(response.access_token)
         } else {
           reject(new ContactsImportError(response.error))
@@ -131,6 +140,7 @@ export async function fetchGoogleContacts(): Promise<GoogleContact[]> {
     )
     if (response.status === 401) {
       cachedToken = null
+      tokenToStorage(TOKEN_KEY, null)
       throw new ContactsImportError()
     }
     if (!response.ok) {

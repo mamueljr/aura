@@ -74,6 +74,12 @@ export function loadGis(): Promise<void> {
   return gisPromise
 }
 
+/** Token de acceso con su caducidad, para persistirlo entre sesiones. */
+export interface DriveToken {
+  value: string
+  expiresAt: number
+}
+
 export interface DriveProviderConfig {
   /** Client ID de OAuth de la app. */
   clientId: string
@@ -82,6 +88,40 @@ export interface DriveProviderConfig {
   /** Caché del id del archivo remoto: evita re-buscarlo en cada arranque. */
   getFileId?: () => string | null
   setFileId?: (id: string | null) => void
+  /**
+   * Token persistido entre sesiones (p. ej. en `localStorage`): las apps del
+   * ecosistema comparten origen y Client ID, así que un token de una vale para
+   * todas y entrar/cambiar de app no vuelve a pedir el selector de cuenta.
+   */
+  getToken?: () => DriveToken | null
+  setToken?: (token: DriveToken | null) => void
+}
+
+/** Margen de seguridad: nunca se usa un token a menos de 60 s de expirar. */
+const TOKEN_BLANK_MS = 60_000
+
+/** Lee un token persistido de `localStorage` (tolerante a JSON roto o ausente). */
+export function tokenFromStorage(key: string): DriveToken | null {
+  try {
+    const raw = localStorage.getItem(key)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as Partial<DriveToken>
+    if (typeof parsed?.value !== 'string' || typeof parsed?.expiresAt !== 'number') return null
+    if (parsed.expiresAt - Date.now() <= TOKEN_BLANK_MS) return null
+    return { value: parsed.value, expiresAt: parsed.expiresAt }
+  } catch {
+    return null
+  }
+}
+
+/** Persiste (o borra) el token en `localStorage`. */
+export function tokenToStorage(key: string, token: DriveToken | null): void {
+  try {
+    if (token) localStorage.setItem(key, JSON.stringify(token))
+    else localStorage.removeItem(key)
+  } catch {
+    /* almacenamiento bloqueado o lleno: el token sigue en memoria */
+  }
 }
 
 /** `SyncProvider` de Drive más el acceso al token, que la orquestación usa como pre-vuelo. */
@@ -90,7 +130,7 @@ export interface DriveProvider extends SyncProvider<Blob> {
 }
 
 export function createDriveProvider(config: DriveProviderConfig): DriveProvider {
-  let cachedToken: { value: string; expiresAt: number } | null = null
+  let cachedToken: DriveToken | null = config.getToken?.() ?? null
 
   function requestToken(prompt: '' | 'consent'): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -125,6 +165,7 @@ export function createDriveProvider(config: DriveProviderConfig): DriveProvider 
               value: response.access_token,
               expiresAt: Date.now() + (response.expires_in ?? 3600) * 1000,
             }
+            config.setToken?.(cachedToken)
             resolve(response.access_token)
           } else {
             reject(new SyncAuthError(response.error))
@@ -145,7 +186,7 @@ export function createDriveProvider(config: DriveProviderConfig): DriveProvider 
     if (!config.clientId) {
       throw new Error('Falta configurar el Client ID de Google.')
     }
-    if (cachedToken && cachedToken.expiresAt - Date.now() > 60_000) {
+    if (cachedToken && cachedToken.expiresAt - Date.now() > TOKEN_BLANK_MS) {
       return cachedToken.value
     }
     await loadGis()
@@ -167,9 +208,10 @@ export function createDriveProvider(config: DriveProviderConfig): DriveProvider 
       ...init,
       headers: { ...init.headers, Authorization: `Bearer ${token}` },
     })
-    if (response.status === 401 && !retried) {
+    if (response.status === 401) {
       cachedToken = null
-      return authFetch(input, init, true)
+      config.setToken?.(null)
+      if (!retried) return authFetch(input, init, true)
     }
     if (!response.ok) {
       throw new Error(`Error de Google Drive (${response.status}).`)
@@ -321,6 +363,7 @@ export function createDriveProvider(config: DriveProviderConfig): DriveProvider 
       const token = cachedToken?.value
       if (token) gis()?.revoke(token)
       cachedToken = null
+      config.setToken?.(null)
     },
 
     /**
