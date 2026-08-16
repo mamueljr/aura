@@ -15,6 +15,10 @@ const SCOPE = 'https://www.googleapis.com/auth/contacts.readonly'
 const TOKEN_TIMEOUT_MS = 15_000
 const PAGE_SIZE = 1000
 const MAX_PAGES = 10
+/** Margen de seguridad: nunca se usa un token a menos de 60 s de expirar. */
+const TOKEN_BLANK_MS = 60_000
+/** Ventana de renovación: a menos de 5 min de expirar se renueva en segundo plano. */
+const TOKEN_RENEW_MS = 5 * 60_000
 /**
  * El token de contactos se persiste aparte del de Drive: tiene otro scope, así
  * que no es intercambiable con las apps (que piden `drive.appdata`). Se guarda
@@ -97,8 +101,16 @@ async function getAccessToken(): Promise<string> {
   if (!APP_CONFIG.googleClientId) {
     throw new Error('Falta configurar el Client ID de Google.')
   }
-  if (cachedToken && cachedToken.expiresAt - Date.now() > 60_000) {
-    return cachedToken.value
+  const msLeft = cachedToken ? cachedToken.expiresAt - Date.now() : 0
+  if (msLeft > TOKEN_RENEW_MS) {
+    return cachedToken!.value
+  }
+  // Token vivo pero a punto de expirar: se devuelve tal cual y se renueva en
+  // segundo plano (silencioso), para que la siguiente importación no pida
+  // cuenta por simple caducidad.
+  if (msLeft > TOKEN_BLANK_MS) {
+    void refreshSilently()
+    return cachedToken!.value
   }
   await loadGis()
   try {
@@ -106,6 +118,22 @@ async function getAccessToken(): Promise<string> {
   } catch {
     return requestToken('consent')
   }
+}
+
+/** Re-canje silencioso sin UI: un fallo solo deja vigente el token actual. */
+let refreshPromise: Promise<void> | null = null
+function refreshSilently(): Promise<void> {
+  refreshPromise ??= (async () => {
+    await loadGis()
+    try {
+      await requestToken('')
+    } catch {
+      // El token vigente sigue valiendo: no se molesta al usuario.
+    } finally {
+      refreshPromise = null
+    }
+  })()
+  return refreshPromise
 }
 
 function normalize(person: PersonApiShape): GoogleContact | null {
@@ -121,42 +149,53 @@ function normalize(person: PersonApiShape): GoogleContact | null {
   }
 }
 
+/** Señal interna: el token caducó y hay que pedir uno nuevo y reintentar. */
+class ContactsTokenExpired extends Error {}
+
 /** Trae los contactos guardados en la cuenta de Google del usuario. */
 export async function fetchGoogleContacts(): Promise<GoogleContact[]> {
-  const token = await getAccessToken()
   const results: GoogleContact[] = []
   let pageToken: string | undefined
-  let page = 0
 
-  do {
-    const params = new URLSearchParams({
-      personFields: 'names,phoneNumbers,emailAddresses',
-      pageSize: String(PAGE_SIZE),
-      ...(pageToken ? { pageToken } : {}),
-    })
-    const response = await fetch(
-      `https://people.googleapis.com/v1/people/me/connections?${params}`,
-      { headers: { Authorization: `Bearer ${token}` } },
-    )
-    if (response.status === 401) {
+  // Un 401 (token caducado/revocado) se reintenta una vez con token nuevo,
+  // igual que hace el transporte de Drive; solo falla si sigue negándose.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const token = await getAccessToken()
+    let page = 0
+    try {
+      do {
+        const params = new URLSearchParams({
+          personFields: 'names,phoneNumbers,emailAddresses',
+          pageSize: String(PAGE_SIZE),
+          ...(pageToken ? { pageToken } : {}),
+        })
+        const response = await fetch(
+          `https://people.googleapis.com/v1/people/me/connections?${params}`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        )
+        if (response.status === 401) throw new ContactsTokenExpired()
+        if (!response.ok) {
+          throw new Error(`Error de Google Contactos (${response.status}).`)
+        }
+        const data = (await response.json()) as {
+          connections?: PersonApiShape[]
+          nextPageToken?: string
+        }
+        for (const person of data.connections ?? []) {
+          const contact = normalize(person)
+          if (contact) results.push(contact)
+        }
+        pageToken = data.nextPageToken
+        page++
+      } while (pageToken && page < MAX_PAGES)
+      return results.sort((a, b) => a.name.localeCompare(b.name, 'es'))
+    } catch (error) {
+      if (!(error instanceof ContactsTokenExpired) || attempt > 0) throw error
       cachedToken = null
       tokenToStorage(TOKEN_KEY, null)
-      throw new ContactsImportError()
+      results.length = 0
+      pageToken = undefined
     }
-    if (!response.ok) {
-      throw new Error(`Error de Google Contactos (${response.status}).`)
-    }
-    const data = (await response.json()) as {
-      connections?: PersonApiShape[]
-      nextPageToken?: string
-    }
-    for (const person of data.connections ?? []) {
-      const contact = normalize(person)
-      if (contact) results.push(contact)
-    }
-    pageToken = data.nextPageToken
-    page++
-  } while (pageToken && page < MAX_PAGES)
-
-  return results.sort((a, b) => a.name.localeCompare(b.name, 'es'))
+  }
+  throw new ContactsImportError()
 }

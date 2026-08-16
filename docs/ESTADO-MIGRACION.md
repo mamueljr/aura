@@ -288,14 +288,20 @@ lint en verde; smoke tests en runtime de Music y Home sin errores de consola.
   - Home: el token de **Contactos** (scope `contacts.readonly`, otro token) se persiste
     aparte en `aura:google:contacts-token` para que re-importar dentro de la hora no
     repita el prompt.
+  - **Renovación proactiva:** a menos de 5 min de expirar, el token se re-canjea en
+    segundo plano (silencioso) sin interrumpir la llamada en curso; la siguiente ya usa
+    el fresco. Así el selector no reaparece por simple caducidad.
+  - **Contactos:** un 401 (token caducado/revocado) se reintenta una vez con token nuevo,
+    igual que el transporte de Drive; ya no falla la importación con error genérico.
 - **Límite honesto:** sin backend no hay refresh token; Google emite tokens de ~1h. Con
   este cambio, entrar/cambiar de app no pide nada mientras el token siga vivo y el
-  re-canje silencioso de GIS/FedCM lo renueva sin UI casi siempre. Como mucho, el
-  selector reaparece 1 vez por hora en vez de en cada entrada.
+  re-canje silencioso de GIS/FedCM (ahora proactivo antes de caducar) lo renueva sin UI
+  casi siempre. Como mucho, el selector reaparece 1 vez por hora en vez de en cada entrada.
 - **Nota de seguridad:** el token en `localStorage` es legible por cualquier script del
   origen; aceptable para una PWA local-first con CSP fuerte, anotado como deuda.
-- **Verificación:** `pnpm build` 4/4, lint 7/7, typecheck 6/6, tests 30/30 en `@aura/sync`
-  (4 nuevos de persistencia) y el resto sin regresión. Publicado con `pnpm deploy`.
+- **Verificación:** `pnpm build` 4/4, lint 7/7, typecheck 6/6, tests 32/32 en `@aura/sync`
+  (6 nuevos de persistencia y renovación) y el resto sin regresión. Publicado con
+  `pnpm deploy`.
 
 ---
 

@@ -82,8 +82,9 @@ duplicados"** en Ajustes que corre `dedupeLibrary` a demanda — bitácora en §
 o cambio de app (el token vivía solo en memoria). Ahora `@aura/sync/drive` acepta
 `getToken`/`setToken` y las 3 apps persisten el token en `localStorage` bajo la **misma
 clave** (`aura:google:drive-token`): comparten origen + Client ID, así que un token vale
-para todas y cambiar de app no pide nada mientras siga vivo (~1h; el re-canje silencioso
-de GIS/FedCM lo renueva sin UI casi siempre). El token de Contactos de Home se persiste
+para todas y cambiar de app no pide nada mientras siga vivo (~1h). Renovación
+**proactiva** en segundo plano a <5 min de caducar (silenciosa, sin UI) y reintento
+automático en 401 para Drive y Contactos. El token de Contactos de Home se persiste
 aparte (`aura:google:contacts-token`). Límite: sin backend, Google emite tokens de 1h —
 como mucho pedirá 1 vez por hora, no en cada entrada — bitácora en §4.
 

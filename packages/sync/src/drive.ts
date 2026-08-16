@@ -8,8 +8,8 @@ import type { SyncPayload, SyncProvider } from '@aura/core/sync'
  * en el navegador (Google Identity Services) y la API REST v3. Sin backend.
  *
  * Es una fábrica, no un singleton: cada app trae su propio `clientId` y decide
- * dónde guardar el caché del id de archivo (normalmente su store persistido).
- * El token vive en memoria de cada provider, nunca se persiste.
+ * dónde guardar el caché del id de archivo (normalmente su store persistido) y
+ * del token (normalmente `localStorage`, compartido entre apps del ecosistema).
  *
  * `key` se usa tal cual como nombre del archivo remoto.
  */
@@ -99,6 +99,8 @@ export interface DriveProviderConfig {
 
 /** Margen de seguridad: nunca se usa un token a menos de 60 s de expirar. */
 const TOKEN_BLANK_MS = 60_000
+/** Ventana de renovación: a menos de 5 min de expirar se renueva en segundo plano. */
+const TOKEN_RENEW_MS = 5 * 60_000
 
 /** Lee un token persistido de `localStorage` (tolerante a JSON roto o ausente). */
 export function tokenFromStorage(key: string): DriveToken | null {
@@ -186,8 +188,16 @@ export function createDriveProvider(config: DriveProviderConfig): DriveProvider 
     if (!config.clientId) {
       throw new Error('Falta configurar el Client ID de Google.')
     }
-    if (cachedToken && cachedToken.expiresAt - Date.now() > TOKEN_BLANK_MS) {
-      return cachedToken.value
+    const msLeft = cachedToken ? cachedToken.expiresAt - Date.now() : 0
+    if (msLeft > TOKEN_RENEW_MS) {
+      return cachedToken!.value
+    }
+    // Token vivo pero a punto de expirar: se devuelve tal cual y se renueva en
+    // segundo plano (silencioso), para que la siguiente llamada ya tenga uno
+    // fresco y el selector de cuenta no reaparezca por simple caducidad.
+    if (msLeft > TOKEN_BLANK_MS) {
+      void refreshSilently()
+      return cachedToken!.value
     }
     await loadGis()
     try {
@@ -196,6 +206,22 @@ export function createDriveProvider(config: DriveProviderConfig): DriveProvider 
       if (opts?.interactive) return requestToken('consent')
       throw error instanceof SyncAuthError ? error : new SyncAuthError()
     }
+  }
+
+  /** Re-canje silencioso sin UI: un fallo solo deja vigente el token actual. */
+  let refreshPromise: Promise<void> | null = null
+  function refreshSilently(): Promise<void> {
+    refreshPromise ??= (async () => {
+      await loadGis()
+      try {
+        await requestToken('')
+      } catch {
+        // El token vigente sigue valiendo: no se molesta al usuario.
+      } finally {
+        refreshPromise = null
+      }
+    })()
+    return refreshPromise
   }
 
   async function authFetch(

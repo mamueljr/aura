@@ -335,4 +335,39 @@ describe('persistencia del token', () => {
     tokenToStorage('k', null)
     expect(ls.getItem('k')).toBeNull()
   })
+
+  it('descarta un token persistido caducado y pide uno nuevo en silencio', async () => {
+    handler = () => ok({ dato: 1 })
+
+    const result = await provider({
+      getToken: () => ({ value: 'caducado', expiresAt: Date.now() + 1_000 }),
+      getFileId: () => 'x',
+    }).pull('b.json')
+
+    expect(result).toEqual({ dato: 1 })
+    // El token caducado no viaja en la cabecera: GIS emitió uno nuevo.
+    expect(calls[0].headers?.Authorization).toBe('Bearer token-1')
+  })
+
+  it('renueva en segundo plano cuando el token está a punto de expirar', async () => {
+    const setToken = vi.fn()
+    handler = () => ok({ dato: 1 })
+
+    const p = provider({
+      getToken: () => ({ value: 'casi-expira', expiresAt: Date.now() + 2 * 60_000 }),
+      setToken,
+      getFileId: () => 'x',
+    })
+
+    await p.pull('b.json')
+    // La llamada se hace con el token vigente: GIS no se abre en el camino.
+    expect(calls[0].headers?.Authorization).toBe('Bearer casi-expira')
+
+    // Mientras tanto, en segundo plano ya se pidió uno nuevo y quedó persistido.
+    await vi.waitFor(() => {
+      expect(setToken).toHaveBeenCalledWith(
+        expect.objectContaining({ value: 'token-1' }),
+      )
+    })
+  })
 })
