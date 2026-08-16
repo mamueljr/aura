@@ -73,6 +73,11 @@ shadcn) conservando su identidad (auras, glass, radius 0.75rem), y **nav entre a
 `EcosystemNav` en `@aura/ui` dentro de Home/Music/Finance + launcher vanilla en Weather
 para saltar de app a app sin pasar por el hub — bitácora en §4.
 
+**Fase 9 (ago-2026):** **eliminar una canción de la biblioteca** en Music (menú (…)
+en Biblioteca/Artistas/Álbumes/Géneros/Favoritos/Búsqueda, con confirmación; libera
+copia OPFS y audio de Drive, el archivo en disco no se toca) y botón **"Eliminar
+duplicados"** en Ajustes que corre `dedupeLibrary` a demanda — bitácora en §4.
+
 **Siguiente (ya no es migración):** implementar **Aura Sync** (`SyncProvider` de
 `@aura/core` en el `drive-sync` de Home) — ver `docs/ESTADO-MIGRACION.md` §8.
 Pendiente del usuario: **archivar los repos originales** (`App_Clima`, `Aura-music`,

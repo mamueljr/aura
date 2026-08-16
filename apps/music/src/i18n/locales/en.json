@@ -104,7 +104,10 @@
     "sortArtist": "Artist",
     "sortAlbum": "Album",
     "sortRecent": "Recently added",
-    "sortDuration": "Duration"
+    "sortDuration": "Duration",
+    "removeTrack": "Remove from library",
+    "removeTrackTitle": "Remove song from library?",
+    "removeTrackBody": "“{{name}}” will be removed from your library and playlists. The file on your device is not touched."
   },
   "player": {
     "play": "Play",
@@ -211,6 +214,11 @@
     "onlineCoversHint": "Looks up artwork (iTunes / Cover Art Archive) for albums with no embedded cover",
     "folders": "Music folders",
     "noFolders": "No folders added",
+    "findDuplicates": "Remove duplicates",
+    "findDuplicatesHint": "Merges duplicate songs into a single entry, keeping favourites, plays and playlists.",
+    "findDuplicatesNone": "No duplicate songs found.",
+    "findDuplicatesMerged_one": "{{count}} duplicate merged with its copy.",
+    "findDuplicatesMerged_other": "{{count}} duplicates merged with their copy.",
     "removeFolder": "Remove folder",
     "removeFolderBody": "Songs from “{{name}}” will be removed from your library. Files on disk are not touched.",
     "dataSection": "Data",

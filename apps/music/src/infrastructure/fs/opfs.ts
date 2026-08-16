@@ -76,3 +76,33 @@ export async function deleteFolderFromOpfs(folderId: number): Promise<void> {
     /* nothing to delete */
   }
 }
+
+/**
+ * Borra la copia OPFS de una sola canción.
+ *
+ * Después limpia las carpetas que hayan quedado vacías subiendo por la ruta
+ * (best-effort): se detiene en cuanto una carpeta aún contiene otra cosa, así
+ * nunca se tocan archivos ajenos.
+ */
+export async function deleteTrackFromOpfs(folderId: number, path: string): Promise<void> {
+  const parts = path.split('/');
+  const dir = await getDir(folderId, parts.slice(0, -1), false);
+  if (!dir) return;
+  try {
+    await dir.removeEntry(parts[parts.length - 1]);
+  } catch {
+    /* nothing to delete */
+  }
+
+  for (let depth = parts.length - 2; depth >= 0; depth--) {
+    const parent = await getDir(folderId, parts.slice(0, depth), false);
+    if (!parent) return;
+    // removeEntry sin `recursive` lanza si el directorio no está vacío, así
+    // que falla y nos detenemos justo cuando queda algo más ahí dentro.
+    try {
+      await parent.removeEntry(parts[depth]);
+    } catch {
+      return;
+    }
+  }
+}

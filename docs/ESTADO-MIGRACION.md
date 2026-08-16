@@ -247,6 +247,29 @@ lint en verde; smoke tests en runtime de Music y Home sin errores de consola.
 - **Verificación:** `pnpm build` 4/4, lint 7/7, typecheck 6/6, tests: weather 26/26,
   home 78/78, music 57/57, finance 55/55. Publicado con `pnpm deploy`.
 
+### Fase 9 — Borrar canciones de la biblioteca y deduplicar a demanda (ago-2026)
+- **Eliminar una canción de la biblioteca** (antes solo se podía quitar de una
+  playlist, o toda una carpeta): nuevo ítem "Eliminar de la biblioteca" en el menú
+  (…) de cada canción en Biblioteca, Artista, Álbum, Género, Favoritos y Búsqueda,
+  con diálogo de confirmación (`RemoveTrackDialog` en `TrackList`). Implementación en
+  `removeTrackFromLibrary` (`services/library/actions.ts`):
+  - la saca de todas las playlists **sin tocar `updatedAt`** (es corrección local,
+    igual que `dedupeLibrary`, para no pelearse con una edición remota);
+  - libera su copia OPFS (`deleteTrackFromOpfs` en `infrastructure/fs/opfs.ts`, que
+    además limpia carpetas vacías) y, si estaba subida, su audio de Drive
+    (`removeUploadedTrack`) + `pushSnapshot()` best-effort para que el índice remoto
+    deje de referenciarlo;
+  - borra la fila, reconstruye agregados, poda portadas huérfanas y la saca del
+    reproductor (cola y canción actual). **El archivo en disco nunca se toca**.
+- **Botón "Eliminar duplicados" en Ajustes → Biblioteca**: ejecuta `dedupeLibrary` +
+  `rebuildAggregates` + `pruneOrphanCovers` a demanda y avisa cuántas filas fusionó.
+  Antes la deduplicación solo corría al terminar un escaneo o al fusionar un snapshot
+  con pistas nuevas, así que los duplicados heredados quedaban atascados hasta
+  re-escanear.
+- **Verificación:** `pnpm build` 4/4, lint 7/7, typecheck 6/6, tests: weather 26/26,
+  home 78/78, music 61/61 (4 nuevos de `removeTrackFromLibrary`), finance 55/55.
+  Publicado con `pnpm deploy`.
+
 ---
 
 ## 5. Cómo trabajar

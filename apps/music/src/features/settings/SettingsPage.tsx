@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   BadgeCheck,
+  CopyX,
   FolderOpen,
   HardDriveDownload,
   Monitor,
@@ -32,8 +33,10 @@ import { supportsFsAccess, verifyPermission } from '@/infrastructure/fs/fileSyst
 import { cn } from '@/lib/utils';
 import { fetchMissingCovers } from '@/services/artwork/onlineCovers';
 import { player } from '@/services/audio/AudioEngine';
+import { rebuildAggregates } from '@/infrastructure/db/aggregates';
+import { dedupeLibrary } from '@/services/library/dedupe';
 import { importFolderToApp } from '@/services/library/importer';
-import { reimportFallbackFolder, removeFolder, scanFolder } from '@/services/library/scanner';
+import { pruneOrphanCovers, reimportFallbackFolder, removeFolder, scanFolder } from '@/services/library/scanner';
 import { usePlayerStore } from '@/stores/playerStore';
 import { useSettingsStore, type LanguageSetting, type ThemeSetting } from '@/stores/settingsStore';
 
@@ -266,6 +269,8 @@ function LibrarySection() {
   const folders = useFolders();
   const [pendingRemove, setPendingRemove] = useState<number | null>(null);
   const [importing, setImporting] = useState<Record<number, { done: number; total: number }>>({});
+  const [dedupBusy, setDedupBusy] = useState(false);
+  const [dedupResult, setDedupResult] = useState<number | null>(null);
   const pendingFolder = (folders ?? []).find((f) => f.id === pendingRemove);
 
   const importFolder = async (folderId: number) => {
@@ -287,6 +292,18 @@ function LibrarySection() {
     }
   };
 
+  const findDuplicates = async () => {
+    setDedupBusy(true);
+    try {
+      const merged = await dedupeLibrary();
+      await rebuildAggregates();
+      await pruneOrphanCovers();
+      setDedupResult(merged);
+    } finally {
+      setDedupBusy(false);
+    }
+  };
+
   return (
     <Section title={t('settings.librarySection')}>
       <Row label={t('settings.folders')}>
@@ -300,6 +317,27 @@ function LibrarySection() {
       ) : null}
 
       <OnlineCoversRow />
+
+      <Row
+        label={t('settings.findDuplicates')}
+        hint={
+          dedupResult != null
+            ? dedupResult > 0
+              ? t('settings.findDuplicatesMerged', { count: dedupResult })
+              : t('settings.findDuplicatesNone')
+            : t('settings.findDuplicatesHint')
+        }
+      >
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={dedupBusy}
+          onClick={() => void findDuplicates()}
+        >
+          <CopyX className={cn(dedupBusy && 'animate-pulse text-aura-1')} />
+          {t('settings.findDuplicates')}
+        </Button>
+      </Row>
 
       <div className="space-y-2">
         {(folders ?? []).map((folder) => (

@@ -6,6 +6,7 @@ import { UNKNOWN_ALBUM, UNKNOWN_ARTIST } from '@/core/constants';
 import { useAlbum, useAlbumTracks } from '@/hooks/useLibrary';
 import { formatTotalDuration } from '@/lib/utils';
 import { player } from '@/services/audio/AudioEngine';
+import { removeTrackFromLibrary } from '@/services/library/actions';
 
 import { DetailHero } from './components/DetailHero';
 
@@ -40,7 +41,13 @@ export default function AlbumDetailPage() {
           void player.playTracks(ids, Math.floor(Math.random() * ids.length), { shuffle: true })
         }
       />
-      <TrackList tracks={tracks} showAlbum={false} showArtwork={false} showTrackNo />
+      <TrackList
+        tracks={tracks}
+        showAlbum={false}
+        showArtwork={false}
+        showTrackNo
+        onRemoveTrack={(track) => void removeTrackFromLibrary(track.id)}
+      />
     </div>
   );
 }

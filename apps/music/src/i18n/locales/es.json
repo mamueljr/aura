@@ -104,7 +104,10 @@
     "sortArtist": "Artista",
     "sortAlbum": "Álbum",
     "sortRecent": "Agregado recientemente",
-    "sortDuration": "Duración"
+    "sortDuration": "Duración",
+    "removeTrack": "Eliminar de la biblioteca",
+    "removeTrackTitle": "¿Eliminar canción de la biblioteca?",
+    "removeTrackBody": "“{{name}}” se quitará de tu biblioteca y de tus playlists. El archivo en tu dispositivo no se toca."
   },
   "player": {
     "play": "Reproducir",
@@ -211,6 +214,11 @@
     "onlineCoversHint": "Busca carátulas (iTunes / Cover Art Archive) para álbumes sin portada embebida",
     "folders": "Carpetas de música",
     "noFolders": "Sin carpetas agregadas",
+    "findDuplicates": "Eliminar duplicados",
+    "findDuplicatesHint": "Fusiona las canciones repetidas en una sola, conservando favoritos, escuchas y playlists.",
+    "findDuplicatesNone": "No se encontraron canciones repetidas.",
+    "findDuplicatesMerged_one": "{{count}} repetida fusionada con su copia.",
+    "findDuplicatesMerged_other": "{{count}} repetidas fusionadas con su copia.",
     "removeFolder": "Quitar carpeta",
     "removeFolderBody": "Las canciones de “{{name}}” se quitarán de tu biblioteca. Los archivos en disco no se tocan.",
     "dataSection": "Datos",

@@ -27,6 +27,7 @@ import { supportsFsAccess } from '@/infrastructure/fs/fileSystem';
 import { db } from '@/infrastructure/db/db';
 import { cn } from '@/lib/utils';
 import { player } from '@/services/audio/AudioEngine';
+import { removeTrackFromLibrary } from '@/services/library/actions';
 import { rescanAllFolders } from '@/services/library/scanner';
 import { useUiStore } from '@/stores/uiStore';
 
@@ -184,7 +185,12 @@ function PlayAllButtons() {
 function SongsView({ sort }: { sort: TrackSort }) {
   const tracks = useAllTracks(sort);
   if (!tracks) return null;
-  return <TrackList tracks={tracks} />;
+  return (
+    <TrackList
+      tracks={tracks}
+      onRemoveTrack={(track) => void removeTrackFromLibrary(track.id)}
+    />
+  );
 }
 
 function ArtistsView() {

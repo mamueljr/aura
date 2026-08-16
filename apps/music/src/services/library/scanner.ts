@@ -279,7 +279,7 @@ async function runScan(folderId: number, discovered: DiscoveredFile[]): Promise<
   }
 }
 
-async function pruneOrphanCovers(): Promise<void> {
+export async function pruneOrphanCovers(): Promise<void> {
   const usedCoverIds = new Set<string>();
   await db.tracks.each((t) => {
     if (t.coverId) usedCoverIds.add(t.coverId);

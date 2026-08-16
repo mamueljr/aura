@@ -1,11 +1,19 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Heart, ListEnd, ListPlus, ListStart, MoreHorizontal, Play, Trash2 } from 'lucide-react';
-import { memo, useRef } from 'react';
+import { memo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { Artwork } from '@/components/Artwork';
 import { Button } from '@aura/ui/components/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@aura/ui/components/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +41,9 @@ export interface TrackListProps {
   /** Extra context-menu entry, e.g. "remove from playlist" */
   onRemove?: (track: Track, index: number) => void;
   removeLabel?: string;
+  /** Removes the track from the whole library (shown with a confirmation). */
+  onRemoveTrack?: (track: Track) => void;
+  removeTrackLabel?: string;
   className?: string;
 }
 
@@ -44,9 +55,12 @@ export function TrackList({
   showTrackNo = false,
   onRemove,
   removeLabel,
+  onRemoveTrack,
+  removeTrackLabel,
   className,
 }: TrackListProps) {
   const parentRef = useRef<HTMLDivElement>(null);
+  const [pendingDelete, setPendingDelete] = useState<Track | null>(null);
 
   const virtualizer = useVirtualizer({
     count: tracks.length,
@@ -84,11 +98,22 @@ export function TrackList({
                 showTrackNo={showTrackNo}
                 onRemove={onRemove ? () => onRemove(track, row.index) : undefined}
                 removeLabel={removeLabel}
+                onRemoveTrack={onRemoveTrack ? () => setPendingDelete(track) : undefined}
+                removeTrackLabel={removeTrackLabel}
               />
             </div>
           );
         })}
       </div>
+
+      <RemoveTrackDialog
+        track={pendingDelete}
+        onOpenChange={(open) => !open && setPendingDelete(null)}
+        onConfirm={(track) => {
+          onRemoveTrack?.(track);
+          setPendingDelete(null);
+        }}
+      />
     </div>
   );
 }
@@ -102,6 +127,8 @@ interface TrackRowProps {
   showTrackNo: boolean;
   onRemove?: () => void;
   removeLabel?: string;
+  onRemoveTrack?: () => void;
+  removeTrackLabel?: string;
 }
 
 export const TrackRow = memo(function TrackRow({
@@ -112,6 +139,8 @@ export const TrackRow = memo(function TrackRow({
   showTrackNo,
   onRemove,
   removeLabel,
+  onRemoveTrack,
+  removeTrackLabel,
 }: TrackRowProps) {
   const { t } = useTranslation();
   const isCurrent = usePlayerStore((s) => s.currentTrack?.id === track.id);
@@ -176,7 +205,13 @@ export const TrackRow = memo(function TrackRow({
         {formatDuration(track.duration)}
       </span>
 
-      <TrackMenu track={track} onRemove={onRemove} removeLabel={removeLabel} />
+      <TrackMenu
+        track={track}
+        onRemove={onRemove}
+        removeLabel={removeLabel}
+        onRemoveTrack={onRemoveTrack}
+        removeTrackLabel={removeTrackLabel}
+      />
     </div>
   );
 });
@@ -185,10 +220,14 @@ export function TrackMenu({
   track,
   onRemove,
   removeLabel,
+  onRemoveTrack,
+  removeTrackLabel,
 }: {
   track: Track;
   onRemove?: () => void;
   removeLabel?: string;
+  onRemoveTrack?: () => void;
+  removeTrackLabel?: string;
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -240,7 +279,52 @@ export function TrackMenu({
             </DropdownMenuItem>
           </>
         ) : null}
+        {onRemoveTrack ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" onSelect={onRemoveTrack}>
+              <Trash2 /> {removeTrackLabel ?? t('library.removeTrack')}
+            </DropdownMenuItem>
+          </>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+/**
+ * Confirmación reutilizable para eliminar una canción de la biblioteca.
+ * `open` lo controla `track != null`; `onConfirm` recibe la pista al aceptar.
+ */
+export function RemoveTrackDialog({
+  track,
+  onOpenChange,
+  onConfirm,
+}: {
+  track: Track | null;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: (track: Track) => void;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <Dialog open={track != null} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t('library.removeTrackTitle')}</DialogTitle>
+          <DialogDescription>
+            {t('library.removeTrackBody', { name: track?.title ?? '' })}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            {t('common.cancel')}
+          </Button>
+          <Button variant="destructive" onClick={() => track && onConfirm(track)}>
+            {t('common.delete')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

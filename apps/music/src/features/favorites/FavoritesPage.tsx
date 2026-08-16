@@ -8,6 +8,7 @@ import { Button } from '@aura/ui/components/button';
 import { Play, Shuffle } from 'lucide-react';
 import { useFavoriteTracks } from '@/hooks/useLibrary';
 import { player } from '@/services/audio/AudioEngine';
+import { removeTrackFromLibrary } from '@/services/library/actions';
 
 export default function FavoritesPage() {
   const { t } = useTranslation();
@@ -51,7 +52,10 @@ export default function FavoritesPage() {
           body={t('favorites.emptyBody')}
         />
       ) : (
-        <TrackList tracks={tracks} />
+        <TrackList
+          tracks={tracks}
+          onRemoveTrack={(track) => void removeTrackFromLibrary(track.id)}
+        />
       )}
     </div>
   );

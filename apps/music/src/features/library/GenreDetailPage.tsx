@@ -5,6 +5,7 @@ import { TrackList } from '@/components/TrackList';
 import { UNKNOWN_GENRE } from '@/core/constants';
 import { useGenre, useGenreTracks } from '@/hooks/useLibrary';
 import { player } from '@/services/audio/AudioEngine';
+import { removeTrackFromLibrary } from '@/services/library/actions';
 
 import { DetailHero } from './components/DetailHero';
 
@@ -32,7 +33,10 @@ export default function GenreDetailPage() {
           void player.playTracks(ids, Math.floor(Math.random() * ids.length), { shuffle: true })
         }
       />
-      <TrackList tracks={tracks} />
+      <TrackList
+        tracks={tracks}
+        onRemoveTrack={(track) => void removeTrackFromLibrary(track.id)}
+      />
     </div>
   );
 }

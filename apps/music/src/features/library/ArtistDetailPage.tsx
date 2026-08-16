@@ -6,6 +6,7 @@ import { TrackList } from '@/components/TrackList';
 import { UNKNOWN_ARTIST } from '@/core/constants';
 import { useAlbums, useArtist, useArtistTracks } from '@/hooks/useLibrary';
 import { player } from '@/services/audio/AudioEngine';
+import { removeTrackFromLibrary } from '@/services/library/actions';
 
 import { DetailHero } from './components/DetailHero';
 
@@ -57,7 +58,10 @@ export default function ArtistDetailPage() {
         </div>
       ) : null}
 
-      <TrackList tracks={tracks} />
+      <TrackList
+        tracks={tracks}
+        onRemoveTrack={(track) => void removeTrackFromLibrary(track.id)}
+      />
     </div>
   );
 }

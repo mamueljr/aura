@@ -6,15 +6,18 @@ import { Link } from 'react-router-dom';
 
 import { EmptyState } from '@/components/EmptyState';
 import { MediaCard } from '@/components/MediaCard';
-import { TrackRow } from '@/components/TrackList';
+import { RemoveTrackDialog, TrackRow } from '@/components/TrackList';
 import { Input } from '@aura/ui/components/input';
 import { UNKNOWN_ALBUM, UNKNOWN_ARTIST, UNKNOWN_GENRE } from '@/core/constants';
 import { useAlbums, useAllTracks, useArtists, useGenres } from '@/hooks/useLibrary';
 import { player } from '@/services/audio/AudioEngine';
+import { removeTrackFromLibrary } from '@/services/library/actions';
+import type { Track } from '@/core/types';
 
 export default function SearchPage() {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
+  const [pendingDelete, setPendingDelete] = useState<Track | null>(null);
   const deferredQuery = useDeferredValue(query);
   const q = deferredQuery.trim().toLowerCase();
 
@@ -143,6 +146,7 @@ export default function SearchPage() {
                     showAlbum
                     showArtwork
                     showTrackNo={false}
+                    onRemoveTrack={() => setPendingDelete(track)}
                   />
                 ))}
               </div>
@@ -150,6 +154,15 @@ export default function SearchPage() {
           ) : null}
         </div>
       )}
+
+      <RemoveTrackDialog
+        track={pendingDelete}
+        onOpenChange={(open) => !open && setPendingDelete(null)}
+        onConfirm={(track) => {
+          void removeTrackFromLibrary(track.id);
+          setPendingDelete(null);
+        }}
+      />
     </div>
   );
 }
