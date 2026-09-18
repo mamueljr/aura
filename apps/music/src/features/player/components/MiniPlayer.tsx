@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { Heart, ListMusic } from 'lucide-react';
+import { Heart, ListMusic, SkipBack, SkipForward } from 'lucide-react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -60,7 +60,7 @@ export function MiniPlayer() {
             propagación del click; con el teclado eso no funcionaba y pulsar
             Enter sobre "cola" abría además el overlay.
           */}
-          <div className="flex items-center gap-3 px-3 py-2 md:px-4 md:py-2.5">
+          <div className="flex items-center gap-3 px-3 py-2.5 md:px-4 md:py-2.5">
             <motion.button
               type="button"
               aria-label={t('player.nowPlaying')}
@@ -147,9 +147,31 @@ export function MiniPlayer() {
               <VolumeControl />
             </div>
 
-            {/* Mobile: compact controls */}
-            <div className="flex items-center gap-1 md:hidden">
-              <PlayPauseButton size="icon" />
+            {/* Mobile: skip + big play/pause */}
+            <div className="flex items-center gap-1.5 md:hidden">
+              <Button
+                variant="ghost"
+                size="icon-xl"
+                aria-label={t('player.previous')}
+                onClick={() => {
+                  hapticTrackChange();
+                  void player.previous();
+                }}
+              >
+                <SkipBack className="size-6 fill-current" />
+              </Button>
+              <PlayPauseButton size="icon-2xl" className="[&_svg]:size-8" />
+              <Button
+                variant="ghost"
+                size="icon-xl"
+                aria-label={t('player.next')}
+                onClick={() => {
+                  hapticTrackChange();
+                  void player.next();
+                }}
+              >
+                <SkipForward className="size-6 fill-current" />
+              </Button>
             </div>
           </div>
         </motion.div>

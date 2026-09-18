@@ -20,7 +20,7 @@ const Slider = forwardRef<
     <SliderPrimitive.Track
       className={cn(
         'relative grow overflow-hidden rounded-full bg-muted-foreground/25',
-        orientation === 'horizontal' ? 'h-1.5 w-full' : 'h-full w-1.5',
+        orientation === 'horizontal' ? 'h-2 w-full' : 'h-full w-2',
       )}
     >
       <SliderPrimitive.Range
@@ -30,7 +30,7 @@ const Slider = forwardRef<
         )}
       />
     </SliderPrimitive.Track>
-    <SliderPrimitive.Thumb className="block size-3.5 rounded-full bg-foreground shadow-md ring-aura-1/40 transition-transform focus-visible:outline-none focus-visible:ring-4 group-hover:scale-110" />
+    <SliderPrimitive.Thumb className="block size-5 rounded-full bg-foreground shadow-md ring-aura-1/40 transition-transform focus-visible:outline-none focus-visible:ring-4 group-hover:scale-110" />
   </SliderPrimitive.Root>
 ));
 Slider.displayName = 'Slider';

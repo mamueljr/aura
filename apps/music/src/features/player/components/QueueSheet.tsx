@@ -91,11 +91,11 @@ export function QueueSheet() {
               <h2 className="text-base font-semibold">{t('player.queue')}</h2>
               <Button
                 variant="ghost"
-                size="icon-sm"
+                size="icon-xl"
                 aria-label={t('common.close')}
                 onClick={() => setOpen(false)}
               >
-                <X />
+                <X className="size-5" />
               </Button>
             </div>
 
@@ -190,12 +190,12 @@ function QueueRow({
       {!isCurrent ? (
         <Button
           variant="ghost"
-          size="icon-sm"
+          size="icon-xl"
           aria-label={t('player.removeFromQueue')}
           className="focus-visible:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
           onClick={() => player.removeFromQueue(index)}
         >
-          <X />
+          <X className="size-5" />
         </Button>
       ) : null}
     </div>

@@ -194,7 +194,7 @@ export function NowPlayingOverlay() {
               </div>
               <Button
                 variant="ghost"
-                size="icon"
+                size="icon-xl"
                 aria-label={
                   track.favorite ? t('player.removeFromFavorites') : t('player.addToFavorites')
                 }
@@ -202,7 +202,7 @@ export function NowPlayingOverlay() {
                 onClick={() => void toggleFavorite(track.id)}
                 className={cn(track.favorite && 'text-aura-3')}
               >
-                <Heart className={cn(track.favorite && 'fill-current')} />
+                <Heart className={cn('size-5', track.favorite && 'fill-current')} />
               </Button>
             </div>
 
@@ -213,11 +213,11 @@ export function NowPlayingOverlay() {
             </div>
 
             {/* Secondary controls */}
-            <div className="mt-3 flex items-center justify-center gap-1">
+            <div className="mt-3 flex items-center justify-center gap-1.5">
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button variant="ghost" size="icon-sm" aria-label={t('player.equalizer')}>
-                    <SlidersHorizontal />
+                  <Button variant="ghost" size="icon-xl" aria-label={t('player.equalizer')}>
+                    <SlidersHorizontal className="size-5" />
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-lg">
@@ -232,7 +232,7 @@ export function NowPlayingOverlay() {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="icon-xl"
                     aria-label={t('player.playbackSpeed')}
                     className={cn('tabular-nums', playbackRate !== 1 && 'text-aura-1')}
                   >
@@ -257,11 +257,11 @@ export function NowPlayingOverlay() {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    size="icon-sm"
+                    size="icon-xl"
                     aria-label={t('player.sleepTimer')}
                     className={cn(sleepTimerEndsAt != null && 'text-aura-1')}
                   >
-                    <Moon />
+                    <Moon className="size-5" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="center">
@@ -282,13 +282,13 @@ export function NowPlayingOverlay() {
 
               <Button
                 variant="ghost"
-                size="icon-sm"
+                size="icon-xl"
                 aria-label={t('player.lyrics')}
                 aria-pressed={showLyrics}
                 onClick={() => setShowLyrics((v) => !v)}
                 className={cn(showLyrics && 'bg-accent text-aura-1')}
               >
-                <MicVocal />
+                <MicVocal className="size-5" />
               </Button>
             </div>
           </div>

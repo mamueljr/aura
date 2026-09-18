@@ -16,14 +16,14 @@ export function VolumeControl() {
   const Icon = effective === 0 ? VolumeX : effective < 0.5 ? Volume1 : Volume2;
 
   return (
-    <div className="flex w-36 items-center gap-1.5">
+    <div className="flex w-40 items-center gap-1.5">
       <Button
         variant="ghost"
-        size="icon-sm"
+        size="icon-xl"
         aria-label={muted ? t('player.unmute') : t('player.mute')}
         onClick={() => setMuted(!muted)}
       >
-        <Icon />
+        <Icon className="size-5" />
       </Button>
       <Slider
         aria-label={t('player.volume')}
