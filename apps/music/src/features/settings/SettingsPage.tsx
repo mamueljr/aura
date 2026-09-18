@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import {
   BadgeCheck,
   CopyX,
+  FileX2,
   FolderOpen,
   HardDriveDownload,
   Monitor,
@@ -36,6 +37,7 @@ import { player } from '@/services/audio/AudioEngine';
 import { rebuildAggregates } from '@/infrastructure/db/aggregates';
 import { dedupeLibrary } from '@/services/library/dedupe';
 import { importFolderToApp } from '@/services/library/importer';
+import { removeFolderCopy } from '@/services/library/actions';
 import { pruneOrphanCovers, reimportFallbackFolder, removeFolder, scanFolder } from '@/services/library/scanner';
 import { usePlayerStore } from '@/stores/playerStore';
 import { useSettingsStore, type LanguageSetting, type ThemeSetting } from '@/stores/settingsStore';
@@ -358,9 +360,20 @@ function LibrarySection() {
               </p>
             </div>
             {folder.mode === 'cloud' ? null : folder.imported ? (
-              <span className="flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[11px] font-medium text-aura-1">
-                <BadgeCheck className="size-3.5" /> {t('library.importedBadge')}
-              </span>
+              <>
+                <span className="flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[11px] font-medium text-aura-1">
+                  <BadgeCheck className="size-3.5" /> {t('library.importedBadge')}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={t('library.removeCopy')}
+                  title={t('library.removeCopyHint')}
+                  onClick={() => void removeFolderCopy(folder.id!)}
+                >
+                  <FileX2 className="text-muted-foreground" />
+                </Button>
+              </>
             ) : (
               <Button
                 variant="ghost"

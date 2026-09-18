@@ -1,6 +1,6 @@
 import { rebuildAggregates } from '@/infrastructure/db/aggregates';
 import { db } from '@/infrastructure/db/db';
-import { deleteTrackFromOpfs } from '@/infrastructure/fs/opfs';
+import { deleteFolderFromOpfs, deleteTrackFromOpfs } from '@/infrastructure/fs/opfs';
 import { player } from '@/services/audio/AudioEngine';
 import { pruneOrphanCovers } from '@/services/library/scanner';
 import { removeUploadedTrack } from '@/services/sync/library';
@@ -84,4 +84,27 @@ export async function removeTrackFromLibrary(trackId: string): Promise<void> {
 
   await rebuildAggregates();
   await pruneOrphanCovers();
+}
+
+/**
+ * Libera el espacio de la copia interna (OPFS) de una carpeta sin quitarla de
+ * la biblioteca. Las pistas siguen listadas y se reproducen desde la carpeta
+ * original (pidiendo permiso de nuevo) o, si es una carpeta `cloud`, se
+ * vuelven a descargar bajo demanda.
+ *
+ * No toca los archivos de música en disco ni el audio subido a Drive.
+ */
+export async function removeFolderCopy(folderId: number): Promise<void> {
+  const folder = await db.folders.get(folderId);
+  if (!folder) return;
+
+  await deleteFolderFromOpfs(folderId);
+
+  await db.transaction('rw', [db.tracks, db.folders], async () => {
+    const tracks = await db.tracks.where('folderId').equals(folderId).toArray();
+    for (const track of tracks) {
+      if (track.opfs) await db.tracks.update(track.id, { opfs: 0 });
+    }
+    await db.folders.update(folderId, { imported: false });
+  });
 }

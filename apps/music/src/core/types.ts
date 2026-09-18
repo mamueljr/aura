@@ -40,6 +40,11 @@ export interface Track {
   /** 1 when a copy lives in the app's private storage (OPFS) */
   opfs?: 0 | 1;
   /**
+   * Ganancia lineal por pista calculada en el primer play (ReplayGain-style).
+   * `1` = sin cambio. Se cachea para no volver a decodificar el archivo.
+   */
+  replayGain?: number;
+  /**
    * Id of the audio file in Google Drive (appDataFolder), once uploaded.
    * Lets another device fetch the audio without having the original folder.
    * The bytes never travel inside the sync snapshot — only this reference.
@@ -88,6 +93,14 @@ export interface CoverArt {
   driveFileId?: string;
 }
 
+export type SmartPlaylistKind = 'recentlyAdded' | 'mostPlayed' | 'neverPlayed';
+
+export interface SmartPlaylistRule {
+  kind: SmartPlaylistKind;
+  /** Máximo de canciones; por defecto 50. */
+  limit?: number;
+}
+
 export interface Playlist {
   id: string;
   name: string;
@@ -95,6 +108,11 @@ export interface Playlist {
   trackIds: string[];
   createdAt: number;
   updatedAt: number;
+  /**
+   * Playlist inteligente: `trackIds` se deriva en lectura, no se persiste.
+   * En sincronización viaja la definición (`smart`), no las pistas.
+   */
+  smart?: SmartPlaylistRule;
   /**
    * Tombstone: cuándo se borró. La fila se conserva para que el borrado viaje
    * a los demás dispositivos; sin esto la playlist reaparecería en la siguiente

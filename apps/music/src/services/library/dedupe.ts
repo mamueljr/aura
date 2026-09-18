@@ -12,7 +12,7 @@ import { hash53 } from '@/lib/utils';
  * aquí se deriva del contenido: título, artista, álbum y duración.
  */
 
-const normalize = (value: string): string =>
+export const normalize = (value: string): string =>
   value
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '') // quita los acentos: "Canción" == "Cancion"

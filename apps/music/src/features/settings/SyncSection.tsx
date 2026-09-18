@@ -6,6 +6,13 @@ import { Button } from '@aura/ui/components/button';
 import { Input } from '@aura/ui/components/input';
 import { Switch } from '@aura/ui/components/switch';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@aura/ui/components/select';
+import {
   connect,
   disableEncryption,
   disconnect,
@@ -24,6 +31,7 @@ import {
   type UploadProgress,
 } from '@/services/sync/library';
 import { useSyncStore } from '@/stores/syncStore';
+import { useSettingsStore, type UploadConcurrency } from '@/stores/settingsStore';
 
 /** Frase mínima: por debajo, PBKDF2 no compensa lo débil que es. */
 const MIN_PASSPHRASE = 8;
@@ -53,6 +61,8 @@ function formatBytes(bytes: number): string {
  */
 function CloudLibraryRow() {
   const { t } = useTranslation();
+  const uploadConcurrency = useSettingsStore((s) => s.uploadConcurrency);
+  const setUploadConcurrency = useSettingsStore((s) => s.setUploadConcurrency);
   const [stats, setStats] = useState<LibraryUploadStats | null>(null);
   const [freeBytes, setFreeBytes] = useState<number | null>(null);
   const [progress, setProgress] = useState<UploadProgress | null>(null);
@@ -144,6 +154,25 @@ function CloudLibraryRow() {
               })
             : t('settings.cloudFree', { size: formatBytes(freeBytes) })}
         </p>
+      ) : null}
+
+      {!uploading && stats && stats.pending > 0 ? (
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-xs text-muted-foreground">{t('settings.cloudSpeed')}</span>
+          <Select
+            value={uploadConcurrency}
+            onValueChange={(value) => setUploadConcurrency(value as UploadConcurrency)}
+          >
+            <SelectTrigger size="sm" aria-label={t('settings.cloudSpeed')} className="w-auto">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="end">
+              <SelectItem value="low">{t('settings.cloudSpeedLow')}</SelectItem>
+              <SelectItem value="medium">{t('settings.cloudSpeedMedium')}</SelectItem>
+              <SelectItem value="high">{t('settings.cloudSpeedHigh')}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       ) : null}
 
       {progress ? (

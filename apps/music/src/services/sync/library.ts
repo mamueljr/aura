@@ -2,6 +2,7 @@ import type { Track } from '@/core/types';
 import { db } from '@/infrastructure/db/db';
 import { getTrackFile, setCloudResolver } from '@/infrastructure/fs/fileSystem';
 import { saveTrackToOpfs } from '@/infrastructure/fs/opfs';
+import { useSettingsStore, type UploadConcurrency } from '@/stores/settingsStore';
 
 import { decryptBlobIfNeeded, encryptBlob, loadKey } from './crypto';
 import { provider } from './provider';
@@ -98,8 +99,10 @@ export async function uploadLibrary(
   // En paralelo (moderado): con muchos archivos pequeños manda la latencia de
   // cada petición, no el ancho de banda, así que subir de una en una tarda
   // muchísimo más. Se mantiene bajo para no saturar la red del móvil ni topar
-  // con los límites de Drive.
-  const CONCURRENCY = 3;
+  // con los límites de Drive. El usuario puede ajustarlo desde Ajustes.
+  const UPLOAD_CONCURRENCY: Record<UploadConcurrency, number> = { low: 1, medium: 3, high: 6 };
+  const CONCURRENCY =
+    UPLOAD_CONCURRENCY[useSettingsStore.getState().uploadConcurrency] ?? 3;
   const queue = [...pending];
   let done = 0;
 

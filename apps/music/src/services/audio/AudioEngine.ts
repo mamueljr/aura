@@ -6,6 +6,8 @@ import { clamp, shuffleArray } from '@/lib/utils';
 import { usePlayerStore } from '@/stores/playerStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 
+import { MAX_ANALYSIS_BYTES, gainForBuffer } from './loudness';
+
 interface Deck {
   audio: HTMLAudioElement;
   source: MediaElementAudioSourceNode | null;
@@ -53,6 +55,7 @@ class AudioEngine {
       ) {
         this.applyVolume();
         this.applyNormalization();
+        this.applyCurrentGain();
       }
       if (state.playbackRate !== prev.playbackRate) this.applyPlaybackRate();
       if (
@@ -168,6 +171,47 @@ class AudioEngine {
     this.decks.forEach((d) => (d.audio.playbackRate = playbackRate));
   }
 
+  /** Ganancia lineal que corresponde a una pista con la normalización activa. */
+  private trackGainFor(track: Track | null): number {
+    const { normalization } = useSettingsStore.getState();
+    if (!normalization || !track?.replayGain) return 1;
+    return track.replayGain;
+  }
+
+  private applyDeckGain(deck: Deck, gain: number) {
+    if (!deck.gain || !this.ctx) return;
+    deck.gain.gain.setTargetAtTime(gain, this.ctx.currentTime, 0.03);
+  }
+
+  /** Aplica la ganancia de la pista en curso al deck activo. */
+  private applyCurrentGain() {
+    const { currentTrack } = usePlayerStore.getState();
+    this.applyDeckGain(this.deck(), this.trackGainFor(currentTrack));
+  }
+
+  /**
+   * Mide la sonoridad de una pista la primera vez que se reproduce y guarda la
+   * ganancia. Corre en segundo plano: la canción suena ya con volumen neutro y
+   * la ganancia entra en cuanto termina el análisis (y en las siguientes veces
+   * ya está cacheada).
+   */
+  private async analyzeReplayGain(track: Track) {
+    if (track.replayGain != null) return;
+    if (!this.ctx || !(track.size > 0) || track.size > MAX_ANALYSIS_BYTES) return;
+
+    try {
+      const file = await getTrackFile(track);
+      const buffer = await this.ctx.decodeAudioData(await file.arrayBuffer());
+      const gain = gainForBuffer(buffer);
+      await db.tracks.update(track.id, { replayGain: gain });
+
+      // Si sigue sonando esta pista, aplica la ganancia recién calculada.
+      if (usePlayerStore.getState().currentTrack?.id === track.id) this.applyCurrentGain();
+    } catch {
+      // Archivo corrupto o decode no soportado: se queda sin ganancia por pista.
+    }
+  }
+
   // ── Queue management ────────────────────────────────────────
 
   /** Replaces the queue and starts playing at `startIndex`. */
@@ -270,7 +314,7 @@ class AudioEngine {
 
     await this.setDeckSource(deck, track);
     deck.audio.playbackRate = useSettingsStore.getState().playbackRate;
-    if (deck.gain && this.ctx) deck.gain.gain.setValueAtTime(1, this.ctx.currentTime);
+    this.applyDeckGain(deck, this.trackGainFor(track));
 
     if (options?.position) deck.audio.currentTime = options.position;
 
@@ -284,6 +328,9 @@ class AudioEngine {
     // Folder scans no longer read duration up-front (too slow on mobile), so
     // backfill it the first time a track plays, straight from the audio element.
     if (!track.duration) this.backfillDuration(deck, track.id);
+
+    // ReplayGain por pista: se mide en segundo plano y se aplica al terminar.
+    void this.analyzeReplayGain(track);
 
     if (options?.paused) {
       usePlayerStore.setState({ isPlaying: false });
@@ -477,8 +524,9 @@ class AudioEngine {
       inDeck.audio.playbackRate = useSettingsStore.getState().playbackRate;
 
       const t = this.ctx.currentTime;
+      const targetGain = Math.max(this.trackGainFor(nextTrack), 0.0001);
       inDeck.gain?.gain.setValueAtTime(0.0001, t);
-      inDeck.gain?.gain.exponentialRampToValueAtTime(1, t + fade);
+      inDeck.gain?.gain.exponentialRampToValueAtTime(targetGain, t + fade);
       outDeck.gain?.gain.setValueAtTime(Math.max(outDeck.gain.gain.value, 0.0001), t);
       outDeck.gain?.gain.exponentialRampToValueAtTime(0.0001, t + fade);
 
@@ -494,6 +542,7 @@ class AudioEngine {
         loadCount: s.loadCount + 1,
       }));
       void this.registerPlay(nextTrack);
+      void this.analyzeReplayGain(nextTrack);
 
       window.setTimeout(
         () => {

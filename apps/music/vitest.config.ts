@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 export default defineConfig({
   resolve: {
@@ -16,5 +16,8 @@ export default defineConfig({
     environment: 'node',
     // IndexedDB en memoria para poder probar Dexie fuera del navegador.
     setupFiles: ['fake-indexeddb/auto'],
+    // El smoke E2E (Playwright) vive en `e2e/` y usa su propia API: no debe
+    // caer en el runner de vitest.
+    exclude: [...configDefaults.exclude, 'e2e/**', 'playwright.config.ts'],
   },
 });

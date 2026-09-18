@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 
 import type { Track } from '@/core/types';
 import { db } from '@/infrastructure/db/db';
+import { resolveSmartTrackIds } from '@/services/playlists/playlists';
 
 export type TrackSort = 'title' | 'artist' | 'album' | 'recent' | 'duration';
 
@@ -127,7 +128,10 @@ export function usePlaylistTracks(id: string | undefined) {
     if (!id) return undefined;
     const playlist = await db.playlists.get(id);
     if (!playlist || playlist.deletedAt) return [];
-    const tracks = await db.tracks.bulkGet(playlist.trackIds);
+    const trackIds = playlist.smart
+      ? await resolveSmartTrackIds(playlist.smart)
+      : playlist.trackIds;
+    const tracks = await db.tracks.bulkGet(trackIds);
     return tracks.filter((t): t is Track => !!t);
   }, [id]);
 }

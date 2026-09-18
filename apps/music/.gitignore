@@ -8,3 +8,5 @@ dev-dist
 .DS_Store
 coverage
 *.log
+test-results
+playwright-report

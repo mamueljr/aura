@@ -1,17 +1,23 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Heart, ListMusic } from 'lucide-react';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Artwork } from '@/components/Artwork';
 import { Button } from '@aura/ui/components/button';
 import { cn } from '@/lib/utils';
+import { hapticTap, hapticTrackChange } from '@/lib/haptics';
 import { toggleFavorite } from '@/services/library/actions';
+import { player } from '@/services/audio/AudioEngine';
 import { usePlayerStore } from '@/stores/playerStore';
 import { useUiStore } from '@/stores/uiStore';
 
 import { PlayPauseButton, TransportControls } from './PlayerControls';
 import { SeekBar } from './SeekBar';
 import { VolumeControl } from './VolumeControl';
+
+/** Umbral de arrastre horizontal para saltar de pista (px). */
+const SWIPE_THRESHOLD = 64;
 
 export function MiniPlayer() {
   const { t } = useTranslation();
@@ -21,6 +27,7 @@ export function MiniPlayer() {
   const setNowPlayingOpen = useUiStore((s) => s.setNowPlayingOpen);
   const setQueueOpen = useUiStore((s) => s.setQueueOpen);
   const queueOpen = useUiStore((s) => s.queueOpen);
+  const dragged = useRef(false);
 
   return (
     <AnimatePresence>
@@ -54,11 +61,35 @@ export function MiniPlayer() {
             Enter sobre "cola" abría además el overlay.
           */}
           <div className="flex items-center gap-3 px-3 py-2 md:px-4 md:py-2.5">
-            <button
+            <motion.button
               type="button"
               aria-label={t('player.nowPlaying')}
-              onClick={() => setNowPlayingOpen(true)}
-              className="flex min-w-0 flex-1 items-center gap-3 text-left md:flex-none"
+              onClick={() => {
+                if (dragged.current) {
+                  dragged.current = false;
+                  return;
+                }
+                setNowPlayingOpen(true);
+              }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.3}
+              dragSnapToOrigin
+              onDragStart={() => {
+                dragged.current = false;
+              }}
+              onDragEnd={(_, info) => {
+                if (info.offset.x <= -SWIPE_THRESHOLD) {
+                  dragged.current = true;
+                  hapticTrackChange();
+                  void player.next();
+                } else if (info.offset.x >= SWIPE_THRESHOLD) {
+                  dragged.current = true;
+                  hapticTrackChange();
+                  void player.previous();
+                }
+              }}
+              className="flex min-w-0 flex-1 cursor-grab items-center gap-3 text-left active:cursor-grabbing md:flex-none md:cursor-pointer"
             >
               <motion.div layoutId="now-playing-art" className="shrink-0">
                 <Artwork
@@ -74,7 +105,7 @@ export function MiniPlayer() {
                   {track.artist || t('common.unknownArtist')}
                 </p>
               </div>
-            </button>
+            </motion.button>
 
             <button
               type="button"
@@ -82,7 +113,10 @@ export function MiniPlayer() {
                 track.favorite ? t('player.removeFromFavorites') : t('player.addToFavorites')
               }
               aria-pressed={!!track.favorite}
-              onClick={() => void toggleFavorite(track.id)}
+              onClick={() => {
+                hapticTap();
+                void toggleFavorite(track.id);
+              }}
               className={cn(
                 'hidden rounded-full p-2 text-muted-foreground transition-colors hover:text-foreground sm:block',
                 track.favorite && 'text-aura-3',

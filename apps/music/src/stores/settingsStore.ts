@@ -6,6 +6,8 @@ import { EQ_PRESETS } from '@/core/constants';
 export type ThemeSetting = 'system' | 'light' | 'dark';
 export type LanguageSetting = 'system' | 'en' | 'es';
 export type VisualizerMode = 'off' | 'bars' | 'circular';
+/** Velocidad de subida de la biblioteca a Drive. */
+export type UploadConcurrency = 'low' | 'medium' | 'high';
 
 interface SettingsState {
   theme: ThemeSetting;
@@ -25,6 +27,9 @@ interface SettingsState {
   /** Fetch cover art from the internet for albums with no embedded art */
   onlineCovers: boolean;
 
+  /** Cuántos archivos se suben a Drive en paralelo. */
+  uploadConcurrency: UploadConcurrency;
+
   setTheme: (theme: ThemeSetting) => void;
   setLanguage: (language: LanguageSetting) => void;
   setVolume: (volume: number) => void;
@@ -37,6 +42,7 @@ interface SettingsState {
   setEqGain: (band: number, gain: number) => void;
   setVisualizer: (mode: VisualizerMode) => void;
   setOnlineCovers: (enabled: boolean) => void;
+  setUploadConcurrency: (concurrency: UploadConcurrency) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -57,6 +63,8 @@ export const useSettingsStore = create<SettingsState>()(
 
       visualizer: 'bars',
       onlineCovers: true,
+
+      uploadConcurrency: 'medium',
 
       setTheme: (theme) => set({ theme }),
       setLanguage: (language) => set({ language }),
@@ -79,6 +87,7 @@ export const useSettingsStore = create<SettingsState>()(
         }),
       setVisualizer: (visualizer) => set({ visualizer }),
       setOnlineCovers: (onlineCovers) => set({ onlineCovers }),
+      setUploadConcurrency: (uploadConcurrency) => set({ uploadConcurrency }),
     }),
     { name: 'aura.settings' },
   ),

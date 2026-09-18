@@ -75,6 +75,9 @@ export default function PlaylistDetailPage() {
 
   if (!playlist || !tracks) return null;
 
+  const isSmart = !!playlist.smart;
+  const displayName = isSmart ? t(`playlists.smart_${playlist.smart!.kind}`) : playlist.name;
+
   const ids = tracks.map((tr) => tr.id);
   const totalDuration = tracks.reduce((acc, tr) => acc + tr.duration, 0);
 
@@ -89,9 +92,9 @@ export default function PlaylistDetailPage() {
   return (
     <div className="flex h-full flex-col">
       <DetailHero
-        kind={t('playlists.title')}
-        title={playlist.name}
-        subtitle={playlist.description}
+        kind={isSmart ? t('playlists.smartBadge') : t('playlists.title')}
+        title={displayName}
+        subtitle={isSmart ? undefined : playlist.description}
         meta={`${t('common.songs', { count: tracks.length })} · ${formatTotalDuration(
           totalDuration,
           t('common.hours'),
@@ -117,15 +120,17 @@ export default function PlaylistDetailPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
-              <DropdownMenuItem
-                onSelect={() => {
-                  setName(playlist.name);
-                  setDescription(playlist.description ?? '');
-                  setRenameOpen(true);
-                }}
-              >
-                <Pencil /> {t('common.rename')}
-              </DropdownMenuItem>
+              {!isSmart ? (
+                <DropdownMenuItem
+                  onSelect={() => {
+                    setName(playlist.name);
+                    setDescription(playlist.description ?? '');
+                    setRenameOpen(true);
+                  }}
+                >
+                  <Pencil /> {t('common.rename')}
+                </DropdownMenuItem>
+              ) : null}
               <DropdownMenuItem
                 onSelect={() =>
                   void duplicatePlaylist(playlist.id, t('playlists.copySuffix')).then(
@@ -154,11 +159,13 @@ export default function PlaylistDetailPage() {
       {tracks.length === 0 ? (
         <EmptyState
           icon={<Copy />}
-          title={t('playlists.emptyPlaylist')}
+          title={isSmart ? t('playlists.smartEmpty') : t('playlists.emptyPlaylist')}
           action={
-            <Button variant="secondary" onClick={() => navigate('/library')}>
-              {t('playlists.addSongs')}
-            </Button>
+            isSmart ? undefined : (
+              <Button variant="secondary" onClick={() => navigate('/library')}>
+                {t('playlists.addSongs')}
+              </Button>
+            )
           }
         />
       ) : (
@@ -178,6 +185,7 @@ export default function PlaylistDetailPage() {
                   key={`${i}:${track.id}`}
                   sortId={`${i}:${track.id}`}
                   track={track}
+                  isSmart={isSmart}
                   onPlay={() => void player.playTracks(ids, i)}
                   onRemove={() => id && void removeTrackAt(id, i)}
                 />
@@ -225,7 +233,7 @@ export default function PlaylistDetailPage() {
           <DialogHeader>
             <DialogTitle>{t('playlists.deleteTitle')}</DialogTitle>
             <DialogDescription>
-              {t('playlists.deleteBody', { name: playlist.name })}
+              {t('playlists.deleteBody', { name: displayName })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -250,17 +258,20 @@ export default function PlaylistDetailPage() {
 function PlaylistRow({
   sortId,
   track,
+  isSmart,
   onPlay,
   onRemove,
 }: {
   sortId: string;
   track: Track;
+  isSmart?: boolean;
   onPlay: () => void;
   onRemove: () => void;
 }) {
   const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: sortId,
+    disabled: isSmart,
   });
 
   return (
@@ -272,15 +283,17 @@ function PlaylistRow({
         isDragging && 'z-10 bg-accent opacity-90 shadow-lg',
       )}
     >
-      <button
-        type="button"
-        aria-label={t('common.reorder')}
-        className="cursor-grab touch-none p-1 text-muted-foreground/50 active:cursor-grabbing"
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical className="size-4" />
-      </button>
+      {!isSmart ? (
+        <button
+          type="button"
+          aria-label={t('common.reorder')}
+          className="cursor-grab touch-none p-1 text-muted-foreground/50 active:cursor-grabbing"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="size-4" />
+        </button>
+      ) : null}
 
       <button
         type="button"
@@ -299,11 +312,13 @@ function PlaylistRow({
         </span>
       </button>
 
-      <TrackMenu
-        track={track}
-        onRemove={onRemove}
-        removeLabel={t('playlists.removeFromPlaylist')}
-      />
+      {!isSmart ? (
+        <TrackMenu
+          track={track}
+          onRemove={onRemove}
+          removeLabel={t('playlists.removeFromPlaylist')}
+        />
+      ) : null}
     </div>
   );
 }

@@ -471,6 +471,13 @@ aún de relojes de otro dispositivo.
 > de las pistas y sus `driveFileId`. El audio sigue en Drive pero queda
 > huérfano: hay que volver a subir. Conviene tenerlo en cuenta antes de sugerir
 > "reinstala la app" como diagnóstico.
+>
+> *Nota (revisado):* en la práctica, al reinstalar y **volver a conectar Aura
+> Sync**, el snapshot (`aura-music-backup.json`) restaura las fichas de las
+> pistas **con su `driveFileId`**, así que no hace falta re-subir el audio. El
+> caso que sí queda huérfano es el audio subido cuyo snapshot no llegó a
+> publicarse (fallo a mitad); para ese está la limpieza de huérfanos de
+> Ajustes → Sync.
 
 ---
 

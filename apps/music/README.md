@@ -7,14 +7,15 @@
 
 _Tu música. Tu dispositivo. Tu aura._
 
-[![Deploy to GitHub Pages](https://github.com/mamueljr/Aura-music/actions/workflows/deploy.yml/badge.svg)](https://github.com/mamueljr/Aura-music/actions/workflows/deploy.yml)
-![React](https://img.shields.io/badge/React-18-61dafb?logo=react&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-6-646cff?logo=vite&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-8-646cff?logo=vite&logoColor=white)
 ![PWA](https://img.shields.io/badge/PWA-installable-5a0fc8)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-[**Live demo**](https://mamueljr.github.io/Aura-music/) · [Architecture](docs/ARCHITECTURE.md) · [Roadmap](docs/ROADMAP.md) · [Project plan](docs/PROJECT_PLAN.md)
+[**Live demo**](https://mamueljr.github.io/aura/music/) · [Architecture](docs/ARCHITECTURE.md) · [Roadmap](docs/ROADMAP.md) · [Project plan](docs/PROJECT_PLAN.md)
+
+> Parte del **monorepo Aura** (`pnpm workspaces` + Turborepo). Ver [`AGENTS.md`](../../AGENTS.md) en la raíz para comandos y convenciones.
 
 </div>
 
@@ -37,11 +38,12 @@ Aura Music indexes the music folders on **your** device, stores the library in I
 
 - ▶️ Play / pause / stop / seek / ±10 s, queue with drag-and-drop reordering
 - 🔀 Shuffle · 🔁 repeat (off / all / one) · ⏭ gapless-ish **crossfade** (dual-deck Web Audio graph)
-- 🎚️ **10-band equalizer** with presets · 📈 volume normalization (dynamics compressor)
+- 🎚️ **10-band equalizer** with presets · 📈 volume normalization (dynamics compressor + per-track ReplayGain)
 - 🚀 Playback speed (0.5×–2×) · 🌙 sleep timer (minutes or end-of-track)
 - 📊 Two live visualizers (spectrum bars & circular "aura") fed by an `AnalyserNode`
 - 🎤 **Synced lyrics** (LRCLIB): full-screen karaoke view, active line highlight, tap a line to seek
 - 🔒 **Media Session API**: lock-screen / headset / media-key controls
+- 📱 Swipe the mini-player to skip tracks, with haptic feedback
 - 💾 Queue and position survive restarts
 
 **App**
@@ -49,7 +51,9 @@ Aura Music indexes the music folders on **your** device, stores the library in I
 - 🖥️ Screens: Home, Library (Songs / Artists / Albums / Genres), details, Favorites, Playlists, Search, Stats, Now Playing, Settings, About
 - 📈 **Listening stats**: total plays and time, top songs / artists / albums / genres
 - 🔍 Instant search across songs, artists, albums and genres
-- 📋 Playlists: create, rename, reorder (drag & drop), duplicate, export **M3U / JSON**
+- 📋 Playlists: create, rename, reorder (drag & drop), duplicate, import / export **M3U / JSON**
+- ✨ **Smart playlists**: recently added, most played, never played
+- ☁️ **Aura Sync** (opt-in): respalda playlists, favoritos, historial y ajustes a Google Drive, y sube la biblioteca de audio (descarga bajo demanda) con cifrado de extremo a extremo opcional
 - 🌗 Light & dark themes, subtle glassmorphism, Framer Motion transitions
 - 🌍 Bilingual UI (English / Español) switchable at runtime
 - ⌨️ Full keyboard shortcuts · ARIA labels throughout
@@ -59,34 +63,36 @@ Aura Music indexes the music folders on **your** device, stores the library in I
 
 | Layer     | Choice                                                       |
 | --------- | ------------------------------------------------------------ |
-| UI        | React 18 · TypeScript (strict) · TailwindCSS v4 · shadcn-style components (Radix) · Framer Motion |
+| UI        | React 19 · TypeScript (strict) · TailwindCSS v4 · shadcn-style components (Radix) · Framer Motion |
 | State     | Zustand (player / settings / UI) · Dexie `liveQuery` (library data) · TanStack Query (external APIs) |
 | Data      | IndexedDB via Dexie (tracks, covers, playlists, folders, playback state) |
 | Audio     | Web Audio API (dual-deck graph → EQ → compressor → analyser) · Media Session API |
 | Metadata  | `music-metadata` running in a Web Worker pool                 |
+| Sync      | `@aura/sync` — Google Drive (`appDataFolder`) + E2E encryption (opt-in) |
 | PWA       | vite-plugin-pwa (Workbox precache + SPA fallback)             |
-| Tooling   | Vite 6 · ESLint (flat) · Prettier · GitHub Actions → GitHub Pages |
+| Tooling   | Vite 8 · oxlint · Prettier · pnpm workspaces + Turborepo      |
 
 ## 🚀 Getting started
 
 ```bash
-git clone https://github.com/mamueljr/Aura-music.git
-cd Aura-music
-npm install
-npm run dev        # http://localhost:5173/Aura-music/
+git clone https://github.com/mamueljr/aura.git
+cd aura
+pnpm install
+pnpm --filter aura-music dev   # http://localhost:5173/
 ```
 
-| Script              | What it does                                |
-| ------------------- | ------------------------------------------- |
-| `npm run dev`       | Dev server with HMR                         |
-| `npm run build`     | Typecheck + production build + service worker |
-| `npm run preview`   | Serve the production build locally          |
-| `npm run lint`      | ESLint                                      |
-| `npm run typecheck` | `tsc --noEmit`                              |
+| Script                                            | What it does                                |
+| ------------------------------------------------- | ------------------------------------------- |
+| `pnpm --filter aura-music dev`                    | Dev server with HMR                         |
+| `pnpm --filter aura-music build`                  | Typecheck + production build + service worker |
+| `pnpm --filter aura-music preview`                | Serve the production build locally          |
+| `pnpm --filter aura-music lint`                   | oxlint                                      |
+| `pnpm --filter aura-music format`                 | Prettier                                    |
+| `pnpm --filter aura-music typecheck`              | `tsc --noEmit`                              |
+| `pnpm --filter aura-music test`                   | Vitest                                      |
+| `pnpm --filter aura-music test:e2e`               | Playwright smoke (Chromium; no entra en el pre-push hook) |
 
-**Deploy (automatic):** every push to `main` builds and publishes to GitHub Pages via [`deploy.yml`](.github/workflows/deploy.yml). One-time setup: repo **Settings → Pages → Source: GitHub Actions**.
-
-**Deploy (manual fallback):** build locally and push `dist/` to a `gh-pages` branch, then set **Settings → Pages → Source: Deploy from a branch → `gh-pages`**. Useful when Actions are unavailable.
+**Deploy (manual, from the repo root):** `pnpm deploy music` builds the app and publishes it to the `gh-pages` branch under `/aura/music/`. There is no CI — the root `pre-push` hook runs `lint + typecheck + test` as the safety net.
 
 ## 🏗️ Architecture at a glance
 
@@ -108,7 +114,7 @@ Key decisions (full detail in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)):
 
 - **The audio engine is not React.** A singleton owns the Web Audio graph and writes state into a Zustand store; components only render that state and call engine methods. No re-render can glitch audio.
 - **Aggregates are materialized.** Albums / artists / genres are computed once per scan and stored, so no view ever folds 20k tracks at render time.
-- **External services are interfaces.** Lyrics (`LyricsProvider` — LRCLIB included) and cloud sync (`SyncProvider` — no-op included) are plug-in contracts: adding Musixmatch or a Supabase backend touches zero UI code.
+- **External services are interfaces.** Lyrics (`LyricsProvider` — LRCLIB included) and cloud sync are plug-in contracts: adding Musixmatch touches zero UI code. Sync ships as the shared `@aura/sync` runtime (Google Drive transport + E2E crypto).
 
 ## 🌐 Browser support
 
@@ -123,7 +129,7 @@ On Firefox / Safari, folders are imported per-session with `<input webkitdirecto
 
 ## 🔒 Privacy
 
-Aura Music collects **nothing**. There is no backend, no analytics, no accounts. Your music, playlists and settings live in your browser's local storage. The only optional network calls are lyrics lookups (LRCLIB) and cover-art lookups (iTunes Search / Cover Art Archive) — both can be avoided (covers via the Settings toggle, lyrics by not opening the panel).
+Aura Music collects **nothing** and has no analytics. Your music, playlists and settings live in your browser's local storage. The only optional network calls are lyrics lookups (LRCLIB), cover-art lookups (iTunes Search / Cover Art Archive) and **Aura Sync** (Google Drive, opt-in, with end-to-end encryption) — all can be avoided or disabled in Settings.
 
 ## 📄 License
 

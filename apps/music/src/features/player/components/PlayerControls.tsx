@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@aura/ui/components/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { hapticTrackChange } from '@/lib/haptics';
 import { player } from '@/services/audio/AudioEngine';
 import { usePlayerStore } from '@/stores/playerStore';
 
@@ -64,6 +65,7 @@ export function TransportControls({ large = false }: { large?: boolean }) {
         aria-label={t('player.previous')}
         onClick={(e) => {
           e.stopPropagation();
+          hapticTrackChange();
           void player.previous();
         }}
       >
@@ -78,6 +80,7 @@ export function TransportControls({ large = false }: { large?: boolean }) {
         aria-label={t('player.next')}
         onClick={(e) => {
           e.stopPropagation();
+          hapticTrackChange();
           void player.next();
         }}
       >
