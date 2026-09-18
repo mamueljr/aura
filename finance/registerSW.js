@@ -1,1 +1,0 @@
-if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/aura/finance/sw.js', { scope: '/aura/finance/' })})}

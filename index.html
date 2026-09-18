@@ -110,20 +110,6 @@
   </header>
 
   <main>
-      <a class="card" href="./home/" style="--tone:#a78bfa">
-        <!-- Sin lazy: son el contenido principal y están arriba del todo;
-             diferirlos solo retrasa lo primero que se ve. -->
-        <img class="icon" src="./home/icons/icon-192.png" alt="" width="64" height="64" decoding="async" />
-        <div class="body">
-          <div class="row">
-            <h2>Aura Home</h2>
-            <span class="status is-checking" data-app="home" role="status"
-                  aria-label="Aura Home — comprobando disponibilidad"><span class="dot" aria-hidden="true"></span></span>
-          </div>
-          <p>Tu hogar, organizado</p>
-        </div>
-        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
-      </a>
       <a class="card" href="./music/" style="--tone:#22d3ee">
         <!-- Sin lazy: son el contenido principal y están arriba del todo;
              diferirlos solo retrasa lo primero que se ve. -->
@@ -135,34 +121,6 @@
                   aria-label="Aura Music — comprobando disponibilidad"><span class="dot" aria-hidden="true"></span></span>
           </div>
           <p>Tu música, siempre contigo</p>
-        </div>
-        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
-      </a>
-      <a class="card" href="./weather/" style="--tone:#f472b6">
-        <!-- Sin lazy: son el contenido principal y están arriba del todo;
-             diferirlos solo retrasa lo primero que se ve. -->
-        <img class="icon" src="./weather/assets/icons/icon-192.png" alt="" width="64" height="64" decoding="async" />
-        <div class="body">
-          <div class="row">
-            <h2>AuraWeather</h2>
-            <span class="status is-checking" data-app="weather" role="status"
-                  aria-label="AuraWeather — comprobando disponibilidad"><span class="dot" aria-hidden="true"></span></span>
-          </div>
-          <p>El clima, al momento</p>
-        </div>
-        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
-      </a>
-      <a class="card" href="./finance/" style="--tone:#10b981">
-        <!-- Sin lazy: son el contenido principal y están arriba del todo;
-             diferirlos solo retrasa lo primero que se ve. -->
-        <img class="icon" src="./finance/icons/icon-192.png" alt="" width="64" height="64" decoding="async" />
-        <div class="body">
-          <div class="row">
-            <h2>Aura Finance</h2>
-            <span class="status is-checking" data-app="finance" role="status"
-                  aria-label="Aura Finance — comprobando disponibilidad"><span class="dot" aria-hidden="true"></span></span>
-          </div>
-          <p>Tus finanzas, en orden</p>
         </div>
         <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
       </a>
@@ -184,7 +142,7 @@
     // Chequeo en vivo de disponibilidad: cada tarjeta hace un HEAD ligero a su
     // propia subruta en GitHub Pages y marca el indicador según responda.
     (function () {
-      var labels = {"home":"Aura Home","music":"Aura Music","weather":"AuraWeather","finance":"Aura Finance"};
+      var labels = {"music":"Aura Music"};
       var states = ['is-checking', 'is-online', 'is-offline'];
       function mark(app, cls, text) {
         var card = document.querySelector('[data-app="' + app + '"]');
